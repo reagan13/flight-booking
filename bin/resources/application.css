@@ -1,0 +1,103 @@
+/* Base styles */
+.root {
+	-fx-font-family: "Segoe UI", Arial, sans-serif;
+	-fx-background-color: #e6f2ff;
+}
+
+/* Bottom tab styles */
+.bottom-tab {
+	-fx-background-color: transparent;
+	-fx-padding: 5;
+	-fx-alignment: center;
+}
+
+.bottom-tab:hover {
+	-fx-background-color: #f0f5ff;
+	-fx-background-radius: 10;
+}
+
+.bottom-tab-active {
+	-fx-background-color: #e6f2ff;
+	-fx-background-radius: 10;
+}
+
+/* List view styles */
+.list-view {
+	-fx-background-color: transparent;
+	-fx-padding: 5;
+}
+
+.list-cell {
+	-fx-background-color: transparent;
+	-fx-padding: 5 0;
+}
+
+.list-cell:filled:selected {
+	-fx-background-color: transparent;
+}
+
+/* These styles will be applied to the HBox in the custom cell */
+.travel-cell {
+	-fx-background-color: white;
+	-fx-background-radius: 10;
+	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+}
+
+.travel-cell:hover {
+	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0, 0, 3);
+}
+
+/* Banner styles */
+.banner {
+	-fx-background-color: #1a237e;
+	-fx-background-radius: 10;
+}
+
+/* Search box styles */
+.search-box {
+	-fx-background-color: white;
+	-fx-background-radius: 20;
+}
+
+/* Button styles */
+.button {
+	-fx-background-radius: 20;
+}
+
+.button:hover {
+	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 3, 0, 0, 1);
+}
+
+/* Payment method styling */
+.payment-method-box {
+	-fx-background-color: #fff3e0;
+	-fx-background-radius: 5;
+	-fx-padding: 15;
+}
+
+.payment-method-radio {
+	-fx-font-weight: bold;
+	-fx-font-size: 14px;
+}
+
+.payment-fee-label {
+	-fx-text-fill: #666;
+	-fx-font-size: 12px;
+	-fx-font-style: italic;
+}
+
+.payment-provider-gcash {
+	-fx-text-fill: #0066cc;
+}
+
+.payment-provider-maya {
+	-fx-text-fill: #00b04f;
+}
+
+.payment-provider-paypal {
+	-fx-text-fill: #009cde;
+}
+
+.payment-provider-card {
+	-fx-text-fill: #333;
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/8" 
+      xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="application.BookingsController"
+      style="-fx-background-color: #e6f2ff;">
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10" />
+    </padding>
+    <children>
+        <Label text="My Bookings" style="-fx-font-size: 22; -fx-font-weight: bold;" />
+        
+        <VBox style="-fx-background-color: white; -fx-background-radius: 10;" spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+            </padding>
+            <VBox.margin>
+                <Insets top="10" />
+            </VBox.margin>
+            <children>
+                <Label text="No bookings yet" style="-fx-font-style: italic;" />
+                <Label text="Your travel bookings and reservations will appear here." wrapText="true" />
+                <Button text="Explore Destinations" style="-fx-background-color: #1a237e; -fx-text-fill: white;" />
+            </children>
+        </VBox>
+    </children>
+</VBox>

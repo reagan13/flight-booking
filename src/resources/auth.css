@@ -1,0 +1,81 @@
+/* Auth-specific styling for login and signup screens */
+
+/* Container styling */
+.auth-container {
+	-fx-background-color: white;
+	-fx-background-radius: 8px;
+	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 10, 0, 0, 5);
+}
+
+/* Enhanced title */
+.auth-title {
+	-fx-text-fill: #1a73e8;
+	-fx-font-weight: bold;
+}
+
+/* Form field styling */
+.auth-field {
+	-fx-background-color: #f8f9fa;
+	-fx-border-color: #dadce0;
+	-fx-border-radius: 4px;
+	-fx-background-radius: 4px;
+	-fx-padding: 10px;
+}
+
+.auth-field:focused {
+	-fx-background-color: white;
+	-fx-border-color: #1a73e8;
+	-fx-border-width: 2px;
+}
+
+/* Label styling */
+.auth-label {
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+	-fx-text-fill: #5f6368;
+}
+
+/* Button styling */
+.auth-button {
+	-fx-background-color: #1a73e8;
+	-fx-text-fill: white;
+	-fx-font-weight: bold;
+	-fx-padding: 12px;
+	-fx-background-radius: 4px;
+}
+
+.auth-button:hover {
+	-fx-background-color: #1765cf;
+}
+
+.auth-button:pressed {
+	-fx-background-color: #135bb9;
+}
+
+/* Error message */
+.auth-error {
+	-fx-text-fill: #d32f2f;
+	-fx-font-size: 12px;
+	-fx-padding: 5px 0;
+}
+
+/* Bottom section with hyperlink */
+.auth-link-box {
+	-fx-padding: 10px 0 0 0;
+}
+
+.auth-hyperlink {
+	-fx-text-fill: #1a73e8;
+	-fx-underline: false;
+	-fx-border-color: transparent;
+	-fx-font-weight: bold;
+}
+
+.auth-hyperlink:hover {
+	-fx-underline: true;
+}
+
+/* Background for the entire auth screens */
+.auth-background {
+	-fx-background-color: linear-gradient(to bottom right, #1a73e8, #6b9dfa);
+}
