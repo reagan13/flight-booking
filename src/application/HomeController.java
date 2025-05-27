@@ -11,6 +11,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
@@ -21,6 +23,7 @@ public class HomeController {
     // Header components
     @FXML private Label headerTitle;
     @FXML private Button profileButton;
+    @FXML private Button menuButton;
     @FXML private HBox statusBar;
     @FXML private ProgressIndicator headerProgress;
     @FXML private Label statusLabel;
@@ -46,10 +49,6 @@ public class HomeController {
     // Home screen elements
     @FXML private ListView<Flight> flightListView;
     @FXML private TextField searchField;
-    @FXML private Button searchButton;
-    @FXML private Button todayFlightsBtn;
-    @FXML private Button tomorrowFlightsBtn;
-    @FXML private Button weekendFlightsBtn;
     @FXML private Label sectionLabel;
     @FXML private ProgressIndicator loadingIndicator;
 
@@ -83,6 +82,14 @@ public class HomeController {
     // Current active tab
     private String currentTab = "home";
 
+    // Banner carousel elements
+    private int currentBannerIndex = 0;
+    private final String[] bannerTitles = {
+        "Dream. Discover. GO", 
+        "Explore New Places", 
+        "Fly with Confidence"
+    };
+
     @FXML
     public void initialize() {
         System.out.println("Mobile HomeController initializing...");
@@ -97,11 +104,21 @@ public class HomeController {
             setupMessagesScreen();
             loadAvailableFlights();
             
+            // Setup menu button
+            if (menuButton != null) {
+                menuButton.setOnAction(e -> toggleMenu());
+            }
+            
             System.out.println("Mobile HomeController initialized successfully");
         } catch (Exception e) {
             System.err.println("Error initializing HomeController: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void toggleMenu() {
+        // Implementation for menu button action
+        showMobileAlert("Menu", "Menu functionality coming soon!");
     }
 
     private void setupBottomNavigation() {
@@ -127,13 +144,7 @@ public class HomeController {
         flightListView.setCellFactory(listView -> new FlightListCell());
         
         // Search functionality
-        searchButton.setOnAction(this::handleSearch);
         searchField.setOnAction(this::handleSearch);
-        
-        // Filter buttons
-        todayFlightsBtn.setOnAction(e -> filterFlightsByDate("today"));
-        tomorrowFlightsBtn.setOnAction(e -> filterFlightsByDate("tomorrow"));
-        weekendFlightsBtn.setOnAction(e -> filterFlightsByDate("weekend"));
         
         // Flight selection - single tap for mobile
         flightListView.setOnMouseClicked(event -> {
@@ -1208,4 +1219,6 @@ public class HomeController {
                 });
             });
     }
+
+  
 }

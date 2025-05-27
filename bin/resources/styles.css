@@ -1,0 +1,13 @@
+/* Styles for the JetSetGO app */
+
+.destination-card {
+	-fx-background-color: white;
+	-fx-background-radius: 10;
+	-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
+}
+
+.destination-image {
+	-fx-background-radius: 8 8 0 0;
+}
+
+/* Add any additional styles here */
