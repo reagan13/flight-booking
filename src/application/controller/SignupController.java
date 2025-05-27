@@ -23,25 +23,29 @@ import javafx.stage.Stage;
 public class SignupController {
     
     @FXML
+    private TextField fullNameField;
+    
+    @FXML
+    private TextField phoneNumberField;
+    
+    @FXML
+    private TextField emailField;
+    
+    @FXML
+    private PasswordField passwordField;
+    
+    // Hidden fields that will be set programmatically
+    @FXML
     private TextField firstNameField;
     
     @FXML
     private TextField lastNameField;
     
     @FXML
-    private TextField emailField;
-    
-    @FXML
     private TextField ageField;
     
     @FXML
     private TextField addressField;
-    
-    @FXML
-    private PasswordField passwordField;
-    
-    @FXML
-    private PasswordField confirmPasswordField;
     
     @FXML
     private Button signupButton;
@@ -58,54 +62,34 @@ public class SignupController {
     @FXML
     public void handleSignup(ActionEvent event) {
         // Get form data
-        String firstName = firstNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
+        String fullName = fullNameField.getText().trim();
+        String phoneNumber = phoneNumberField.getText().trim();
         String email = emailField.getText().trim();
-        String ageText = ageField.getText().trim();
-        String address = addressField.getText().trim();
         String password = passwordField.getText().trim();
-        String confirmPassword = confirmPasswordField.getText().trim();
         
         // Form validation
-        if (firstName.isEmpty()) {
-            showError("Please enter your first name");
+        if (fullName.isEmpty()) {
+            showError("Please enter your full name");
             return;
         }
         
-        if (lastName.isEmpty()) {
-            showError("Please enter your last name");
+        if (phoneNumber.isEmpty()) {
+            showError("Please enter your phone number");
+            return;
+        }
+        
+        if (!isValidPhoneNumber(phoneNumber)) {
+            showError("Please enter a valid phone number");
             return;
         }
         
         if (email.isEmpty()) {
-            showError("Please enter your email");
+            showError("Please enter your email address");
             return;
         }
         
         if (!isValidEmail(email)) {
             showError("Please enter a valid email address");
-            return;
-        }
-        
-        // Age validation
-        int age;
-        if (ageText.isEmpty()) {
-            age = 0;  // Default age or you can show error
-        } else {
-            try {
-                age = Integer.parseInt(ageText);
-                if (age < 18) {
-                    showError("You must be at least 18 years old to sign up");
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                showError("Please enter a valid age");
-                return;
-            }
-        }
-        
-        if (address.isEmpty()) {
-            showError("Please enter your address");
             return;
         }
         
@@ -119,10 +103,14 @@ public class SignupController {
             return;
         }
         
-        if (!password.equals(confirmPassword)) {
-            showError("Passwords do not match");
-            return;
-        }
+        // Split full name into first and last name
+        String[] nameParts = fullName.split(" ", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1 ? nameParts[1] : "";
+        
+        // Set default values for the fields not in the UI but required in the database
+        int age = 18;  // Default age
+        String address = phoneNumber;  // Use phone number as address temporarily
         
         // Database operations
         try {
@@ -139,8 +127,8 @@ public class SignupController {
                 return;
             }
             
-            // Insert new user - note the fields match our new table structure
-            String insertQuery = "INSERT INTO users (first_name, last_name, email, password, age, address, user_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // Insert new user - note the fields match our table structure
+            String insertQuery = "INSERT INTO users (first_name, last_name, email, password, age, address) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
             insertStmt.setString(1, firstName);
             insertStmt.setString(2, lastName);
@@ -148,7 +136,6 @@ public class SignupController {
             insertStmt.setString(4, password); // In a real app, use password hashing
             insertStmt.setInt(5, age);
             insertStmt.setString(6, address);
-            insertStmt.setString(7, "regular"); // Default user type for new signups
             
             int rowsAffected = insertStmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -205,5 +192,16 @@ public class SignupController {
     private boolean isValidEmail(String email) {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         return email.matches(emailRegex);
+    }
+    
+    /**
+     * Validate phone number format
+     * Basic validation for demonstration purposes
+     */
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        // Allow digits, possibly with hyphens, parentheses, spaces
+        // This is a simple validation - adjust to your specific requirements
+        String phoneRegex = "^[+]?[(]?[0-9]{1,4}[)]?[-\\s\\./0-9]*$";
+        return phoneNumber.matches(phoneRegex) && phoneNumber.replaceAll("[^0-9]", "").length() >= 7;
     }
 }

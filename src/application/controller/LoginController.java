@@ -1,4 +1,3 @@
-// filepath: d:\work\jetsetgo\src\application\controller\LoginController.java
 package application.controller;
 
 import java.io.IOException;
@@ -8,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import application.database.DatabaseConnection;
+import application.model.User;
 import application.model.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,7 +25,7 @@ import javafx.stage.Stage;
 public class LoginController {
     
     @FXML
-    private TextField emailField;
+    private TextField emailPhoneField;
     
     @FXML
     private PasswordField passwordField;
@@ -37,11 +37,14 @@ public class LoginController {
     private Hyperlink signupLink;
     
     @FXML
+    private Hyperlink forgotPasswordLink;
+    
+    @FXML
     private Label errorLabel;
     
     @FXML
     public void handleLogin(ActionEvent event) {
-        String email = emailField.getText().trim();
+        String email = emailPhoneField.getText().trim();
         String password = passwordField.getText().trim();
         
         // Simple validation
@@ -52,6 +55,8 @@ public class LoginController {
         
         try {
             Connection conn = DatabaseConnection.getConnection();
+            
+            // Modified query to only check email since there's no phone column
             String query = "SELECT * FROM users WHERE email = ? AND password = ?";
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setString(1, email);
@@ -63,16 +68,22 @@ public class LoginController {
                 int userId = rs.getInt("id");
                 String firstName = rs.getString("first_name");
                 String lastName = rs.getString("last_name");
+                String userEmail = rs.getString("email");
                 String userType = rs.getString("user_type");
+                String userAddress = rs.getString("address");
+                int userAge = rs.getInt("age");
+                
+                // Create User object
+                User currentUser = new User(userId, firstName, lastName, userEmail, userAddress, userAge, userType);
                 
                 // Store user info in session
-                UserSession.getInstance().setUser(userId, firstName + " " + lastName, email, userType);
+                UserSession.getInstance().login(currentUser);
                 
                 // Navigate to appropriate screen based on user type
                 if ("admin".equals(userType)) {
                     navigateToAdminDashboard(event);
                 } else {
-                    navigateToMain(event);
+                    navigateToHome(event);
                 }
             } else {
                 showError("Invalid email or password");
@@ -80,6 +91,21 @@ public class LoginController {
             
         } catch (SQLException e) {
             showError("Database error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    @FXML
+    public void handleForgotPassword(ActionEvent event) {
+        try {
+            Parent forgotPasswordRoot = FXMLLoader.load(getClass().getResource("/resources/ForgotPassword.fxml"));
+            Scene forgotPasswordScene = new Scene(forgotPasswordRoot);
+            
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(forgotPasswordScene);
+            stage.show();
+        } catch (IOException e) {
+            showError("Could not load forgot password page");
             e.printStackTrace();
         }
     }
@@ -105,16 +131,17 @@ public class LoginController {
         }
     }
     
-    private void navigateToMain(ActionEvent event) {
+    private void navigateToHome(ActionEvent event) {
         try {
-            Parent mainRoot = FXMLLoader.load(getClass().getResource("/resources/Main.fxml"));
-            Scene mainScene = new Scene(mainRoot);
+            Parent homeRoot = FXMLLoader.load(getClass().getResource("/resources/home.fxml"));
+            Scene homeScene = new Scene(homeRoot);
             
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(mainScene);
+            stage.setScene(homeScene);
+            stage.setTitle("JetSetGO - Home");
             stage.show();
         } catch (IOException e) {
-            showError("Could not load main page");
+            showError("Could not load home page");
             e.printStackTrace();
         }
     }

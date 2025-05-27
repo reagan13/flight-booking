@@ -5,29 +5,24 @@ public class User {
     private String firstName;
     private String lastName;
     private String email;
-    private String password; // Note: In a real application, store only hashed passwords
-    private String userType; // e.g., "regular", "admin", etc.
+    private String address;
+    private int age;
+    private String userType;
     
-    // Default constructor
-    public User() {
-    }
-    
-    // Constructor with parameters
-    public User(int id, String firstName, String lastName, String email, String userType) {
+    public User(int id, String firstName, String lastName, String email, 
+                String address, int age, String userType) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.address = address;
+        this.age = age;
         this.userType = userType;
     }
     
     // Getters and setters
     public int getId() {
         return id;
-    }
-    
-    public void setId(int id) {
-        this.id = id;
     }
     
     public String getFirstName() {
@@ -54,20 +49,27 @@ public class User {
         this.email = email;
     }
     
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public int getAge() {
+        return age;
+    }
+    
+    public void setAge(int age) {
+        this.age = age;
+    }
+    
     public String getUserType() {
         return userType;
     }
     
     public void setUserType(String userType) {
         this.userType = userType;
-    }
-    
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-    
-    @Override
-    public String toString() {
-        return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", userType=" + userType + "]";
     }
 }
