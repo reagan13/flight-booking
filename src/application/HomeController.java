@@ -7,6 +7,7 @@ import application.service.FlightService;
 import application.util.FlightListCell;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.application.Platform;
@@ -23,7 +24,7 @@ public class HomeController {
     // Header components
     @FXML private Label headerTitle;
     @FXML private Button profileButton;
-    @FXML private Button menuButton;
+    // @FXML private Button menuButton;
     @FXML private HBox statusBar;
     @FXML private ProgressIndicator headerProgress;
     @FXML private Label statusLabel;
@@ -59,7 +60,9 @@ public class HomeController {
     @FXML private VBox flightDetailsContent;
     @FXML private VBox bookingFormContent;
     @FXML private VBox paymentContent;
-    @FXML private VBox confirmationContent;
+    @FXML
+    private VBox confirmationContent;
+    
 
     // Action buttons
     @FXML private Button bookFlightBtn;
@@ -78,6 +81,7 @@ public class HomeController {
     private double currentTotalPrice;
     private TextField firstNameField, lastNameField, emailField, phoneField;
     private ToggleGroup paymentMethodGroup;
+    
 
     // Current active tab
     private String currentTab = "home";
@@ -97,6 +101,12 @@ public class HomeController {
         try {
             flightService = new FlightService();
             
+            // Check if all required FXML elements are injected
+            if (!checkFXMLElements()) {
+                System.err.println("Some FXML elements are not properly injected");
+                return;
+            }
+            
             setupBottomNavigation();
             setupHomeScreen();
             setupProfileScreen();
@@ -105,9 +115,9 @@ public class HomeController {
             loadAvailableFlights();
             
             // Setup menu button
-            if (menuButton != null) {
-                menuButton.setOnAction(e -> toggleMenu());
-            }
+            // if (menuButton != null) {
+            //     menuButton.setOnAction(e -> toggleMenu());
+            // }
             
             System.out.println("Mobile HomeController initialized successfully");
         } catch (Exception e) {
@@ -115,47 +125,89 @@ public class HomeController {
             e.printStackTrace();
         }
     }
+    
+    // Add this method to check FXML element injection
+    private boolean checkFXMLElements() {
+        boolean allElementsPresent = true;
 
-    private void toggleMenu() {
-        // Implementation for menu button action
-        showMobileAlert("Menu", "Menu functionality coming soon!");
+        if (profileContent == null) {
+            System.err.println("profileContent is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
+        if (bookingsContent == null) {
+            System.err.println("bookingsContent is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
+        if (messagesContent == null) {
+            System.err.println("messagesContent is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
+        if (flightDetailsContent == null) {
+            System.err.println("flightDetailsContent is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
+        if (flightListView == null) {
+            System.err.println("flightListView is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
+
+        return allElementsPresent;
     }
 
+    
+    // private void toggleMenu() {
+    //     // Implementation for menu button action
+    //     showMobileAlert("Menu", "Menu functionality coming soon!");
+    // }
+
     private void setupBottomNavigation() {
-        // Set up tab click handlers
-        homeTab.setOnMouseClicked(e -> switchToTab("home"));
-        bookingsTab.setOnMouseClicked(e -> switchToTab("bookings"));
-        messagesTab.setOnMouseClicked(e -> switchToTab("messages"));
-        profileTab.setOnMouseClicked(e -> switchToTab("profile"));
+        // Set up tab click handlers - add null checks
+        if (homeTab != null) homeTab.setOnMouseClicked(e -> switchToTab("home"));
+        if (bookingsTab != null) bookingsTab.setOnMouseClicked(e -> switchToTab("bookings"));
+        if (messagesTab != null) messagesTab.setOnMouseClicked(e -> switchToTab("messages"));
+        if (profileTab != null) profileTab.setOnMouseClicked(e -> switchToTab("profile"));
         
         // Profile button in header
-        profileButton.setOnAction(e -> switchToTab("profile"));
+        if (profileButton != null) profileButton.setOnAction(e -> switchToTab("profile"));
         
-        // Action buttons
-        bookFlightBtn.setOnAction(e -> showBookingForm());
-        continueToPaymentBtn.setOnAction(e -> showPaymentForm());
-        confirmPaymentBtn.setOnAction(e -> processPayment());
-        newBookingBtn.setOnAction(e -> switchToTab("home"));
+        // Action buttons - add null checks
+        if (continueToPaymentBtn != null) continueToPaymentBtn.setOnAction(e -> showPaymentForm());
+        if (confirmPaymentBtn != null) confirmPaymentBtn.setOnAction(e -> processPayment());
+        if (newBookingBtn != null) newBookingBtn.setOnAction(e -> switchToTab("home"));
     }
 
     private void setupHomeScreen() {
+        if (flightListView == null) {
+            System.err.println("flightListView is null, skipping home setup");
+            return;
+        }
+        
         // Flight list setup
         flightListView.setPlaceholder(new Label("No flights available"));
+        
+        // Store controller reference in the ListView for FlightListCell access
+        flightListView.getProperties().put("controller", this);
+        
+        // Custom cell factory for card-like display
         flightListView.setCellFactory(listView -> new FlightListCell());
         
-        // Search functionality
-        searchField.setOnAction(this::handleSearch);
+        // Configure ListView for vertical scrolling only
+        flightListView.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
+                               "-fx-focus-color: transparent; -fx-faint-focus-color: transparent; " +
+                               "-fx-selection-bar: transparent; -fx-selection-bar-non-focused: transparent;");
         
-        // Flight selection - single tap for mobile
-        flightListView.setOnMouseClicked(event -> {
-            Flight selectedFlight = flightListView.getSelectionModel().getSelectedItem();
-            if (selectedFlight != null) {
-                showFlightDetails(selectedFlight);
-            }
-        });
+        // Search functionality
+        if (searchField != null) {
+            searchField.setOnAction(this::handleSearch);
+        }
     }
 
     private void setupProfileScreen() {
+        if (profileContent == null) {
+            System.err.println("profileContent is null, skipping profile setup");
+            return;
+        }
+        
         profileContent.getChildren().clear();
         
         try {
@@ -166,11 +218,18 @@ public class HomeController {
                 profileContent.getChildren().add(createGuestProfile());
             }
         } catch (Exception e) {
+            System.err.println("Error setting up profile screen: " + e.getMessage());
             profileContent.getChildren().add(createGuestProfile());
         }
     }
+    
 
     private void setupBookingsScreen() {
+        if (bookingsContent == null) {
+            System.err.println("bookingsContent is null, skipping bookings setup");
+            return;
+        }
+        
         bookingsContent.getChildren().clear();
         
         try {
@@ -181,12 +240,18 @@ public class HomeController {
                 bookingsContent.getChildren().add(loginPrompt);
             }
         } catch (Exception e) {
+            System.err.println("Error setting up bookings screen: " + e.getMessage());
             VBox errorCard = createErrorCard("Unable to load bookings");
             bookingsContent.getChildren().add(errorCard);
         }
     }
 
     private void setupMessagesScreen() {
+        if (messagesContent == null) {
+            System.err.println("messagesContent is null, skipping messages setup");
+            return;
+        }
+        
         messagesContent.getChildren().clear();
         
         try {
@@ -197,6 +262,7 @@ public class HomeController {
                 messagesContent.getChildren().add(loginPrompt);
             }
         } catch (Exception e) {
+            System.err.println("Error setting up messages screen: " + e.getMessage());
             VBox errorCard = createErrorCard("Unable to load messages");
             messagesContent.getChildren().add(errorCard);
         }
@@ -341,6 +407,11 @@ public class HomeController {
     }
 
     private void loadUserBookings() {
+        if (bookingsContent == null) {
+            System.err.println("bookingsContent is null in loadUserBookings");
+            return;
+        }
+        
         // Implementation for loading user bookings
         VBox placeholderCard = new VBox(15);
         placeholderCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
@@ -363,6 +434,11 @@ public class HomeController {
     }
 
     private void loadUserMessages() {
+        if (messagesContent == null) {
+            System.err.println("messagesContent is null in loadUserMessages");
+            return;
+        }
+        
         // Create messages placeholder - replace with actual message loading logic
         VBox placeholderCard = new VBox(15);
         placeholderCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
@@ -532,20 +608,185 @@ public class HomeController {
         statusBar.setVisible(false);
         statusBar.setManaged(false);
     }
-
-    private void showFlightDetails(Flight flight) {
+    public void showFlightDetails(Flight flight) {
         currentFlight = flight;
         
         // Clear previous content
         flightDetailsContent.getChildren().clear();
         
-        // Create mobile flight details
-        VBox detailsCard = createMobileFlightDetails(flight);
+        // Create enhanced mobile flight details
+        VBox detailsCard = createEnhancedMobileFlightDetails(flight);
         flightDetailsContent.getChildren().add(detailsCard);
         
         // Show details screen
         switchToTab("flight-details");
     }
+
+    private VBox createEnhancedMobileFlightDetails(Flight flight) {
+        VBox container = new VBox(20);
+        container.setStyle("-fx-padding: 15;");
+
+        // Back button
+        Button backButton = new Button("← Back to Flights");
+        backButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #2196F3; " +
+                "-fx-font-size: 14px; -fx-padding: 8 12; -fx-cursor: hand;");
+        backButton.setOnAction(e -> switchToTab("home"));
+
+        // Main flight card
+        VBox card = new VBox(20);
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; " +
+                "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 6, 0, 0, 3);");
+
+        // Flight header
+        HBox headerRow = new HBox();
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox airlineBox = new VBox(5);
+        Label airlineLabel = new Label(flight.getAirlineName());
+        airlineLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1565C0;");
+        Label flightNoLabel = new Label("Flight " + flight.getFlightNo());
+        flightNoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        airlineBox.getChildren().addAll(airlineLabel, flightNoLabel);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label statusLabel = new Label(flight.getStatus().toUpperCase());
+        statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                "-fx-padding: 8 16; -fx-background-radius: 20; " +
+                "-fx-font-size: 12px; -fx-font-weight: bold;");
+
+        headerRow.getChildren().addAll(airlineBox, spacer, statusLabel);
+
+        // Route section
+        VBox routeSection = createEnhancedRouteSection(flight);
+
+        // Details section
+        VBox detailsSection = createFlightDetailsGrid(flight);
+
+        // Price section
+        VBox priceSection = createPriceSection(flight);
+
+        // Book button
+        Button bookButton = new Button("Book This Flight");
+        bookButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; " +
+                "-fx-font-size: 16px; -fx-padding: 15 30; -fx-background-radius: 25; " +
+                "-fx-font-weight: bold; -fx-cursor: hand;");
+        bookButton.setMaxWidth(Double.MAX_VALUE);
+        bookButton.setOnAction(e -> handleBookFlight());
+
+        card.getChildren().addAll(headerRow, routeSection, detailsSection, priceSection, bookButton);
+        container.getChildren().addAll(backButton, card);
+
+        return container;
+    }
+    private void handleBookFlight() {
+        // Navigate to booking form
+        switchToTab("booking-form");
+    }
+
+    private VBox createEnhancedRouteSection(Flight flight) {
+        VBox routeBox = new VBox(25);
+        routeBox.setAlignment(Pos.CENTER);
+        routeBox.setStyle("-fx-padding: 20 0;");
+
+        // Cities row
+        HBox citiesRow = new HBox();
+        citiesRow.setAlignment(Pos.CENTER);
+        citiesRow.setSpacing(40);
+
+        VBox originBox = new VBox(8);
+        originBox.setAlignment(Pos.CENTER);
+        Label originCode = new Label(flight.getOrigin());
+        originCode.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        Label originLabel = new Label("Departure");
+        originLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        originBox.getChildren().addAll(originCode, originLabel);
+
+        VBox pathBox = new VBox(8);
+        pathBox.setAlignment(Pos.CENTER);
+        Label planeIcon = new Label("✈️");
+        planeIcon.setStyle("-fx-font-size: 28px;");
+        Label durationLabel = new Label(flight.getDuration());
+        durationLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        pathBox.getChildren().addAll(planeIcon, durationLabel);
+
+        VBox destBox = new VBox(8);
+        destBox.setAlignment(Pos.CENTER);
+        Label destCode = new Label(flight.getDestination());
+        destCode.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        Label destLabel = new Label("Arrival");
+        destLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        destBox.getChildren().addAll(destCode, destLabel);
+
+        citiesRow.getChildren().addAll(originBox, pathBox, destBox);
+
+        // Times row
+        HBox timesRow = new HBox();
+        timesRow.setAlignment(Pos.CENTER);
+        timesRow.setSpacing(80);
+
+        VBox depTimeBox = new VBox(5);
+        depTimeBox.setAlignment(Pos.CENTER);
+        Label depTime = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
+        depTime.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        Label depDate = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
+        depDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        depTimeBox.getChildren().addAll(depTime, depDate);
+
+        VBox arrTimeBox = new VBox(5);
+        arrTimeBox.setAlignment(Pos.CENTER);
+        Label arrTime = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
+        arrTime.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        Label arrDate = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
+        arrDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        arrTimeBox.getChildren().addAll(arrTime, arrDate);
+
+        timesRow.getChildren().addAll(depTimeBox, arrTimeBox);
+
+        routeBox.getChildren().addAll(citiesRow, timesRow);
+        return routeBox;
+    }
+
+    private VBox createPriceSection(Flight flight) {
+        VBox priceBox = new VBox(15);
+        priceBox.setAlignment(Pos.CENTER);
+        priceBox.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 20; -fx-background-radius: 12;");
+
+        Label priceTitle = new Label("Total Price");
+        priceTitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;");
+
+        Label priceAmount = new Label(currencyFormat.format(flight.getPrice()));
+        priceAmount.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+
+        Label priceNote = new Label("per person • includes taxes & fees");
+        priceNote.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+
+        priceBox.getChildren().addAll(priceTitle, priceAmount, priceNote);
+        return priceBox;
+    }
+    
+    
+    private VBox createFlightDetailsGrid(Flight flight) {
+        VBox detailsBox = new VBox(15);
+        detailsBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-background-radius: 12;");
+
+        Label detailsTitle = new Label("Flight Information");
+        detailsTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        VBox detailsGrid = new VBox(12);
+        detailsGrid.getChildren().addAll(
+                createDetailRow("✈️ Aircraft", flight.getAircraft()),
+                createDetailRow("💺 Available Seats", String.valueOf(flight.getSeats())),
+                createDetailRow("📅 Flight Date",
+                        flight.getDeparture().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy"))),
+                createDetailRow("⏱️ Flight Duration", flight.getDuration()));
+
+        detailsBox.getChildren().addAll(detailsTitle, detailsGrid);
+        return detailsBox;
+    }
+
 
     private VBox createMobileFlightDetails(Flight flight) {
         VBox card = new VBox(20);
@@ -670,15 +911,16 @@ public class HomeController {
 
     private HBox createDetailRow(String label, String value) {
         HBox row = new HBox();
-        row.setStyle("-fx-alignment: center-left;");
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setSpacing(10);
         
-        Label labelNode = new Label(label + ":");
-        labelNode.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-pref-width: 120;");
+        Label labelText = new Label(label);
+        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-min-width: 120;");
         
-        Label valueNode = new Label(value);
-        valueNode.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label valueText = new Label(value);
+        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
         
-        row.getChildren().addAll(labelNode, valueNode);
+        row.getChildren().addAll(labelText, valueText);
         return row;
     }
 
