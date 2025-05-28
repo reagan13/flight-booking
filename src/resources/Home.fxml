@@ -78,12 +78,17 @@
                 </ScrollPane>
             </VBox>
             
-            <!-- FLIGHT DETAILS SCREEN -->
+           <!-- FLIGHT DETAILS SCREEN -->
             <VBox fx:id="flightDetailsScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="flightDetailsContent" style="-fx-background-color: transparent;" />
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
+                            style="-fx-background-color: transparent; -fx-background: transparent;" 
+                            vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
+                    <VBox fx:id="flightDetailsContent" 
+                        style="-fx-background-color: transparent; -fx-padding: 10; -fx-spacing: 15;" 
+                        fillWidth="true" />
                 </ScrollPane>
             </VBox>
+
             
             <!-- BOOKING FORM SCREEN -->
             <VBox fx:id="bookingFormScreen" visible="false" style="-fx-background-color: #f8f9fa;">

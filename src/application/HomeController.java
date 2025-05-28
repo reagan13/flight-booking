@@ -624,7 +624,9 @@ public class HomeController {
 
     private VBox createEnhancedMobileFlightDetails(Flight flight) {
         VBox container = new VBox(20);
-        container.setStyle("-fx-padding: 15;");
+        container.setStyle("-fx-padding: 10;");
+        container.setFillWidth(true);
+        container.setMaxWidth(Double.MAX_VALUE);
 
         // Back button
         Button backButton = new Button("← Back to Flights");
@@ -634,36 +636,20 @@ public class HomeController {
 
         // Main flight card
         VBox card = new VBox(20);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; " +
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
                 "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 6, 0, 0, 3);");
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setFillWidth(true);
 
         // Flight header
-        HBox headerRow = new HBox();
-        headerRow.setAlignment(Pos.CENTER_LEFT);
+        VBox headerSection = createFlightHeader(flight);
 
-        VBox airlineBox = new VBox(5);
-        Label airlineLabel = new Label(flight.getAirlineName());
-        airlineLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1565C0;");
-        Label flightNoLabel = new Label("Flight " + flight.getFlightNo());
-        flightNoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        airlineBox.getChildren().addAll(airlineLabel, flightNoLabel);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label statusLabel = new Label(flight.getStatus().toUpperCase());
-        statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
-                "-fx-padding: 8 16; -fx-background-radius: 20; " +
-                "-fx-font-size: 12px; -fx-font-weight: bold;");
-
-        headerRow.getChildren().addAll(airlineBox, spacer, statusLabel);
-
-        // Route section
+        // Route section with improved layout
         VBox routeSection = createEnhancedRouteSection(flight);
 
-        // Details section
-        VBox detailsSection = createFlightDetailsGrid(flight);
+        // Flight details in a more organized way
+        VBox detailsSection = createComprehensiveFlightDetails(flight);
 
         // Price section
         VBox priceSection = createPriceSection(flight);
@@ -676,399 +662,199 @@ public class HomeController {
         bookButton.setMaxWidth(Double.MAX_VALUE);
         bookButton.setOnAction(e -> handleBookFlight());
 
-        card.getChildren().addAll(headerRow, routeSection, detailsSection, priceSection, bookButton);
+        card.getChildren().addAll(headerSection, routeSection, detailsSection, priceSection, bookButton);
         container.getChildren().addAll(backButton, card);
 
         return container;
     }
+
+    private VBox createFlightHeader(Flight flight) {
+        VBox headerSection = new VBox(15);
+
+        // Airline and flight number
+        VBox airlineInfo = new VBox(5);
+        Label airlineLabel = new Label(flight.getAirlineName());
+        airlineLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1565C0;");
+        airlineLabel.setWrapText(true);
+
+        Label flightNoLabel = new Label("Flight " + flight.getFlightNo());
+        flightNoLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+
+        airlineInfo.getChildren().addAll(airlineLabel, flightNoLabel);
+
+        // Status badge
+        HBox statusRow = new HBox();
+        statusRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label statusLabel = new Label(flight.getStatus().toUpperCase());
+        statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                "-fx-padding: 8 16; -fx-background-radius: 20; " +
+                "-fx-font-size: 12px; -fx-font-weight: bold;");
+
+        statusRow.getChildren().add(statusLabel);
+
+        headerSection.getChildren().addAll(airlineInfo, statusRow);
+        return headerSection;
+    }
+    
     private void handleBookFlight() {
         // Navigate to booking form
         switchToTab("booking-form");
     }
 
+    
+    
     private VBox createEnhancedRouteSection(Flight flight) {
-        VBox routeBox = new VBox(25);
-        routeBox.setAlignment(Pos.CENTER);
-        routeBox.setStyle("-fx-padding: 20 0;");
+        VBox routeSection = new VBox(20);
+        routeSection.setAlignment(Pos.CENTER);
+        routeSection.setStyle("-fx-padding: 20 10;");
 
-        // Cities row
-        HBox citiesRow = new HBox();
-        citiesRow.setAlignment(Pos.CENTER);
-        citiesRow.setSpacing(40);
+        // Airport codes and labels
+        HBox airportsRow = new HBox();
+        airportsRow.setAlignment(Pos.CENTER);
+        airportsRow.setSpacing(20);
 
+        // Origin
         VBox originBox = new VBox(8);
         originBox.setAlignment(Pos.CENTER);
+        originBox.setMaxWidth(80);
+
         Label originCode = new Label(flight.getOrigin());
-        originCode.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        originCode.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+
         Label originLabel = new Label("Departure");
         originLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+
         originBox.getChildren().addAll(originCode, originLabel);
 
+        // Flight path with plane icon
         VBox pathBox = new VBox(8);
         pathBox.setAlignment(Pos.CENTER);
+        pathBox.setMaxWidth(60);
+
         Label planeIcon = new Label("✈️");
-        planeIcon.setStyle("-fx-font-size: 28px;");
+        planeIcon.setStyle("-fx-font-size: 24px;");
+
         Label durationLabel = new Label(flight.getDuration());
-        durationLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        durationLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        durationLabel.setWrapText(true);
+
         pathBox.getChildren().addAll(planeIcon, durationLabel);
 
+        // Destination
         VBox destBox = new VBox(8);
         destBox.setAlignment(Pos.CENTER);
+        destBox.setMaxWidth(80);
+
         Label destCode = new Label(flight.getDestination());
-        destCode.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        destCode.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+
         Label destLabel = new Label("Arrival");
         destLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+
         destBox.getChildren().addAll(destCode, destLabel);
 
-        citiesRow.getChildren().addAll(originBox, pathBox, destBox);
+        airportsRow.getChildren().addAll(originBox, pathBox, destBox);
 
-        // Times row
-        HBox timesRow = new HBox();
-        timesRow.setAlignment(Pos.CENTER);
-        timesRow.setSpacing(80);
+        // Times section
+        VBox timesSection = new VBox(15);
+        timesSection.setAlignment(Pos.CENTER);
 
-        VBox depTimeBox = new VBox(5);
-        depTimeBox.setAlignment(Pos.CENTER);
-        Label depTime = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
-        depTime.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        Label depDate = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
-        depDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        depTimeBox.getChildren().addAll(depTime, depDate);
+        // Departure time
+        VBox depSection = createTimeSection("Departure", flight.getDeparture());
 
-        VBox arrTimeBox = new VBox(5);
-        arrTimeBox.setAlignment(Pos.CENTER);
-        Label arrTime = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
-        arrTime.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        Label arrDate = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
-        arrDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        arrTimeBox.getChildren().addAll(arrTime, arrDate);
+        // Arrival time  
+        VBox arrSection = createTimeSection("Arrival", flight.getArrival());
 
-        timesRow.getChildren().addAll(depTimeBox, arrTimeBox);
+        timesSection.getChildren().addAll(depSection, arrSection);
 
-        routeBox.getChildren().addAll(citiesRow, timesRow);
-        return routeBox;
+        routeSection.getChildren().addAll(airportsRow, timesSection);
+        return routeSection;
     }
 
+    private VBox createTimeSection(String label, java.time.LocalDateTime dateTime) {
+        VBox timeSection = new VBox(5);
+        timeSection.setAlignment(Pos.CENTER);
+        timeSection.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 12; -fx-background-radius: 10;");
+
+        Label titleLabel = new Label(label);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;");
+
+        Label timeLabel = new Label(dateTime.format(DateTimeFormatter.ofPattern("HH:mm")));
+        timeLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        Label dateLabel = new Label(dateTime.format(DateTimeFormatter.ofPattern("EEE, MMM dd, yyyy")));
+        dateLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+        dateLabel.setWrapText(true);
+
+        timeSection.getChildren().addAll(titleLabel, timeLabel, dateLabel);
+        return timeSection;
+    }
+    
     private VBox createPriceSection(Flight flight) {
-        VBox priceBox = new VBox(15);
-        priceBox.setAlignment(Pos.CENTER);
-        priceBox.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 20; -fx-background-radius: 12;");
+        VBox priceSection = new VBox(15);
+        priceSection.setAlignment(Pos.CENTER);
+        priceSection.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 20; -fx-background-radius: 12;");
 
         Label priceTitle = new Label("Total Price");
-        priceTitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        priceTitle.setStyle("-fx-font-size: 16px; -fx-text-fill: #666; -fx-font-weight: bold;");
 
-        Label priceAmount = new Label(currencyFormat.format(flight.getPrice()));
-        priceAmount.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-
-        Label priceNote = new Label("per person • includes taxes & fees");
-        priceNote.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-
-        priceBox.getChildren().addAll(priceTitle, priceAmount, priceNote);
-        return priceBox;
-    }
-    
-    
-    private VBox createFlightDetailsGrid(Flight flight) {
-        VBox detailsBox = new VBox(15);
-        detailsBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-background-radius: 12;");
-
-        Label detailsTitle = new Label("Flight Information");
-        detailsTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-        VBox detailsGrid = new VBox(12);
-        detailsGrid.getChildren().addAll(
-                createDetailRow("✈️ Aircraft", flight.getAircraft()),
-                createDetailRow("💺 Available Seats", String.valueOf(flight.getSeats())),
-                createDetailRow("📅 Flight Date",
-                        flight.getDeparture().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy"))),
-                createDetailRow("⏱️ Flight Duration", flight.getDuration()));
-
-        detailsBox.getChildren().addAll(detailsTitle, detailsGrid);
-        return detailsBox;
-    }
-
-
-    private VBox createMobileFlightDetails(Flight flight) {
-        VBox card = new VBox(20);
-        
-        // Flight header card
-        VBox headerCard = new VBox(15);
-        headerCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-        
-        // Airline and status
-        HBox headerRow = new HBox();
-        headerRow.setStyle("-fx-alignment: center-left;");
-        
-        VBox airlineBox = new VBox(5);
-        Label airlineLabel = new Label(flight.getAirlineName());
-        airlineLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1565C0;");
-        Label flightNoLabel = new Label("Flight " + flight.getFlightNo());
-        flightNoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        airlineBox.getChildren().addAll(airlineLabel, flightNoLabel);
-        
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        Label statusLabel = new Label(flight.getStatus().toUpperCase());
-        statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 8 16; -fx-background-radius: 15; -fx-font-size: 12px; -fx-font-weight: bold;");
-        
-        headerRow.getChildren().addAll(airlineBox, spacer, statusLabel);
-        
-        // Route section
-        VBox routeBox = new VBox(20);
-        routeBox.setStyle("-fx-alignment: center; -fx-padding: 20 0;");
-        
-        // Cities
-        HBox citiesRow = new HBox();
-        citiesRow.setStyle("-fx-alignment: center; -fx-spacing: 30;");
-        
-        VBox originBox = new VBox(5);
-        originBox.setStyle("-fx-alignment: center;");
-        Label originLabel = new Label(flight.getOrigin());
-        originLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
-        Label originNameLabel = new Label("Departure");
-        originNameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        originBox.getChildren().addAll(originLabel, originNameLabel);
-        
-        VBox pathBox = new VBox(5);
-        pathBox.setStyle("-fx-alignment: center;");
-        Label planeLabel = new Label("✈️");
-        planeLabel.setStyle("-fx-font-size: 24px;");
-        Label durationLabel = new Label(flight.getDuration());
-        durationLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
-        pathBox.getChildren().addAll(planeLabel, durationLabel);
-        
-        VBox destBox = new VBox(5);
-        destBox.setStyle("-fx-alignment: center;");
-        Label destLabel = new Label(flight.getDestination());
-        destLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
-        Label destNameLabel = new Label("Arrival");
-        destNameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        destBox.getChildren().addAll(destLabel, destNameLabel);
-        
-        citiesRow.getChildren().addAll(originBox, pathBox, destBox);
-        
-        // Times
-        HBox timesRow = new HBox();
-        timesRow.setStyle("-fx-alignment: center; -fx-spacing: 60;");
-        
-        VBox depTimeBox = new VBox(3);
-        depTimeBox.setStyle("-fx-alignment: center;");
-        Label depTimeLabel = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
-        depTimeLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
-        Label depDateLabel = new Label(flight.getDeparture().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
-        depDateLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        depTimeBox.getChildren().addAll(depTimeLabel, depDateLabel);
-        
-        VBox arrTimeBox = new VBox(3);
-        arrTimeBox.setStyle("-fx-alignment: center;");
-        Label arrTimeLabel = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
-        arrTimeLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
-        Label arrDateLabel = new Label(flight.getArrival().format(DateTimeFormatter.ofPattern("EEE, MMM dd")));
-        arrDateLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        arrTimeBox.getChildren().addAll(arrTimeLabel, arrDateLabel);
-        
-        timesRow.getChildren().addAll(depTimeBox, arrTimeBox);
-        
-        routeBox.getChildren().addAll(citiesRow, timesRow);
-        
-        headerCard.getChildren().addAll(headerRow, routeBox);
-        
-        // Details card
-        VBox detailsCard = new VBox(15);
-        detailsCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-        
-        Label detailsTitle = new Label("Flight Details");
-        detailsTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        VBox detailsGrid = new VBox(12);
-        detailsGrid.getChildren().addAll(
-            createDetailRow("Aircraft", flight.getAircraft()),
-            createDetailRow("Available Seats", String.valueOf(flight.getSeats())),
-            createDetailRow("Flight Date", flight.getDeparture().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")))
-        );
-        
-        detailsCard.getChildren().addAll(detailsTitle, detailsGrid);
-        
-        // Price card
-        VBox priceCard = new VBox(15);
-        priceCard.setStyle("-fx-background-color: #E8F5E8; -fx-background-radius: 15; -fx-padding: 20; -fx-alignment: center;");
-        
-        Label priceTitle = new Label("Total Price");
-        priceTitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        
         Label priceAmount = new Label(currencyFormat.format(flight.getPrice()));
         priceAmount.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-        
+        priceAmount.setWrapText(true);
+
         Label priceNote = new Label("per person • includes taxes & fees");
         priceNote.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        
-        priceCard.getChildren().addAll(priceTitle, priceAmount, priceNote);
-        
-        card.getChildren().addAll(headerCard, detailsCard, priceCard);
-        return card;
+        priceNote.setWrapText(true);
+
+        priceSection.getChildren().addAll(priceTitle, priceAmount, priceNote);
+        return priceSection;
+    }
+    
+    private VBox createComprehensiveFlightDetails(Flight flight) {
+        VBox detailsSection = new VBox(15);
+        detailsSection.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-background-radius: 12;");
+
+        Label detailsTitle = new Label("Flight Information");
+        detailsTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        VBox detailsGrid = new VBox(15);
+
+        // Flight details with better formatting
+        detailsGrid.getChildren().addAll(
+                createWideDetailRow("✈️ Aircraft Type", flight.getAircraft()),
+                createWideDetailRow("💺 Available Seats", String.valueOf(flight.getSeats()) + " seats"),
+                createWideDetailRow("📅 Flight Date",
+                        flight.getDeparture().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy"))),
+                createWideDetailRow("⏱️ Flight Duration", flight.getDuration()),
+                createWideDetailRow("🛫 Departure Airport", flight.getOrigin()),
+                createWideDetailRow("🛬 Arrival Airport", flight.getDestination()));
+
+        detailsSection.getChildren().addAll(detailsTitle, detailsGrid);
+        return detailsSection;
     }
 
-    private HBox createDetailRow(String label, String value) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setSpacing(10);
-        
+
+    private VBox createWideDetailRow(String label, String value) {
+        VBox row = new VBox(5);
+        row.setStyle("-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 8;");
+        row.setMaxWidth(Double.MAX_VALUE);
+
         Label labelText = new Label(label);
-        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-min-width: 120;");
-        
+        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        labelText.setWrapText(true);
+
         Label valueText = new Label(value);
-        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
-        
+        valueText.setStyle("-fx-font-size: 15px; -fx-text-fill: #333; -fx-font-weight: bold;");
+        valueText.setWrapText(true);
+        valueText.setMaxWidth(Double.MAX_VALUE);
+
         row.getChildren().addAll(labelText, valueText);
         return row;
     }
 
-    private void showBookingForm() {
-        if (currentFlight == null) return;
-        
-        // Clear previous content
-        bookingFormContent.getChildren().clear();
-        
-        // Build mobile booking form
-        buildMobileBookingForm();
-        
-        // Show booking screen
-        switchToTab("booking-form");
-    }
-
-    private void buildMobileBookingForm() {
-        // Flight summary
-        VBox flightSummary = createMobileFlightSummary();
-        bookingFormContent.getChildren().add(flightSummary);
-        
-        // Passenger form
-        VBox passengerForm = createMobilePassengerForm();
-        bookingFormContent.getChildren().add(passengerForm);
-        
-        // Price summary
-        VBox priceSummary = createMobilePriceSummary();
-        bookingFormContent.getChildren().add(priceSummary);
-    }
-
-    private VBox createMobileFlightSummary() {
-        VBox card = new VBox(12);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 15; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-
-        Label titleLabel = new Label("Your Flight");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
-
-        HBox flightRow = new HBox(10);
-        flightRow.setStyle("-fx-alignment: center-left;");
-        
-        VBox leftBox = new VBox(3);
-        Label flightLabel = new Label(currentFlight.getAirlineName());
-        flightLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        Label routeLabel = new Label(currentFlight.getOrigin() + " → " + currentFlight.getDestination());
-        routeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        leftBox.getChildren().addAll(flightLabel, routeLabel);
-        
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        Label dateLabel = new Label(currentFlight.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd")));
-        dateLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
-        
-        flightRow.getChildren().addAll(leftBox, spacer, dateLabel);
-
-        card.getChildren().addAll(titleLabel, flightRow);
-        return card;
-    }
-
-    private VBox createMobilePassengerForm() {
-        VBox form = new VBox(15);
-        form.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-
-        Label titleLabel = new Label("Passenger Information");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
-
-        // Create form fields
-        firstNameField = createMobileTextField("First Name *");
-        lastNameField = createMobileTextField("Last Name *");
-        emailField = createMobileTextField("Email Address");
-        phoneField = createMobileTextField("Phone Number");
-
-        // Pre-fill if user is logged in
-        try {
-            if (UserSession.getInstance().isLoggedIn()) {
-                User currentUser = UserSession.getInstance().getCurrentUser();
-                if (currentUser != null) {
-                    firstNameField.setText(currentUser.getFirstName());
-                    lastNameField.setText(currentUser.getLastName());
-                    emailField.setText(currentUser.getEmail());
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching user data: " + e.getMessage());
-        }
-
-        form.getChildren().addAll(titleLabel, firstNameField, lastNameField, emailField, phoneField);
-        return form;
-    }
-
-    private TextField createMobileTextField(String promptText) {
-        TextField field = new TextField();
-        field.setPromptText(promptText);
-        field.setStyle("-fx-font-size: 14px; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #ddd; -fx-border-radius: 10; -fx-border-width: 1;");
-        return field;
-    }
-
-    private VBox createMobilePriceSummary() {
-        VBox summary = new VBox(12);
-        summary.setStyle("-fx-background-color: #E8F5E8; -fx-background-radius: 15; -fx-padding: 20;");
-
-        Label titleLabel = new Label("Price Breakdown");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-
-        VBox pricesBox = new VBox(8);
-        pricesBox.getChildren().addAll(
-            createMobilePriceRow("Base Fare", currencyFormat.format(currentFlight.getPrice())),
-            createMobilePriceRow("Taxes & Fees", currencyFormat.format(currentFlight.getPrice() * 0.12))
-        );
-
-        Separator separator = new Separator();
-        
-        currentTotalPrice = currentFlight.getPrice() * 1.12;
-        HBox totalBox = new HBox();
-        totalBox.setStyle("-fx-alignment: center-left;");
-        
-        Label totalLabel = new Label("Total Amount:");
-        totalLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-        
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        Label totalAmount = new Label(currencyFormat.format(currentTotalPrice));
-        totalAmount.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-        
-        totalBox.getChildren().addAll(totalLabel, spacer, totalAmount);
-
-        summary.getChildren().addAll(titleLabel, pricesBox, separator, totalBox);
-        return summary;
-    }
-
-    private HBox createMobilePriceRow(String label, String amount) {
-        HBox row = new HBox();
-        row.setStyle("-fx-alignment: center-left;");
-
-        Label labelNode = new Label(label + ":");
-        labelNode.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label amountNode = new Label(amount);
-        amountNode.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-
-        row.getChildren().addAll(labelNode, spacer, amountNode);
-        return row;
-    }
-
+    
+    
     private void showPaymentForm() {
         // Validate form
         if (!validateBookingForm()) {
@@ -1113,33 +899,53 @@ public class HomeController {
 
     private VBox createMobileBookingSummary() {
         VBox card = new VBox(15);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-        
+        card.setStyle(
+                "-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+
         Label titleLabel = new Label("Booking Summary");
         titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
-        
+
         VBox detailsBox = new VBox(10);
         detailsBox.getChildren().addAll(
-            createDetailRow("Flight", currentFlight.getFlightNo()),
-            createDetailRow("Route", currentFlight.getOrigin() + " → " + currentFlight.getDestination()),
-            createDetailRow("Passenger", firstNameField.getText() + " " + lastNameField.getText())
-        );
-        
-        
+                createDetailRow("Flight", currentFlight.getFlightNo()),
+                createDetailRow("Route", currentFlight.getOrigin() + " → " + currentFlight.getDestination()),
+                createDetailRow("Passenger", firstNameField.getText() + " " + lastNameField.getText()));
+
         VBox totalBox = new VBox(5);
         totalBox.setStyle("-fx-background-color: #FFF3E0; -fx-padding: 12; -fx-background-radius: 10;");
-        
+
         Label totalLabel = new Label("Total Amount");
         totalLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        
+
         Label amountLabel = new Label(currencyFormat.format(currentTotalPrice));
         amountLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FF9800;");
-        
+
         totalBox.getChildren().addAll(totalLabel, amountLabel);
-        
+
         card.getChildren().addAll(titleLabel, detailsBox, totalBox);
         return card;
     }
+
+    private HBox createDetailRow(String label, String value) {
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setSpacing(10);
+
+        Label labelText = new Label(label);
+        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-font-weight: 500;");
+        labelText.setPrefWidth(120); // Fixed width for alignment
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label valueText = new Label(value);
+        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
+        valueText.setWrapText(true);
+
+        row.getChildren().addAll(labelText, spacer, valueText);
+        return row;
+    }
+    
 
     private VBox createMobilePaymentMethods() {
         VBox card = new VBox(15);
