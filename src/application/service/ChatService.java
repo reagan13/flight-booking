@@ -205,7 +205,7 @@ public class ChatService {
         try {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "INSERT INTO messages (user_id, message_text, sender_type, reply_to) VALUES (?, ?, 'bot', ?)";
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
             if (UserSession.getInstance().isLoggedIn()) {
                 stmt.setInt(1, UserSession.getInstance().getCurrentUser().getId());
@@ -215,6 +215,19 @@ public class ChatService {
             stmt.setString(2, replyText);
             stmt.setInt(3, replyToId);
             stmt.executeUpdate();
+            
+            // Create notification for bot reply
+            if (UserSession.getInstance().isLoggedIn()) {
+                ResultSet rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    int messageId = rs.getInt(1);
+                    NotificationService.createMessageNotification(
+                        UserSession.getInstance().getCurrentUser().getId(),
+                        "bot",
+                        messageId
+                    );
+                }
+            }
             
         } catch (SQLException e) {
             System.err.println("Error sending bot reply: " + e.getMessage());

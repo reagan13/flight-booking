@@ -247,6 +247,14 @@ public class BookingService {
                 // Commit transaction
                 conn.commit();
                 conn.setAutoCommit(true);
+
+                if (UserSession.getInstance().isLoggedIn()) {
+                    NotificationService.createBookingNotification(
+                        UserSession.getInstance().getCurrentUser().getId(),
+                        bookingResult.getBookingReference(),
+                        bookingResult.getBookingId()
+                    );
+                }
                 
                 return new BookingResult(true, bookingResult.getBookingReference(), bookingResult.getBookingId(), 
                                        "Booking completed successfully! Transaction: " + transactionResult.getTransactionReference());

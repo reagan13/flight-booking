@@ -25,6 +25,7 @@ public class DatabaseConnection {
                 createTransactionsTable();
                 createSeatsTable();
                 createMessagesTable();
+                createNotificationsTable();
 
             } catch (ClassNotFoundException e) {
                 System.err.println("Database Error: MySQL JDBC Driver not found");
@@ -205,25 +206,52 @@ public class DatabaseConnection {
     private static void createMessagesTable() {
         try {
             Statement stmt = connection.createStatement();
-            
+
             String createMessagesTable = "CREATE TABLE IF NOT EXISTS messages ("
-                + "id INT PRIMARY KEY AUTO_INCREMENT,"
-                + "user_id INT NULL,"
-                + "message_text TEXT NOT NULL,"
-                + "sender_type ENUM('user', 'bot', 'admin') NOT NULL,"
-                + "is_read BOOLEAN DEFAULT FALSE,"
-                + "reply_to INT NULL,"
-                + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
-                + "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,"
-                + "FOREIGN KEY (reply_to) REFERENCES messages(id)"
-                + ")";
-            
+                    + "id INT PRIMARY KEY AUTO_INCREMENT,"
+                    + "user_id INT NULL,"
+                    + "message_text TEXT NOT NULL,"
+                    + "sender_type ENUM('user', 'bot', 'admin') NOT NULL,"
+                    + "is_read BOOLEAN DEFAULT FALSE,"
+                    + "reply_to INT NULL,"
+                    + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
+                    + "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,"
+                    + "FOREIGN KEY (reply_to) REFERENCES messages(id)"
+                    + ")";
+
             stmt.execute(createMessagesTable);
             System.out.println("Messages table initialized successfully!");
-            
+
         } catch (SQLException e) {
             System.err.println("Error initializing messages table: " + e.getMessage());
             e.printStackTrace();
         }
     }
+    
+    private static void createNotificationsTable() {
+        try {
+            Statement stmt = connection.createStatement();
+
+            String createNotificationsTable = "CREATE TABLE IF NOT EXISTS notifications ("
+                    + "id INT PRIMARY KEY AUTO_INCREMENT,"
+                    + "user_id INT NULL,"
+                    + "type VARCHAR(20) NOT NULL," // 'booking' or 'message'
+                    + "title VARCHAR(100) NOT NULL,"
+                    + "message TEXT NOT NULL,"
+                    + "related_id INT NULL," // booking_id or message_id
+                    + "is_read BOOLEAN DEFAULT FALSE,"
+                    + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
+                    + "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+                    + ")";
+
+            stmt.execute(createNotificationsTable);
+            System.out.println("Notifications table initialized successfully!");
+
+        } catch (SQLException e) {
+            System.err.println("Error initializing notifications table: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    
 }
