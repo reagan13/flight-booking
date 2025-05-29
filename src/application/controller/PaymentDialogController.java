@@ -354,7 +354,7 @@ public class PaymentDialogController {
             
             int userId = 0;
             if (UserSession.getInstance().isLoggedIn()) {
-                userId = UserSession.getInstance().getUserId();
+                userId = UserSession.getInstance().getCurrentUserId();
             }
 
             // Calculate processing fees
