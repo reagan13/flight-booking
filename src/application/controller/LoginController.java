@@ -87,7 +87,7 @@ public class LoginController {
             Scene adminScene = new Scene(adminRoot);
             stage.setScene(adminScene);
             stage.setTitle("JetSetGO - Admin Panel");
-            stage.setMaximized(true);
+            // stage.setMaximized(true);
             stage.centerOnScreen();
 
             System.out.println("Successfully navigated to admin panel");

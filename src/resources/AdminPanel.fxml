@@ -33,7 +33,7 @@
                        style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
                        maxWidth="Infinity" />
                
-               <Button fx:id="messagesBtn" text="💬 Messages & Support" onAction="#showMessages" 
+               <Button fx:id="messagesBtn" text="💬 Messages &amp;  Support" onAction="#showMessages" 
                        style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
                        maxWidth="Infinity" />
                
@@ -110,11 +110,11 @@
          </VBox>
          
          <VBox fx:id="messagesContent" visible="false" style="-fx-padding: 30;">
-            <Label text="Messages & Support" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+            <Label text="Messages &amp;  Support" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
          </VBox>
          
          <VBox fx:id="reportsContent" visible="false" style="-fx-padding: 30;">
-            <Label text="Reports & Analytics" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+            <Label text="Reports &amp;  Analytics" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
          </VBox>
       </StackPane>
    </center>
