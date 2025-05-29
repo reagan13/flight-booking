@@ -1,6 +1,8 @@
 package application;
 
+import application.model.Flight;
 import application.model.User;
+import application.service.AdminFlightService;
 import application.service.AdminService;
 import application.service.UserService;
 import application.service.UserSession;
@@ -17,6 +19,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -25,12 +28,17 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ResourceBundle;
 
 public class AdminController implements Initializable {
@@ -59,7 +67,9 @@ public class AdminController implements Initializable {
     @FXML private Button messagesBtn;
     @FXML
     private Button transactionsBtn;
-    @FXML private Button addUserBtn;
+    @FXML
+    private Button addUserBtn;
+    @FXML private Button addFlightBtn;
 
     
     // ALL CONTENT SECTIONS - ALL VBox (MATCH EXACTLY WITH FXML fx:id)
@@ -75,7 +85,8 @@ public class AdminController implements Initializable {
     @FXML private TableView flightsTable;
     @FXML private TableView bookingsTable;
     @FXML private TableView messagesTable;
-    @FXML private TableView transactionsTable;
+    @FXML
+    private TableView transactionsTable;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -248,7 +259,7 @@ public class AdminController implements Initializable {
     
     // QUICK ACTION METHODSadadtes
     @FXML
-    private void addNewFlight() {
+    private void addNewFlightQuickAction() {
         System.out.println("Add new flight clicked");
         showFlights();
     }
@@ -618,7 +629,7 @@ public class AdminController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    
+
     
     
     private void loadFlightsData() {
@@ -626,11 +637,470 @@ public class AdminController implements Initializable {
             System.out.println("Loading flights data...");
             flightsTable.getItems().clear();
             flightsTable.getColumns().clear();
-            System.out.println("Flights data loaded successfully");
+
+            // Create columns
+            TableColumn<Flight, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setPrefWidth(50);
+
+            TableColumn<Flight, String> flightNoCol = new TableColumn<>("Flight No");
+            flightNoCol.setCellValueFactory(new PropertyValueFactory<>("flightNo"));
+            flightNoCol.setPrefWidth(80);
+
+            TableColumn<Flight, String> airlineCol = new TableColumn<>("Airline");
+            airlineCol.setCellValueFactory(new PropertyValueFactory<>("airlineName"));
+            airlineCol.setPrefWidth(100);
+
+            TableColumn<Flight, String> routeCol = new TableColumn<>("Route");
+            routeCol.setCellValueFactory(new PropertyValueFactory<>("route"));
+            routeCol.setPrefWidth(120);
+
+            TableColumn<Flight, String> departureCol = new TableColumn<>("Departure");
+            departureCol.setCellValueFactory(new PropertyValueFactory<>("formattedDeparture"));
+            departureCol.setPrefWidth(130);
+
+            TableColumn<Flight, String> arrivalCol = new TableColumn<>("Arrival");
+            arrivalCol.setCellValueFactory(new PropertyValueFactory<>("formattedArrival"));
+            arrivalCol.setPrefWidth(130);
+
+            TableColumn<Flight, Integer> seatsCol = new TableColumn<>("Seats");
+            seatsCol.setCellValueFactory(new PropertyValueFactory<>("seats"));
+            seatsCol.setPrefWidth(60);
+
+            TableColumn<Flight, String> statusCol = new TableColumn<>("Status");
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setPrefWidth(80);
+
+            TableColumn<Flight, Double> priceCol = new TableColumn<>("Price");
+            priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+            priceCol.setPrefWidth(80);
+
+            // Actions column
+            TableColumn<Flight, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setPrefWidth(150);
+
+            actionsCol.setCellFactory(param -> new TableCell<Flight, Void>() {
+                private final Button editBtn = new Button("Edit");
+                private final Button deleteBtn = new Button("Delete");
+                private final HBox buttonsBox = new HBox(5);
+
+                {
+                    editBtn.setStyle("-fx-font-size: 12px; -fx-padding: 5 10;");
+                    deleteBtn.setStyle("-fx-font-size: 12px; -fx-padding: 5 10;");
+                    buttonsBox.getChildren().addAll(editBtn, deleteBtn);
+                    buttonsBox.setPadding(new Insets(5));
+
+                    editBtn.setOnAction(event -> {
+                        Flight flight = getTableView().getItems().get(getIndex());
+                        editFlight(flight);
+                    });
+
+                    deleteBtn.setOnAction(event -> {
+                        Flight flight = getTableView().getItems().get(getIndex());
+                        deleteFlight(flight);
+                    });
+                }
+
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(buttonsBox);
+                    }
+                }
+            });
+
+            flightsTable.getColumns().addAll(idCol, flightNoCol, airlineCol, routeCol,
+                    departureCol, arrivalCol, seatsCol, statusCol, priceCol, actionsCol);
+
+            // Load data
+            ObservableList<Flight> flights = AdminFlightService.getAllFlights();
+            flightsTable.setItems(flights);
+
+            System.out.println("Flights data loaded successfully: " + flights.size() + " flights");
+
         } catch (Exception e) {
             System.err.println("Error loading flights: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+   @FXML
+    private void addNewFlight() {
+        try {
+            Dialog<Flight> dialog = new Dialog<>();
+            dialog.setTitle("Add New Flight");
+            dialog.setHeaderText("Add New Flight Information");
+
+            // Create form fields
+            TextField idField = new TextField();
+            TextField flightNoField = new TextField();
+            TextField airlineField = new TextField();
+            TextField originField = new TextField();
+            TextField destinationField = new TextField();
+            DatePicker departureDatePicker = new DatePicker();
+            TextField departureTimeField = new TextField();
+            DatePicker arrivalDatePicker = new DatePicker();
+            TextField arrivalTimeField = new TextField();
+            TextField durationField = new TextField();
+            TextField aircraftField = new TextField();
+            TextField seatsField = new TextField();
+            ComboBox<String> statusBox = new ComboBox<>();
+            statusBox.getItems().addAll("Active", "Cancelled", "Delayed", "Completed");
+            statusBox.setValue("Active");
+            TextField priceField = new TextField();
+
+            // Set placeholders
+            idField.setPromptText("Enter flight ID");
+            flightNoField.setPromptText("e.g., PR123");
+            airlineField.setPromptText("e.g., Philippine Airlines");
+            originField.setPromptText("e.g., MNL");
+            destinationField.setPromptText("e.g., CEB");
+            departureTimeField.setPromptText("HH:MM (e.g., 08:30)");
+            arrivalTimeField.setPromptText("HH:MM (e.g., 10:45)");
+            durationField.setPromptText("e.g., 02:15");
+            aircraftField.setPromptText("e.g., Boeing 737");
+            seatsField.setPromptText("e.g., 180");
+            priceField.setPromptText("e.g., 5500.00");
+
+            // Create GridPane layout
+            GridPane grid = new GridPane();
+            grid.setHgap(15);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20));
+
+            // Set column constraints for better layout
+            ColumnConstraints col1 = new ColumnConstraints();
+            col1.setPercentWidth(25);
+            ColumnConstraints col2 = new ColumnConstraints();
+            col2.setPercentWidth(25);
+            ColumnConstraints col3 = new ColumnConstraints();
+            col3.setPercentWidth(25);
+            ColumnConstraints col4 = new ColumnConstraints();
+            col4.setPercentWidth(25);
+            grid.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+            // Row 1: Basic Flight Information
+            Label basicInfoLabel = new Label("Basic Information");
+            basicInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(basicInfoLabel, 0, 0, 4, 1);
+
+            grid.add(new Label("Flight ID:"), 0, 1);
+            grid.add(idField, 1, 1);
+            grid.add(new Label("Flight Number:"), 2, 1);
+            grid.add(flightNoField, 3, 1);
+
+            grid.add(new Label("Airline:"), 0, 2);
+            grid.add(airlineField, 1, 2, 3, 1); // Span 3 columns for airline name
+
+            // Row 3: Route Information
+            Label routeLabel = new Label("Route Information");
+            routeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(routeLabel, 0, 3, 4, 1);
+
+            grid.add(new Label("Origin:"), 0, 4);
+            grid.add(originField, 1, 4);
+            grid.add(new Label("Destination:"), 2, 4);
+            grid.add(destinationField, 3, 4);
+
+            // Row 5: Departure Information
+            Label departureLabel = new Label("Departure Information");
+            departureLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(departureLabel, 0, 5, 4, 1);
+
+            grid.add(new Label("Departure Date:"), 0, 6);
+            grid.add(departureDatePicker, 1, 6);
+            grid.add(new Label("Departure Time:"), 2, 6);
+            grid.add(departureTimeField, 3, 6);
+
+            // Row 7: Arrival Information
+            Label arrivalLabel = new Label("Arrival Information");
+            arrivalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(arrivalLabel, 0, 7, 4, 1);
+
+            grid.add(new Label("Arrival Date:"), 0, 8);
+            grid.add(arrivalDatePicker, 1, 8);
+            grid.add(new Label("Arrival Time:"), 2, 8);
+            grid.add(arrivalTimeField, 3, 8);
+
+            // Row 9: Flight Details
+            Label detailsLabel = new Label("Flight Details");
+            detailsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(detailsLabel, 0, 9, 4, 1);
+
+            grid.add(new Label("Duration:"), 0, 10);
+            grid.add(durationField, 1, 10);
+            grid.add(new Label("Aircraft Type:"), 2, 10);
+            grid.add(aircraftField, 3, 10);
+
+            grid.add(new Label("Available Seats:"), 0, 11);
+            grid.add(seatsField, 1, 11);
+            grid.add(new Label("Status:"), 2, 11);
+            grid.add(statusBox, 3, 11);
+
+            // Row 12: Pricing
+            Label pricingLabel = new Label("Pricing");
+            pricingLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(pricingLabel, 0, 12, 4, 1);
+
+            grid.add(new Label("Base Price (₱):"), 0, 13);
+            grid.add(priceField, 1, 13);
+
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // Make dialog larger to accommodate grid layout
+            dialog.getDialogPane().setPrefSize(600, 500);
+
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    try {
+                        Flight flight = new Flight();
+                        flight.setId(Integer.parseInt(idField.getText()));
+                        flight.setFlightNo(flightNoField.getText());
+                        flight.setAirlineName(airlineField.getText());
+                        flight.setOrigin(originField.getText());
+                        flight.setDestination(destinationField.getText());
+
+                        LocalDate depDate = departureDatePicker.getValue();
+                        LocalTime depTime = LocalTime.parse(departureTimeField.getText());
+                        flight.setDeparture(LocalDateTime.of(depDate, depTime));
+
+                        LocalDate arrDate = arrivalDatePicker.getValue();
+                        LocalTime arrTime = LocalTime.parse(arrivalTimeField.getText());
+                        flight.setArrival(LocalDateTime.of(arrDate, arrTime));
+
+                        flight.setDuration(durationField.getText());
+                        flight.setAircraft(aircraftField.getText());
+                        flight.setSeats(Integer.parseInt(seatsField.getText()));
+                        flight.setStatus(statusBox.getValue());
+                        flight.setPrice(Double.parseDouble(priceField.getText()));
+
+                        String validationError = AdminFlightService.validateFlightData(flight, false);
+                        if (validationError != null) {
+                            showAlert("Validation Error", validationError);
+                            return null;
+                        }
+
+                        return flight;
+
+                    } catch (Exception e) {
+                        showAlert("Validation Error", "Please check all fields and try again: " + e.getMessage());
+                        return null;
+                    }
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(flight -> {
+                try {
+                    if (AdminFlightService.addFlight(flight)) {
+                        showAlert("Success", "Flight added successfully!");
+                        loadFlightsData();
+                    } else {
+                        showAlert("Error", "Failed to add flight.");
+                    }
+                } catch (Exception e) {
+                    showAlert("Database Error", "Error adding flight: " + e.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            showAlert("Error", "An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+    private void editFlight(Flight flight) {
+        try {
+            Dialog<Flight> dialog = new Dialog<>();
+            dialog.setTitle("Edit Flight");
+            dialog.setHeaderText("Edit Flight Information");
+
+            // Create form fields with existing values
+            TextField idField = new TextField(String.valueOf(flight.getId()));
+            idField.setDisable(true); // Don't allow changing ID
+            TextField flightNoField = new TextField(flight.getFlightNo());
+            TextField airlineField = new TextField(flight.getAirlineName());
+            TextField originField = new TextField(flight.getOrigin());
+            TextField destinationField = new TextField(flight.getDestination());
+
+            DatePicker departureDatePicker = new DatePicker(flight.getDeparture().toLocalDate());
+            TextField departureTimeField = new TextField(flight.getDeparture().toLocalTime().toString());
+            DatePicker arrivalDatePicker = new DatePicker(flight.getArrival().toLocalDate());
+            TextField arrivalTimeField = new TextField(flight.getArrival().toLocalTime().toString());
+
+            TextField durationField = new TextField(flight.getDuration());
+            TextField aircraftField = new TextField(flight.getAircraft());
+            TextField seatsField = new TextField(String.valueOf(flight.getSeats()));
+            ComboBox<String> statusBox = new ComboBox<>();
+            statusBox.getItems().addAll("Active", "Cancelled", "Delayed", "Completed");
+            statusBox.setValue(flight.getStatus());
+            TextField priceField = new TextField(String.valueOf(flight.getPrice()));
+
+            // Use the same grid layout as addNewFlight
+            GridPane grid = new GridPane();
+            grid.setHgap(15);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20));
+
+            // Set column constraints
+            ColumnConstraints col1 = new ColumnConstraints();
+            col1.setPercentWidth(25);
+            ColumnConstraints col2 = new ColumnConstraints();
+            col2.setPercentWidth(25);
+            ColumnConstraints col3 = new ColumnConstraints();
+            col3.setPercentWidth(25);
+            ColumnConstraints col4 = new ColumnConstraints();
+            col4.setPercentWidth(25);
+            grid.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+            // Add all fields to grid (same layout as add dialog)
+            Label basicInfoLabel = new Label("Basic Information");
+            basicInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(basicInfoLabel, 0, 0, 4, 1);
+
+            grid.add(new Label("Flight ID:"), 0, 1);
+            grid.add(idField, 1, 1);
+            grid.add(new Label("Flight Number:"), 2, 1);
+            grid.add(flightNoField, 3, 1);
+
+            grid.add(new Label("Airline:"), 0, 2);
+            grid.add(airlineField, 1, 2, 3, 1);
+
+            Label routeLabel = new Label("Route Information");
+            routeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(routeLabel, 0, 3, 4, 1);
+
+            grid.add(new Label("Origin:"), 0, 4);
+            grid.add(originField, 1, 4);
+            grid.add(new Label("Destination:"), 2, 4);
+            grid.add(destinationField, 3, 4);
+
+            Label departureLabel = new Label("Departure Information");
+            departureLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(departureLabel, 0, 5, 4, 1);
+
+            grid.add(new Label("Departure Date:"), 0, 6);
+            grid.add(departureDatePicker, 1, 6);
+            grid.add(new Label("Departure Time:"), 2, 6);
+            grid.add(departureTimeField, 3, 6);
+
+            Label arrivalLabel = new Label("Arrival Information");
+            arrivalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(arrivalLabel, 0, 7, 4, 1);
+
+            grid.add(new Label("Arrival Date:"), 0, 8);
+            grid.add(arrivalDatePicker, 1, 8);
+            grid.add(new Label("Arrival Time:"), 2, 8);
+            grid.add(arrivalTimeField, 3, 8);
+
+            Label detailsLabel = new Label("Flight Details");
+            detailsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(detailsLabel, 0, 9, 4, 1);
+
+            grid.add(new Label("Duration:"), 0, 10);
+            grid.add(durationField, 1, 10);
+            grid.add(new Label("Aircraft Type:"), 2, 10);
+            grid.add(aircraftField, 3, 10);
+
+            grid.add(new Label("Available Seats:"), 0, 11);
+            grid.add(seatsField, 1, 11);
+            grid.add(new Label("Status:"), 2, 11);
+            grid.add(statusBox, 3, 11);
+
+            Label pricingLabel = new Label("Pricing");
+            pricingLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            grid.add(pricingLabel, 0, 12, 4, 1);
+
+            grid.add(new Label("Base Price (₱):"), 0, 13);
+            grid.add(priceField, 1, 13);
+
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            dialog.getDialogPane().setPrefSize(600, 500);
+
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    try {
+                        flight.setFlightNo(flightNoField.getText());
+                        flight.setAirlineName(airlineField.getText());
+                        flight.setOrigin(originField.getText());
+                        flight.setDestination(destinationField.getText());
+
+                        LocalDate depDate = departureDatePicker.getValue();
+                        LocalTime depTime = LocalTime.parse(departureTimeField.getText());
+                        flight.setDeparture(LocalDateTime.of(depDate, depTime));
+
+                        LocalDate arrDate = arrivalDatePicker.getValue();
+                        LocalTime arrTime = LocalTime.parse(arrivalTimeField.getText());
+                        flight.setArrival(LocalDateTime.of(arrDate, arrTime));
+
+                        flight.setDuration(durationField.getText());
+                        flight.setAircraft(aircraftField.getText());
+                        flight.setSeats(Integer.parseInt(seatsField.getText()));
+                        flight.setStatus(statusBox.getValue());
+                        flight.setPrice(Double.parseDouble(priceField.getText()));
+
+                        String validationError = AdminFlightService.validateFlightData(flight, true);
+                        if (validationError != null) {
+                            showAlert("Validation Error", validationError);
+                            return null;
+                        }
+
+                        return flight;
+
+                    } catch (Exception e) {
+                        showAlert("Validation Error", "Please check all fields: " + e.getMessage());
+                        return null;
+                    }
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(updatedFlight -> {
+                try {
+                    if (AdminFlightService.updateFlight(updatedFlight)) {
+                        showAlert("Success", "Flight updated successfully!");
+                        loadFlightsData();
+                    } else {
+                        showAlert("Error", "Failed to update flight.");
+                    }
+                } catch (Exception e) {
+                    showAlert("Database Error", "Error updating flight: " + e.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            showAlert("Error", "An unexpected error occurred: " + e.getMessage());
+        }
+    }
+    
+
+    private void deleteFlight(Flight flight) {
+        try {
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle("Delete Flight");
+            alert.setHeaderText("Are you sure?");
+            alert.setContentText("Delete flight: " + flight.getFlightNo() + "?");
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    if (AdminFlightService.deleteFlight(flight.getId())) {
+                        showAlert("Success", "Flight deleted successfully!");
+                        loadFlightsData();
+                    } else {
+                        showAlert("Error", "Failed to delete flight.");
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            showAlert("Error", "Error deleting flight: " + e.getMessage());
+        }
+    }
+    
+    
     
     private void loadBookingsData() {
         try {

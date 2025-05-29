@@ -124,9 +124,13 @@
             </VBox>
             
             <!-- FLIGHTS CONTENT -->
-            <VBox fx:id="flightsContent" visible="false" spacing="15">
-                <Label text="Flights Management" style="-fx-font-size: 20px;" />
-                <TableView fx:id="flightsTable" />
+               <VBox fx:id="flightsContent" visible="false" spacing="15" style="-fx-padding: 20;">
+                <HBox spacing="10">
+                    <Label text="Flights Management" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="addFlightBtn" text="Add New Flight" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 15;" onAction="#addNewFlight" />
+                </HBox>
+                <TableView fx:id="flightsTable" VBox.vgrow="ALWAYS" style="-fx-background-color: white;" />
             </VBox>
             
             <!-- BOOKINGS CONTENT -->
