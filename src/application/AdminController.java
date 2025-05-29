@@ -399,6 +399,14 @@ public class AdminController implements Initializable {
             userTypeBox.getItems().addAll("regular", "admin");
             userTypeBox.setValue("regular");
 
+            // Add placeholder text
+            firstNameField.setPromptText("Enter first name");
+            lastNameField.setPromptText("Enter last name");
+            emailField.setPromptText("Enter email address");
+            ageField.setPromptText("Enter age (1-120)");
+            addressField.setPromptText("Enter address");
+            passwordField.setPromptText("Enter password (min 6 characters)");
+
             // Create layout
             VBox content = new VBox(10);
             content.getChildren().addAll(
@@ -413,10 +421,11 @@ public class AdminController implements Initializable {
             dialog.getDialogPane().setContent(content);
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-            // Convert result
+            // Convert result with validation
             dialog.setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
                     try {
+                        // Create user object
                         User newUser = new User();
                         newUser.setFirstName(firstNameField.getText());
                         newUser.setLastName(lastNameField.getText());
@@ -424,9 +433,28 @@ public class AdminController implements Initializable {
                         newUser.setAge(Integer.parseInt(ageField.getText()));
                         newUser.setAddress(addressField.getText());
                         newUser.setUserType(userTypeBox.getValue());
+
+                        // Validate user data
+                        String userValidationError = UserService.validateUserData(newUser, false);
+                        if (userValidationError != null) {
+                            showAlert("Validation Error", userValidationError);
+                            return null;
+                        }
+
+                        // Validate password
+                        String passwordValidationError = UserService.validatePassword(passwordField.getText());
+                        if (passwordValidationError != null) {
+                            showAlert("Validation Error", passwordValidationError);
+                            return null;
+                        }
+
                         return newUser;
+
                     } catch (NumberFormatException e) {
-                        showAlert("Error", "Please enter a valid age.");
+                        showAlert("Validation Error", "Please enter a valid number for age.");
+                        return null;
+                    } catch (Exception e) {
+                        showAlert("Error", "An error occurred while validating user data: " + e.getMessage());
                         return null;
                     }
                 }
@@ -435,17 +463,22 @@ public class AdminController implements Initializable {
 
             // Show dialog and handle result
             dialog.showAndWait().ifPresent(newUser -> {
-                if (UserService.addUser(newUser, passwordField.getText())) {
-                    showAlert("Success", "User added successfully!");
-                    loadUsersData(); // Refresh table
-                } else {
-                    showAlert("Error", "Failed to add user.");
+                try {
+                    if (UserService.addUser(newUser, passwordField.getText())) {
+                        showAlert("Success", "User added successfully!");
+                        loadUsersData(); // Refresh table
+                    } else {
+                        showAlert("Error", "Failed to add user. Please check the database connection and try again.");
+                    }
+                } catch (Exception e) {
+                    showAlert("Database Error", "An error occurred while adding the user: " + e.getMessage());
                 }
             });
 
         } catch (Exception e) {
             System.err.println("Error adding user: " + e.getMessage());
             e.printStackTrace();
+            showAlert("Error", "An unexpected error occurred: " + e.getMessage());
         }
     }
     
@@ -467,6 +500,13 @@ public class AdminController implements Initializable {
             userTypeBox.getItems().addAll("regular", "admin");
             userTypeBox.setValue(user.getUserType());
             
+            // Add placeholder text
+            firstNameField.setPromptText("Enter first name");
+            lastNameField.setPromptText("Enter last name");
+            emailField.setPromptText("Enter email address");
+            ageField.setPromptText("Enter age (1-120)");
+            addressField.setPromptText("Enter address");
+            
             // Create layout
             VBox content = new VBox(10);
             content.getChildren().addAll(
@@ -481,19 +521,32 @@ public class AdminController implements Initializable {
             dialog.getDialogPane().setContent(content);
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
             
-            // Convert result
+            // Convert result with validation
             dialog.setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
                     try {
+                        // Update user object
                         user.setFirstName(firstNameField.getText());
                         user.setLastName(lastNameField.getText());
                         user.setEmail(emailField.getText());
                         user.setAge(Integer.parseInt(ageField.getText()));
                         user.setAddress(addressField.getText());
                         user.setUserType(userTypeBox.getValue());
+                        
+                        // Validate user data (for update)
+                        String validationError = UserService.validateUserData(user, true);
+                        if (validationError != null) {
+                            showAlert("Validation Error", validationError);
+                            return null;
+                        }
+                        
                         return user;
+                        
                     } catch (NumberFormatException e) {
-                        showAlert("Error", "Please enter a valid age.");
+                        showAlert("Validation Error", "Please enter a valid number for age.");
+                        return null;
+                    } catch (Exception e) {
+                        showAlert("Error", "An error occurred while validating user data: " + e.getMessage());
                         return null;
                     }
                 }
@@ -502,35 +555,51 @@ public class AdminController implements Initializable {
             
             // Show dialog and handle result
             dialog.showAndWait().ifPresent(updatedUser -> {
-                if (UserService.updateUser(updatedUser)) {
-                    showAlert("Success", "User updated successfully!");
-                    loadUsersData(); // Refresh table
-                } else {
-                    showAlert("Error", "Failed to update user.");
+                try {
+                    if (UserService.updateUser(updatedUser)) {
+                        showAlert("Success", "User updated successfully!");
+                        loadUsersData(); // Refresh table
+                    } else {
+                        showAlert("Error", "Failed to update user. Please check the database connection and try again.");
+                    }
+                } catch (Exception e) {
+                    showAlert("Database Error", "An error occurred while updating the user: " + e.getMessage());
                 }
             });
             
         } catch (Exception e) {
             System.err.println("Error editing user: " + e.getMessage());
             e.printStackTrace();
+            showAlert("Error", "An unexpected error occurred: " + e.getMessage());
         }
     }
     
     private void deleteUser(User user) {
         try {
+            // Prevent deleting the current admin user
+            User currentUser = UserSession.getInstance().getCurrentUser();
+            if (currentUser != null && currentUser.getId() == user.getId()) {
+                showAlert("Error", "You cannot delete your own account while logged in.");
+                return;
+            }
+            
             // Show confirmation dialog
             Alert alert = new Alert(AlertType.CONFIRMATION);
             alert.setTitle("Delete User");
             alert.setHeaderText("Are you sure?");
-            alert.setContentText("Do you want to delete user: " + user.getFullName() + "?");
+            alert.setContentText("Do you want to delete user: " + user.getFullName() + "?\n\nThis action cannot be undone.");
             
             alert.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
-                    if (UserService.deleteUser(user.getId())) {
-                        showAlert("Success", "User deleted successfully!");
-                        loadUsersData(); // Refresh table
-                    } else {
-                        showAlert("Error", "Failed to delete user.");
+                    try {
+                        if (UserService.deleteUser(user.getId())) {
+                            showAlert("Success", "User deleted successfully!");
+                            loadUsersData(); // Refresh table
+                        } else {
+                            showAlert("Error", "Failed to delete user. The user may have associated records that prevent deletion.");
+                        }
+                    } catch (Exception e) {
+                        showAlert("Database Error", "An error occurred while deleting the user: " + e.getMessage());
                     }
                 }
             });
@@ -538,9 +607,10 @@ public class AdminController implements Initializable {
         } catch (Exception e) {
             System.err.println("Error deleting user: " + e.getMessage());
             e.printStackTrace();
+            showAlert("Error", "An unexpected error occurred: " + e.getMessage());
         }
     }
-    
+
     private void showAlert(String title, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
