@@ -2,16 +2,30 @@ package application;
 
 import application.model.User;
 import application.service.AdminService;
+import application.service.UserService;
 import application.service.UserSession;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -33,7 +47,6 @@ public class AdminController implements Initializable {
     @FXML private Label cancelledBookingsLabel;
     @FXML private Label totalMessagesLabel;
     @FXML private Label todayBookingsLabel;
-    @FXML private Label weekRevenueLabel;
     @FXML private Label newMessagesLabel;
     @FXML private Label systemStatusLabel;
     
@@ -44,7 +57,10 @@ public class AdminController implements Initializable {
     @FXML private Button flightsBtn;
     @FXML private Button bookingsBtn;
     @FXML private Button messagesBtn;
-    @FXML private Button transactionsBtn;
+    @FXML
+    private Button transactionsBtn;
+    @FXML private Button addUserBtn;
+
     
     // ALL CONTENT SECTIONS - ALL VBox (MATCH EXACTLY WITH FXML fx:id)
     @FXML private VBox dashboardContent;
@@ -55,7 +71,7 @@ public class AdminController implements Initializable {
     @FXML private VBox transactionsContent;
     
     // ALL TABLES - MATCH EXACTLY WITH FXML fx:id
-    @FXML private TableView usersTable;
+    @FXML private TableView<User> usersTable;
     @FXML private TableView flightsTable;
     @FXML private TableView bookingsTable;
     @FXML private TableView messagesTable;
@@ -120,7 +136,7 @@ public class AdminController implements Initializable {
             totalUsersLabel.setText(String.valueOf(totalUsers));
             totalFlightsLabel.setText(String.valueOf(totalFlights));
             totalBookingsLabel.setText(String.valueOf(totalBookings));
-            totalRevenueLabel.setText(String.format("$%.2f", totalRevenue));
+            totalRevenueLabel.setText(String.format("₱%.2f", totalRevenue));
 
             // Update secondary stats
             pendingBookingsLabel.setText(String.valueOf(pendingBookings));
@@ -130,7 +146,6 @@ public class AdminController implements Initializable {
 
             // Update activity stats
             todayBookingsLabel.setText(String.valueOf(todayBookings));
-            weekRevenueLabel.setText(String.format("$%.2f", weekRevenue));
             newMessagesLabel.setText(String.valueOf(newMessages));
             systemStatusLabel.setText("Online");
 
@@ -142,13 +157,12 @@ public class AdminController implements Initializable {
             totalUsersLabel.setText("25");
             totalFlightsLabel.setText("12");
             totalBookingsLabel.setText("48");
-            totalRevenueLabel.setText("$2,230.00");
+            totalRevenueLabel.setText("₱2,230.00");
             pendingBookingsLabel.setText("5");
             confirmedBookingsLabel.setText("40");
             cancelledBookingsLabel.setText("3");
             totalMessagesLabel.setText("15");
             todayBookingsLabel.setText("7");
-            weekRevenueLabel.setText("$1,450.00");
             newMessagesLabel.setText("3");
             systemStatusLabel.setText("Online");
         }
@@ -167,7 +181,7 @@ public class AdminController implements Initializable {
 
             Scene loginScene = new Scene(loginRoot);
             stage.setScene(loginScene);
-            stage.setTitle("JetSetGO - Login");
+            stage.setTitle("JetSetGO - Login");     
             stage.centerOnScreen();
 
             System.out.println("Admin logged out successfully");
@@ -232,7 +246,7 @@ public class AdminController implements Initializable {
         System.out.println("Showing transactions");
     }
     
-    // QUICK ACTION METHODS
+    // QUICK ACTION METHODSadadtes
     @FXML
     private void addNewFlight() {
         System.out.println("Add new flight clicked");
@@ -277,16 +291,265 @@ public class AdminController implements Initializable {
     }
     
     // DATA LOADING METHODS
+    
     private void loadUsersData() {
         try {
             System.out.println("Loading users data...");
             usersTable.getItems().clear();
             usersTable.getColumns().clear();
-            System.out.println("Users data loaded successfully");
+
+            // Create columns
+            TableColumn<User, Integer> idCol = new TableColumn<>("ID");
+            idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+            idCol.setPrefWidth(50);
+
+            TableColumn<User, String> firstNameCol = new TableColumn<>("First Name");
+            firstNameCol.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+            firstNameCol.setPrefWidth(100);
+
+            TableColumn<User, String> lastNameCol = new TableColumn<>("Last Name");
+            lastNameCol.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+            lastNameCol.setPrefWidth(100);
+
+            TableColumn<User, String> emailCol = new TableColumn<>("Email");
+            emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
+            emailCol.setPrefWidth(200);
+
+            TableColumn<User, Integer> ageCol = new TableColumn<>("Age");
+            ageCol.setCellValueFactory(new PropertyValueFactory<>("age"));
+            ageCol.setPrefWidth(60);
+
+            TableColumn<User, String> addressCol = new TableColumn<>("Address");
+            addressCol.setCellValueFactory(new PropertyValueFactory<>("address"));
+            addressCol.setPrefWidth(150);
+
+            TableColumn<User, String> typeCol = new TableColumn<>("Type");
+            typeCol.setCellValueFactory(new PropertyValueFactory<>("userType"));
+            typeCol.setPrefWidth(80);
+
+            // Actions column
+            TableColumn<User, Void> actionsCol = new TableColumn<>("Actions");
+            actionsCol.setPrefWidth(150);
+
+            actionsCol.setCellFactory(param -> new TableCell<User, Void>() {
+                private final Button editBtn = new Button("Edit");
+                private final Button deleteBtn = new Button("Delete");
+                private final HBox buttonsBox = new HBox(5);
+
+                {
+                    // Simple button styling - no colors
+                    editBtn.setStyle("-fx-font-size: 12px; -fx-padding: 5 10;");
+                    deleteBtn.setStyle("-fx-font-size: 12px; -fx-padding: 5 10;");
+                    buttonsBox.getChildren().addAll(editBtn, deleteBtn);
+                    buttonsBox.setPadding(new Insets(5));
+
+                    editBtn.setOnAction(event -> {
+                        User user = getTableView().getItems().get(getIndex());
+                        editUser(user);
+                    });
+
+                    deleteBtn.setOnAction(event -> {
+                        User user = getTableView().getItems().get(getIndex());
+                        deleteUser(user);
+                    });
+                }
+
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(buttonsBox);
+                    }
+                }
+            });
+
+            usersTable.getColumns().addAll(idCol, firstNameCol, lastNameCol, emailCol, ageCol, addressCol, typeCol, actionsCol);
+
+
+            // Load data
+            ObservableList<User> users = UserService.getAllUsers();
+            usersTable.setItems(users);
+
+            System.out.println("Users data loaded successfully: " + users.size() + " users");
+
         } catch (Exception e) {
             System.err.println("Error loading users: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+    @FXML
+    private void addNewUser() {
+        try {
+            // Create a dialog for adding new user
+            Dialog<User> dialog = new Dialog<>();
+            dialog.setTitle("Add New User");
+            dialog.setHeaderText("Add New User");
+
+            // Create form fields
+            TextField firstNameField = new TextField();
+            TextField lastNameField = new TextField();
+            TextField emailField = new TextField();
+            TextField ageField = new TextField();
+            TextField addressField = new TextField();
+            PasswordField passwordField = new PasswordField();
+            ComboBox<String> userTypeBox = new ComboBox<>();
+            userTypeBox.getItems().addAll("regular", "admin");
+            userTypeBox.setValue("regular");
+
+            // Create layout
+            VBox content = new VBox(10);
+            content.getChildren().addAll(
+                    new Label("First Name:"), firstNameField,
+                    new Label("Last Name:"), lastNameField,
+                    new Label("Email:"), emailField,
+                    new Label("Password:"), passwordField,
+                    new Label("Age:"), ageField,
+                    new Label("Address:"), addressField,
+                    new Label("User Type:"), userTypeBox);
+
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // Convert result
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    try {
+                        User newUser = new User();
+                        newUser.setFirstName(firstNameField.getText());
+                        newUser.setLastName(lastNameField.getText());
+                        newUser.setEmail(emailField.getText());
+                        newUser.setAge(Integer.parseInt(ageField.getText()));
+                        newUser.setAddress(addressField.getText());
+                        newUser.setUserType(userTypeBox.getValue());
+                        return newUser;
+                    } catch (NumberFormatException e) {
+                        showAlert("Error", "Please enter a valid age.");
+                        return null;
+                    }
+                }
+                return null;
+            });
+
+            // Show dialog and handle result
+            dialog.showAndWait().ifPresent(newUser -> {
+                if (UserService.addUser(newUser, passwordField.getText())) {
+                    showAlert("Success", "User added successfully!");
+                    loadUsersData(); // Refresh table
+                } else {
+                    showAlert("Error", "Failed to add user.");
+                }
+            });
+
+        } catch (Exception e) {
+            System.err.println("Error adding user: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    
+    private void editUser(User user) {
+        try {
+            // Create a dialog for editing user
+            Dialog<User> dialog = new Dialog<>();
+            dialog.setTitle("Edit User");
+            dialog.setHeaderText("Edit User Information");
+            
+            // Create form fields
+            TextField firstNameField = new TextField(user.getFirstName());
+            TextField lastNameField = new TextField(user.getLastName());
+            TextField emailField = new TextField(user.getEmail());
+            TextField ageField = new TextField(String.valueOf(user.getAge()));
+            TextField addressField = new TextField(user.getAddress());
+            ComboBox<String> userTypeBox = new ComboBox<>();
+            userTypeBox.getItems().addAll("regular", "admin");
+            userTypeBox.setValue(user.getUserType());
+            
+            // Create layout
+            VBox content = new VBox(10);
+            content.getChildren().addAll(
+                new Label("First Name:"), firstNameField,
+                new Label("Last Name:"), lastNameField,
+                new Label("Email:"), emailField,
+                new Label("Age:"), ageField,
+                new Label("Address:"), addressField,
+                new Label("User Type:"), userTypeBox
+            );
+            
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            
+            // Convert result
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    try {
+                        user.setFirstName(firstNameField.getText());
+                        user.setLastName(lastNameField.getText());
+                        user.setEmail(emailField.getText());
+                        user.setAge(Integer.parseInt(ageField.getText()));
+                        user.setAddress(addressField.getText());
+                        user.setUserType(userTypeBox.getValue());
+                        return user;
+                    } catch (NumberFormatException e) {
+                        showAlert("Error", "Please enter a valid age.");
+                        return null;
+                    }
+                }
+                return null;
+            });
+            
+            // Show dialog and handle result
+            dialog.showAndWait().ifPresent(updatedUser -> {
+                if (UserService.updateUser(updatedUser)) {
+                    showAlert("Success", "User updated successfully!");
+                    loadUsersData(); // Refresh table
+                } else {
+                    showAlert("Error", "Failed to update user.");
+                }
+            });
+            
+        } catch (Exception e) {
+            System.err.println("Error editing user: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void deleteUser(User user) {
+        try {
+            // Show confirmation dialog
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle("Delete User");
+            alert.setHeaderText("Are you sure?");
+            alert.setContentText("Do you want to delete user: " + user.getFullName() + "?");
+            
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    if (UserService.deleteUser(user.getId())) {
+                        showAlert("Success", "User deleted successfully!");
+                        loadUsersData(); // Refresh table
+                    } else {
+                        showAlert("Error", "Failed to delete user.");
+                    }
+                }
+            });
+            
+        } catch (Exception e) {
+            System.err.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    
     
     private void loadFlightsData() {
         try {
