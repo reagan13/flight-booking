@@ -28,14 +28,18 @@ public class FlightListCell extends ListCell<Flight> {
         
         if (empty || flight == null) {
             setGraphic(null);
-            setText(null);
+            setStyle("-fx-background-color: transparent;");
         } else {
-            setGraphic(createMobileFlightCard(flight));
-            setText(null);
+            VBox flightCard = createMobileFlightCard(flight);
+            
+            // Add spacing container around each flight card
+            VBox cardWithSpacing = new VBox();
+            cardWithSpacing.getChildren().add(flightCard);
+            cardWithSpacing.setStyle("-fx-padding: 0 0 15 0;"); // 15px bottom spacing
+            
+            setGraphic(cardWithSpacing);
+            setStyle("-fx-background-color: transparent; -fx-padding: 0;");
         }
-        
-        // Remove default selection styling
-        setStyle("-fx-background-color: transparent; -fx-padding: 0;");
     }
 
     private VBox createMobileFlightCard(Flight flight) {
@@ -75,6 +79,7 @@ public class FlightListCell extends ListCell<Flight> {
         });
 
         card.getChildren().addAll(header, routeSection, footer, bookButton);
+
         
         // Add margin for mobile list
         VBox.setMargin(card, new Insets(8, 12, 8, 12));

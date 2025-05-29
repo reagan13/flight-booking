@@ -14,6 +14,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
@@ -79,8 +80,8 @@ public class HomeController {
     // Services and data
     private FlightService flightService;
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
-    private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("en", "PH"));
-    
+    private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
+
     // Current booking data
     private Flight currentFlight;
     private String currentBookingRef;
@@ -211,8 +212,9 @@ public class HomeController {
         
         // Configure ListView for vertical scrolling only
         flightListView.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
-                               "-fx-focus-color: transparent; -fx-faint-focus-color: transparent; " +
-                               "-fx-selection-bar: transparent; -fx-selection-bar-non-focused: transparent;");
+                "-fx-focus-color: transparent; -fx-faint-focus-color: transparent; " +
+                                "-fx-selection-bar: transparent; -fx-selection-bar-non-focused: transparent;" +
+                               "-fx-cell-size: 200; -fx-vertical-cell-spacing: 100;");
         
         // Search functionality
         if (searchField != null) {
@@ -244,6 +246,7 @@ public class HomeController {
 
     private void setupBookingsScreen() {
         if (bookingsContent != null) {
+            bookingsContent.setSpacing(15);
             loadUserBookings();
         }
     }
@@ -414,8 +417,39 @@ private VBox createLoggedInProfile(User user) {
 
 private void handleLogout() {
     UserSession.getInstance().logout();
-    setupProfileScreen(); // Refresh to show guest profile
+
+    // Show logout confirmation
     showMobileAlert("Logged Out", "You have been successfully logged out.");
+
+    // Navigate to login screen
+    navigateToLogin();
+}
+private void navigateToLogin() {
+    try {
+        // Get the current stage
+        Stage currentStage = (Stage) profileContent.getScene().getWindow();
+        
+        // Load the login FXML
+        javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/Login.fxml"));
+        javafx.scene.Parent loginRoot = loader.load();
+        
+        // Create new scene and set it to the stage
+        javafx.scene.Scene loginScene = new javafx.scene.Scene(loginRoot);
+        currentStage.setScene(loginScene);
+        currentStage.setTitle("JetSetGO - Login");
+        
+        // Center the window
+        currentStage.centerOnScreen();
+        
+        System.out.println("Successfully navigated to login screen");
+        
+    } catch (Exception e) {
+        System.err.println("Error navigating to login: " + e.getMessage());
+        e.printStackTrace();
+        
+        // Fallback: refresh profile to show guest profile
+        setupProfileScreen();
+    }
 }
 
 // Create special notification option with badge
@@ -1212,7 +1246,7 @@ private void showNotificationDetails(NotificationService.Notification notificati
                            "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 8; " +
                            "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1; " +
                            "-fx-cursor: hand; -fx-font-weight: 500;");
-        
+        backButton.setOnAction(e -> switchToTab("home"));
         // Add hover effect (optional)
         backButton.setOnMouseEntered(e -> {
             backButton.setStyle("-fx-background-color: #e8e8e8; -fx-text-fill: #333; " +
@@ -1799,7 +1833,7 @@ private boolean isValidPhone(String phone) {
         priceTitle.setStyle("-fx-font-size: 16px; -fx-text-fill: #666; -fx-font-weight: bold;");
 
         Label priceAmount = new Label(currencyFormat.format(flight.getPrice()));
-        priceAmount.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+        priceAmount.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
         priceAmount.setWrapText(true);
 
         Label priceNote = new Label("per person • includes taxes & fees");
@@ -1904,9 +1938,8 @@ private boolean isValidPhone(String phone) {
         RadioButton gcash = createSimplePaymentOption("🔵 GCash", "gcash", paymentGroup, false);
         RadioButton maya = createSimplePaymentOption("🟢 Maya (PayMaya)", "maya", paymentGroup, false);
         RadioButton paypal = createSimplePaymentOption("🅿️ PayPal", "paypal", paymentGroup, false);
-        RadioButton bankTransfer = createSimplePaymentOption("🏦 Bank Transfer", "bank_transfer", paymentGroup, false);
         
-        methodsContainer.getChildren().addAll(creditCard, gcash, maya, paypal, bankTransfer);
+        methodsContainer.getChildren().addAll(creditCard, gcash, maya, paypal);
         
         section.getChildren().addAll(titleLabel, methodsContainer);
         return section;
@@ -1993,10 +2026,7 @@ private boolean isValidPhone(String phone) {
                 feeText = "Processing fee: 3.4%";
                 feeColor = "#FF5722";
                 break;
-            case "bank_transfer":
-                feeText = "No processing fee";
-                feeColor = "#4CAF50";
-                break;
+           
         }
         
         if (!feeText.isEmpty()) {
@@ -2067,28 +2097,28 @@ private boolean isValidPhone(String phone) {
         summaryBox.getChildren().addAll(flightPriceRow, processingFeeRow, separator, totalRow);
 
         // Payment info
-        VBox infoBox = new VBox(8);
-        infoBox.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 15; -fx-background-radius: 10;");
+        // VBox infoBox = new VBox(8);
+        // infoBox.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 15; -fx-background-radius: 10;");
 
-        Label infoTitle = new Label("🔒 Secure Payment");
-        infoTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        // Label infoTitle = new Label("🔒 Secure Payment");
+        // infoTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
 
-        Label infoText = new Label(
-                "Your payment will be processed securely. You'll be redirected to complete the payment after clicking 'Pay Now'.");
-        infoText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
+        // Label infoText = new Label(
+        //         "Your payment will be processed securely. You'll be redirected to complete the payment after clicking 'Pay Now'.");
+        // infoText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
 
-        infoBox.getChildren().addAll(infoTitle, infoText);
+        // infoBox.getChildren().addAll(infoTitle, infoText);
 
         // Pay Now button
-        Button payButton = new Button("Pay Now - " + currencyFormat.format(totalAmount));
-        payButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 15 30; " +
-                "-fx-background-radius: 25; -fx-cursor: hand; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);");
-        payButton.setMaxWidth(Double.MAX_VALUE);
-        payButton.setOnAction(e -> processPayment());
+        // Button payButton = new Button("Pay Now - " + currencyFormat.format(totalAmount));
+        // payButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+        //         "-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 15 30; " +
+        //         "-fx-background-radius: 25; -fx-cursor: hand; " +
+        //         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);");
+        // payButton.setMaxWidth(Double.MAX_VALUE);
+        // payButton.setOnAction(e -> processPayment());
 
-        detailsContainer.getChildren().addAll(titleLabel, summaryBox, infoBox, payButton);
+        detailsContainer.getChildren().addAll(titleLabel, summaryBox);
         return detailsContainer;
     }
     
@@ -2123,8 +2153,7 @@ private boolean isValidPhone(String phone) {
                 return amount * 0.01; // 1%
             case "paypal":
                 return amount * 0.034; // 3.4%
-            case "bank_transfer":
-                return 0.0; // No fee
+          
             default:
                 return amount * 0.02; // 2%
         }
