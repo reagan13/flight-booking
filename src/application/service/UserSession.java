@@ -31,8 +31,7 @@ public class UserSession {
         return currentUser;
     }
     public void logout() {
-        System.out.println("Logging out user: " + (currentUser != null ? currentUser.getEmail() : "none"));
-        this.currentUser = null;
+        clearSession();
     }
     
     // Check if user is logged in
