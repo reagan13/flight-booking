@@ -92,15 +92,22 @@
             
             <!-- BOOKING FORM SCREEN -->
             <VBox fx:id="bookingFormScreen" visible="false" style="-fx-background-color: #f8f9fa;">
+                <!-- Back Navigation -->
+                <HBox style="-fx-padding: 10 15; -fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
+                    <Button fx:id="backToDetailsBtn" text="← Flight Details" 
+                        style="-fx-background-color: transparent; -fx-text-fill: #2196F3; -fx-font-size: 14px; -fx-cursor: hand;" 
+                        onAction="#goBackToFlightDetails" />
+                </HBox>
+                
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="bookingFormContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+                    <VBox fx:id="bookingFormContent" style="-fx-background-color: transparent; -fx-padding: 15; -fx-spacing: 15;" />
                 </ScrollPane>
                 
                 <!-- Continue Button -->
-                <VBox style="-fx-padding: 15;">
+                <VBox style="-fx-padding: 15; -fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;">
                     <Button fx:id="continueToPaymentBtn" text="Continue to Payment" 
-                           style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 25;" 
-                           maxWidth="Infinity" />
+                        style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 25; -fx-font-weight: bold;" 
+                        maxWidth="Infinity" />
                 </VBox>
             </VBox>
             

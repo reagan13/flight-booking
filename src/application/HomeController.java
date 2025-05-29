@@ -3,6 +3,8 @@ package application;
 import application.model.Flight;
 import application.model.User;
 import application.model.UserSession;
+import application.service.BookingHistoryService;
+import application.service.BookingService;
 import application.service.FlightService;
 import application.util.FlightListCell;
 
@@ -17,6 +19,7 @@ import javafx.scene.image.ImageView;
 
 import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 
 public class HomeController {
@@ -81,6 +84,17 @@ public class HomeController {
     private double currentTotalPrice;
     private TextField firstNameField, lastNameField, emailField, phoneField;
     private ToggleGroup paymentMethodGroup;
+    private TextField ageField, addressField;
+    private String currentBookingReference;
+    private String selectedPaymentMethod = "credit_card";
+    private VBox methodsContainer;
+    private TextField messageInput;
+    private VBox chatContainer;
+
+
+
+
+
     
 
     // Current active tab
@@ -113,6 +127,7 @@ public class HomeController {
             setupBookingsScreen();
             setupMessagesScreen();
             loadAvailableFlights();
+         
             
             // Setup menu button
             // if (menuButton != null) {
@@ -225,26 +240,11 @@ public class HomeController {
     
 
     private void setupBookingsScreen() {
-        if (bookingsContent == null) {
-            System.err.println("bookingsContent is null, skipping bookings setup");
-            return;
-        }
-        
-        bookingsContent.getChildren().clear();
-        
-        try {
-            if (UserSession.getInstance().isLoggedIn()) {
-                loadUserBookings();
-            } else {
-                VBox loginPrompt = createLoginPrompt();
-                bookingsContent.getChildren().add(loginPrompt);
-            }
-        } catch (Exception e) {
-            System.err.println("Error setting up bookings screen: " + e.getMessage());
-            VBox errorCard = createErrorCard("Unable to load bookings");
-            bookingsContent.getChildren().add(errorCard);
+        if (bookingsContent != null) {
+            loadUserBookings();
         }
     }
+    
 
     private void setupMessagesScreen() {
         if (messagesContent == null) {
@@ -406,32 +406,200 @@ public class HomeController {
         return errorCard;
     }
 
+    
     private void loadUserBookings() {
         if (bookingsContent == null) {
-            System.err.println("bookingsContent is null in loadUserBookings");
+            System.err.println("bookingsContent is null");
             return;
         }
-        
-        // Implementation for loading user bookings
-        VBox placeholderCard = new VBox(15);
-        placeholderCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
-        
-        Label iconLabel = new Label("🎯");
-        iconLabel.setStyle("-fx-font-size: 48px;");
-        
-        Label titleLabel = new Label("No Bookings Yet");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        Label messageLabel = new Label("Book your first flight to see it here!");
-        messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
-        
-        Button browseButton = new Button("Browse Flights");
-        browseButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 20;");
-        browseButton.setOnAction(e -> switchToTab("home"));
-        
-        placeholderCard.getChildren().addAll(iconLabel, titleLabel, messageLabel, browseButton);
-        bookingsContent.getChildren().add(placeholderCard);
+
+        bookingsContent.getChildren().clear();
+
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showLoginPrompt();
+            return;
+        }
+
+        List<BookingHistoryService.BookingHistory> bookings = BookingHistoryService.getUserBookings();
+
+        if (bookings.isEmpty()) {
+            showNoBookingsMessage();
+        } else {
+            for (BookingHistoryService.BookingHistory booking : bookings) {
+                VBox bookingCard = createBookingCard(booking);
+                bookingsContent.getChildren().add(bookingCard);
+            }
+        }
     }
+
+    private void showLoginPrompt() {
+        VBox loginPrompt = new VBox(20);
+        loginPrompt.setAlignment(Pos.CENTER);
+        loginPrompt.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; " +
+                            "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+        
+        Label icon = new Label("🔒");
+        icon.setStyle("-fx-font-size: 48px;");
+        
+        Label title = new Label("Login Required");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        
+        Label message = new Label("Please log in to view your booking history");
+        message.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        
+        Button loginButton = new Button("Go to Login");
+        loginButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; " +
+                            "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 20;");
+        loginButton.setOnAction(e -> switchToTab("profile"));
+        
+        loginPrompt.getChildren().addAll(icon, title, message, loginButton);
+        bookingsContent.getChildren().add(loginPrompt);
+    }
+    
+    private void showNoBookingsMessage() {
+        VBox noBookingsBox = new VBox(20);
+        noBookingsBox.setAlignment(Pos.CENTER);
+        noBookingsBox.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; " +
+                              "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+        
+        Label icon = new Label("✈️");
+        icon.setStyle("-fx-font-size: 48px;");
+        
+        Label title = new Label("No Bookings Yet");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        
+        Label message = new Label("Your travel bookings and reservations will appear here after you make a booking.");
+        message.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
+        message.setMaxWidth(300);
+        
+        Button exploreButton = new Button("Explore Flights");
+        exploreButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                              "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 20;");
+        exploreButton.setOnAction(e -> switchToTab("home"));
+        
+        noBookingsBox.getChildren().addAll(icon, title, message, exploreButton);
+        bookingsContent.getChildren().add(noBookingsBox);
+    }
+    
+    private VBox createBookingCard(BookingHistoryService.BookingHistory booking) {
+        VBox card = new VBox(15);
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+                     "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
+        
+        // Header with booking reference and status
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox refBox = new VBox(2);
+        Label refLabel = new Label("Booking Reference");
+        refLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+        Label refValue = new Label(booking.getBookingReference());
+        refValue.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        refBox.getChildren().addAll(refLabel, refValue);
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label statusBadge = createStatusBadge(booking.getBookingStatus(), booking.getPaymentStatus());
+        
+        header.getChildren().addAll(refBox, spacer, statusBadge);
+        
+        // Flight info
+        HBox flightInfo = new HBox();
+        flightInfo.setAlignment(Pos.CENTER);
+        flightInfo.setSpacing(15);
+        flightInfo.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
+        
+        VBox originBox = new VBox(3);
+        originBox.setAlignment(Pos.CENTER);
+        Label originCode = new Label(booking.getOrigin());
+        originCode.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        Label depTime = new Label(booking.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
+        depTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        originBox.getChildren().addAll(originCode, depTime);
+        
+        Label arrow = new Label("→");
+        arrow.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+        
+        VBox destBox = new VBox(3);
+        destBox.setAlignment(Pos.CENTER);
+        Label destCode = new Label(booking.getDestination());
+        destCode.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        Label arrTime = new Label(booking.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
+        arrTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        destBox.getChildren().addAll(destCode, arrTime);
+        
+        flightInfo.getChildren().addAll(originBox, arrow, destBox);
+        
+        // Details
+        VBox details = new VBox(8);
+        details.getChildren().addAll(
+            createDetailRow("✈️ Flight", booking.getFlightNo() + " • " + booking.getAirlineName()),
+            createDetailRow("📅 Date", booking.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
+            createDetailRow("💺 Seat", booking.getSeatNumber()),
+            createDetailRow("💳 Payment", booking.getPaymentMethod() + " • " + currencyFormat.format(booking.getAmount()))
+        );
+        
+        // Action buttons
+        HBox actions = new HBox(10);
+        actions.setAlignment(Pos.CENTER);
+        
+        Button viewButton = new Button("View Details");
+        viewButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; " +
+                           "-fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
+        viewButton.setOnAction(e -> showBookingDetails(booking));
+        
+        Button downloadButton = new Button("Download Ticket");
+        downloadButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                               "-fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
+        downloadButton.setOnAction(e -> downloadTicket(booking));
+        
+        actions.getChildren().addAll(viewButton, downloadButton);
+        
+        card.getChildren().addAll(header, flightInfo, details, actions);
+        return card;
+    }
+    
+    private Label createStatusBadge(String bookingStatus, String paymentStatus) {
+        String text = "";
+        String style = "";
+
+        if ("confirmed".equals(bookingStatus) && "paid".equals(paymentStatus)) {
+            text = "✅ Confirmed";
+            style = "-fx-background-color: #E8F5E8; -fx-text-fill: #4CAF50;";
+        } else if ("pending".equals(paymentStatus)) {
+            text = "⏳ Pending";
+            style = "-fx-background-color: #FFF3E0; -fx-text-fill: #FF9800;";
+        } else if ("failed".equals(paymentStatus)) {
+            text = "❌ Failed";
+            style = "-fx-background-color: #FFEBEE; -fx-text-fill: #F44336;";
+        } else {
+            text = "📋 " + bookingStatus;
+            style = "-fx-background-color: #E3F2FD; -fx-text-fill: #2196F3;";
+        }
+
+        Label badge = new Label(text);
+        badge.setStyle(style + " -fx-font-size: 11px; -fx-font-weight: bold; " +
+                "-fx-padding: 5 10; -fx-background-radius: 12;");
+
+        return badge;
+    }
+    
+    private void showBookingDetails(BookingHistoryService.BookingHistory booking) {
+        showMobileAlert("Booking Details",
+                "Reference: " + booking.getBookingReference() + "\n" +
+                        "Flight: " + booking.getFlightNo() + "\n" +
+                        "Route: " + booking.getOrigin() + " → " + booking.getDestination() + "\n" +
+                        "Date: " + booking.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"))
+                        + "\n" +
+                        "Seat: " + booking.getSeatNumber() + "\n" +
+                        "Amount: " + currencyFormat.format(booking.getAmount()));
+    }
+    private void downloadTicket(BookingHistoryService.BookingHistory booking) {
+        showMobileAlert("Download", "Ticket download feature will be available soon!");
+    }
+
 
     private void loadUserMessages() {
         if (messagesContent == null) {
@@ -596,6 +764,10 @@ public class HomeController {
                 break;
         }
     }
+    @FXML
+    private void goBackToFlightDetails() {
+        switchToTab("flight-details");
+    }
 
     private void showStatus(String message, boolean showProgress) {
         statusLabel.setText(message);
@@ -649,7 +821,7 @@ public class HomeController {
                                "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1; " +
                                "-fx-cursor: hand; -fx-font-weight: 500;");
         });
-        
+
         // Main flight card
         VBox card = new VBox(20);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
@@ -713,10 +885,415 @@ public class HomeController {
         return headerSection;
     }
     
-    private void handleBookFlight() {
-        // Navigate to booking form
-        switchToTab("booking-form");
+    // Add this method after handleBookFlight()
+private void handleBookFlight() {
+    // Set the current total price
+    currentTotalPrice = currentFlight.getPrice();
+    
+    // Clear previous content and build booking form
+    buildMobileBookingForm();
+    
+    // Navigate to booking form
+    switchToTab("booking-form");
+}
+
+private void buildMobileBookingForm() {
+    if (bookingFormContent == null) {
+        System.err.println("bookingFormContent is null, cannot build booking form");
+        return;
     }
+    
+    bookingFormContent.getChildren().clear();
+    
+    // Flight summary card
+    VBox flightSummary = createMobileFlightSummary();
+    bookingFormContent.getChildren().add(flightSummary);
+    
+    // Passenger information form
+    VBox passengerForm = createMobilePassengerForm();
+    bookingFormContent.getChildren().add(passengerForm);
+    
+    // Contact information form
+    VBox contactForm = createMobileContactForm();
+    bookingFormContent.getChildren().add(contactForm);
+    
+    // Terms and conditions
+    VBox termsSection = createMobileTermsSection();
+    bookingFormContent.getChildren().add(termsSection);
+}
+
+private VBox createMobileFlightSummary() {
+    VBox card = new VBox(15);
+    card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+                  "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                  "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
+    
+    // Header
+    HBox headerBox = new HBox();
+    headerBox.setAlignment(Pos.CENTER_LEFT);
+    headerBox.setSpacing(10);
+    
+    Label flightIcon = new Label("✈️");
+    flightIcon.setStyle("-fx-font-size: 20px;");
+    
+    Label titleLabel = new Label("Flight Summary");
+    titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+    
+    headerBox.getChildren().addAll(flightIcon, titleLabel);
+    
+    // Flight details
+    VBox detailsBox = new VBox(12);
+    
+    // Airline and flight number
+    VBox flightInfo = new VBox(2);
+    Label airlineLabel = new Label(currentFlight.getAirlineName());
+    airlineLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    Label flightNoLabel = new Label("Flight " + currentFlight.getFlightNo());
+    flightNoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    flightInfo.getChildren().addAll(airlineLabel, flightNoLabel);
+    
+    // Route
+    HBox routeRow = new HBox();
+    routeRow.setAlignment(Pos.CENTER);
+    routeRow.setSpacing(15);
+    routeRow.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 12; -fx-background-radius: 8;");
+    
+    VBox originBox = new VBox(3);
+    originBox.setAlignment(Pos.CENTER);
+    Label originCode = new Label(currentFlight.getOrigin());
+    originCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+    Label depTime = new Label(currentFlight.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
+    depTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    originBox.getChildren().addAll(originCode, depTime);
+    
+    Label arrowLabel = new Label("→");
+    arrowLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+    
+    VBox destBox = new VBox(3);
+    destBox.setAlignment(Pos.CENTER);
+    Label destCode = new Label(currentFlight.getDestination());
+    destCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+    Label arrTime = new Label(currentFlight.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
+    arrTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    destBox.getChildren().addAll(destCode, arrTime);
+    
+    routeRow.getChildren().addAll(originBox, arrowLabel, destBox);
+    
+    // Date and duration
+    VBox scheduleBox = new VBox(8);
+    Label dateLabel = new Label("📅 " + currentFlight.getDeparture().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")));
+    dateLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+    Label durationLabel = new Label("⏱️ " + currentFlight.getDuration() + " flight time");
+    durationLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+    scheduleBox.getChildren().addAll(dateLabel, durationLabel);
+    
+    // Price section (moved below flight details)
+    VBox priceBox = new VBox(5);
+    priceBox.setAlignment(Pos.CENTER);
+    priceBox.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 15; -fx-background-radius: 10;");
+    
+    Label priceTitle = new Label("Flight Price");
+    priceTitle.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;");
+    
+    Label priceLabel = new Label(currencyFormat.format(currentFlight.getPrice()));
+    priceLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+    
+    Label priceNote = new Label("per person • includes taxes & fees");
+    priceNote.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+    
+    priceBox.getChildren().addAll(priceTitle, priceLabel, priceNote);
+    
+    detailsBox.getChildren().addAll(flightInfo, routeRow, scheduleBox, priceBox);
+    card.getChildren().addAll(headerBox, detailsBox);
+    
+    return card;
+}
+
+private VBox createMobilePassengerForm() {
+    VBox card = new VBox(15);
+    card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+            "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+
+    // Header
+    HBox headerBox = new HBox();
+    headerBox.setAlignment(Pos.CENTER_LEFT);
+    headerBox.setSpacing(10);
+
+    Label passengerIcon = new Label("👤");
+    passengerIcon.setStyle("-fx-font-size: 20px;");
+
+    Label titleLabel = new Label("Passenger Information");
+    titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+
+    headerBox.getChildren().addAll(passengerIcon, titleLabel);
+
+    // Form fields
+    VBox formBox = new VBox(15);
+
+    // First Name
+    VBox firstNameBox = new VBox(5);
+    Label firstNameLabel = new Label("First Name *");
+    firstNameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    firstNameField = new TextField();
+    firstNameField.setPromptText("Enter your first name");
+    firstNameField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+            "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    firstNameBox.getChildren().addAll(firstNameLabel, firstNameField);
+
+    // Last Name
+    VBox lastNameBox = new VBox(5);
+    Label lastNameLabel = new Label("Last Name *");
+    lastNameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    lastNameField = new TextField();
+    lastNameField.setPromptText("Enter your last name");
+    lastNameField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+            "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    lastNameBox.getChildren().addAll(lastNameLabel, lastNameField);
+
+    // Age
+    VBox ageBox = new VBox(5);
+    Label ageLabel = new Label("Age *");
+    ageLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    ageField = new TextField();
+    ageField.setPromptText("Enter your age");
+    ageField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+            "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    ageBox.getChildren().addAll(ageLabel, ageField);
+
+    // Address
+    VBox addressBox = new VBox(5);
+    Label addressLabel = new Label("Address *");
+    addressLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    addressField = new TextField();
+    addressField.setPromptText("Enter your address");
+    addressField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+            "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    addressBox.getChildren().addAll(addressLabel, addressField);
+
+    // Pre-fill data if user is logged in
+    if (UserSession.getInstance().isLoggedIn()) {
+        User user = UserSession.getInstance().getCurrentUser();
+        firstNameField.setText(user.getFirstName());
+        lastNameField.setText(user.getLastName());
+        if (user.getAge() > 0) {
+            ageField.setText(String.valueOf(user.getAge()));
+        }
+        if (user.getAddress() != null && !user.getAddress().isEmpty()) {
+            addressField.setText(user.getAddress());
+        }
+    }
+
+    formBox.getChildren().addAll(firstNameBox, lastNameBox, ageBox, addressBox);
+
+    // Important note
+    VBox noteBox = new VBox(5);
+    noteBox.setStyle("-fx-background-color: #FFF3E0; -fx-padding: 12; -fx-background-radius: 8;");
+
+    Label noteIcon = new Label("ℹ️");
+    noteIcon.setStyle("-fx-font-size: 14px;");
+
+    Label noteText = new Label(
+            "Important: Please ensure the name matches exactly as shown on your government-issued ID.");
+    noteText.setStyle("-fx-font-size: 11px; -fx-text-fill: #E65100; -fx-wrap-text: true;");
+
+    HBox noteRow = new HBox(8);
+    noteRow.setAlignment(Pos.TOP_LEFT);
+    noteRow.getChildren().addAll(noteIcon, noteText);
+    noteBox.getChildren().add(noteRow);
+
+    card.getChildren().addAll(headerBox, formBox, noteBox);
+    return card;
+}
+
+private VBox createMobileContactForm() {
+    VBox card = new VBox(15);
+    card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+                  "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+    
+    // Header
+    HBox headerBox = new HBox();
+    headerBox.setAlignment(Pos.CENTER_LEFT);
+    headerBox.setSpacing(10);
+    
+    Label contactIcon = new Label("📧");
+    contactIcon.setStyle("-fx-font-size: 20px;");
+    
+    Label titleLabel = new Label("Contact Information");
+    titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+    
+    headerBox.getChildren().addAll(contactIcon, titleLabel);
+    
+    // Form fields
+    VBox formBox = new VBox(15);
+    
+    // Email
+    VBox emailBox = new VBox(5);
+    Label emailLabel = new Label("Email Address *");
+    emailLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    emailField = new TextField();
+    emailField.setPromptText("Enter your email address");
+    emailField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+                       "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    
+    // Pre-fill if user is logged in
+    if (UserSession.getInstance().isLoggedIn()) {
+        emailField.setText(UserSession.getInstance().getCurrentUser().getEmail());
+    }
+    
+    emailBox.getChildren().addAll(emailLabel, emailField);
+    
+    // Phone
+    VBox phoneBox = new VBox(5);
+    Label phoneLabel = new Label("Phone Number *");
+    phoneLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    phoneField = new TextField();
+    phoneField.setPromptText("Enter your phone number");
+    phoneField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+                       "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    phoneBox.getChildren().addAll(phoneLabel, phoneField);
+    
+    // Emergency Contact
+    VBox emergencyBox = new VBox(5);
+    Label emergencyLabel = new Label("Emergency Contact (Optional)");
+    emergencyLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;");
+    TextField emergencyField = new TextField();
+    emergencyField.setPromptText("Emergency contact number");
+    emergencyField.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 8; " +
+                           "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1;");
+    emergencyBox.getChildren().addAll(emergencyLabel, emergencyField);
+    
+    formBox.getChildren().addAll(emailBox, phoneBox, emergencyBox);
+    
+    // Contact note
+    VBox noteBox = new VBox(5);
+    noteBox.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 12; -fx-background-radius: 8;");
+    
+    Label noteText = new Label("📱 We'll send your booking confirmation and flight updates to this email and phone number.");
+    noteText.setStyle("-fx-font-size: 11px; -fx-text-fill: #1976D2; -fx-wrap-text: true;");
+    noteBox.getChildren().add(noteText);
+    
+    card.getChildren().addAll(headerBox, formBox, noteBox);
+    return card;
+}
+
+private VBox createMobileTermsSection() {
+    VBox card = new VBox(15);
+    card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+            "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+
+    // Header
+    HBox headerBox = new HBox();
+    headerBox.setAlignment(Pos.CENTER_LEFT);
+    headerBox.setSpacing(10);
+
+    Label termsIcon = new Label("📋");
+    termsIcon.setStyle("-fx-font-size: 20px;");
+
+    Label titleLabel = new Label("Terms & Conditions");
+    titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+
+    headerBox.getChildren().addAll(termsIcon, titleLabel);
+
+    // Checkboxes only
+    VBox checkboxBox = new VBox(12);
+
+    CheckBox termsCheckbox = new CheckBox("I agree to the Terms and Conditions");
+    termsCheckbox.setStyle("-fx-font-size: 13px;");
+
+    CheckBox privacyCheckbox = new CheckBox("I agree to the Privacy Policy");
+    privacyCheckbox.setStyle("-fx-font-size: 13px;");
+
+    CheckBox marketingCheckbox = new CheckBox("I want to receive promotional emails and updates (Optional)");
+    marketingCheckbox.setStyle("-fx-font-size: 13px;");
+    marketingCheckbox.setSelected(true);
+
+    checkboxBox.getChildren().addAll(termsCheckbox, privacyCheckbox, marketingCheckbox);
+
+    card.getChildren().addAll(headerBox, checkboxBox);
+    return card;
+}
+
+// Update the validateBookingForm method
+private boolean validateBookingForm() {
+    String firstName = firstNameField.getText().trim();
+    String lastName = lastNameField.getText().trim();
+    String email = emailField.getText().trim();
+    String phone = phoneField.getText().trim();
+    String age = ageField.getText().trim();
+    String address = addressField.getText().trim();
+
+    if (firstName.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your first name.");
+        firstNameField.requestFocus();
+        return false;
+    }
+
+    if (lastName.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your last name.");
+        lastNameField.requestFocus();
+        return false;
+    }
+
+    if (age.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your age.");
+        ageField.requestFocus();
+        return false;
+    }
+
+    try {
+        int ageValue = Integer.parseInt(age);
+        if (ageValue < 1 || ageValue > 120) {
+            showMobileAlert("Invalid Age", "Please enter a valid age between 1 and 120.");
+            ageField.requestFocus();
+            return false;
+        }
+    } catch (NumberFormatException e) {
+        showMobileAlert("Invalid Age", "Please enter a valid numeric age.");
+        ageField.requestFocus();
+        return false;
+    }
+
+    if (address.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your address.");
+        addressField.requestFocus();
+        return false;
+    }
+
+    if (email.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your email address.");
+        emailField.requestFocus();
+        return false;
+    }
+
+    if (!isValidEmail(email)) {
+        showMobileAlert("Invalid Email", "Please enter a valid email address.");
+        emailField.requestFocus();
+        return false;
+    }
+
+    if (phone.isEmpty()) {
+        showMobileAlert("Required Field", "Please enter your phone number.");
+        phoneField.requestFocus();
+        return false;
+    }
+
+    if (!isValidPhone(phone)) {
+        showMobileAlert("Invalid Phone", "Please enter a valid phone number.");
+        phoneField.requestFocus();
+        return false;
+    }
+
+    return true;
+}
+
+private boolean isValidEmail(String email) {
+    return email.contains("@") && email.contains(".");
+}
+
+private boolean isValidPhone(String phone) {
+    return phone.replaceAll("[^0-9]", "").length() >= 10;
+}
+
 
     
     
@@ -872,47 +1449,283 @@ public class HomeController {
     
     
     private void showPaymentForm() {
-        // Validate form
         if (!validateBookingForm()) {
             return;
         }
         
-        // Clear previous content
-        paymentContent.getChildren().clear();
-        
-        // Build mobile payment form
+        // Build payment form content
         buildMobilePaymentForm();
-        
-        // Show payment screen
         switchToTab("payment");
     }
-
-    private boolean validateBookingForm() {
-        String firstName = firstNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
-        
-        if (firstName.isEmpty() || lastName.isEmpty()) {
-            showMobileAlert("Required Fields", "Please fill in your first name and last name.");
-            return false;
-        }
-        
-        return true;
-    }
-
+    
     private void buildMobilePaymentForm() {
+        if (paymentContent == null) {
+            System.err.println("paymentContent is null, cannot build payment form");
+            return;
+        }
+
+        paymentContent.getChildren().clear();
+
         // Booking summary
         VBox bookingSummary = createMobileBookingSummary();
         paymentContent.getChildren().add(bookingSummary);
-        
-        // Payment methods
-        VBox paymentMethods = createMobilePaymentMethods();
+
+        // Payment method selection
+        VBox paymentMethods = createPaymentMethodsSection();
         paymentContent.getChildren().add(paymentMethods);
+
+        // Payment summary and pay button
+        VBox paymentSummary = createPaymentDetailsForm();
+        paymentContent.getChildren().add(paymentSummary);
+    }
+    
+    private VBox createPaymentMethodsSection() {
+        VBox section = new VBox(15);
+        section.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+                        "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
         
-        // Security note
-        VBox securityNote = createMobileSecurityNote();
-        paymentContent.getChildren().add(securityNote);
+        Label titleLabel = new Label("Select Payment Method");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        
+        // Toggle group for payment methods
+        ToggleGroup paymentGroup = new ToggleGroup();
+        
+        VBox methodsContainer = new VBox(12);
+        
+        // Create payment options without complex styling
+        RadioButton creditCard = createSimplePaymentOption("💳 Credit/Debit Card", "credit_card", paymentGroup, true);
+        RadioButton gcash = createSimplePaymentOption("🔵 GCash", "gcash", paymentGroup, false);
+        RadioButton maya = createSimplePaymentOption("🟢 Maya (PayMaya)", "maya", paymentGroup, false);
+        RadioButton paypal = createSimplePaymentOption("🅿️ PayPal", "paypal", paymentGroup, false);
+        RadioButton bankTransfer = createSimplePaymentOption("🏦 Bank Transfer", "bank_transfer", paymentGroup, false);
+        
+        methodsContainer.getChildren().addAll(creditCard, gcash, maya, paypal, bankTransfer);
+        
+        section.getChildren().addAll(titleLabel, methodsContainer);
+        return section;
+    }
+    
+    private RadioButton createSimplePaymentOption(String text, String methodId, ToggleGroup group, boolean selected) {
+        RadioButton radio = new RadioButton(text);
+        radio.setToggleGroup(group);
+        radio.setStyle("-fx-font-size: 14px; -fx-padding: 10;");
+        radio.setSelected(selected);
+
+        if (selected) {
+            selectedPaymentMethod = methodId;
+        }
+
+        radio.setOnAction(e -> {
+            selectedPaymentMethod = methodId;
+            System.out.println("Selected payment method: " + methodId);
+        });
+
+        return radio;
+    }
+    
+    private HBox createPaymentMethodOption(String icon, String title, String description, ToggleGroup group, String methodId) {
+        HBox option = new HBox(15);
+        option.setAlignment(Pos.CENTER_LEFT);
+        option.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 15; " +
+                       "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1; " +
+                       "-fx-cursor: hand;");
+        
+        RadioButton radioButton = new RadioButton();
+        radioButton.setToggleGroup(group);
+        radioButton.setStyle("-fx-font-size: 14px;");
+        
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 24px;");
+        
+        VBox textBox = new VBox(3);
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        
+        Label descLabel = new Label(description);
+        descLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        descLabel.setWrapText(true);
+        
+        textBox.getChildren().addAll(titleLabel, descLabel);
+        
+        // Add processing fee info
+        Label feeLabel = createProcessingFeeLabel(methodId);
+        if (feeLabel != null) {
+            textBox.getChildren().add(feeLabel);
+        }
+        
+        option.getChildren().addAll(radioButton, iconLabel, textBox);
+        
+        // Handle selection - simplified without the problematic updateSelectedPaymentStyle call
+        radioButton.setOnAction(e -> {
+            selectedPaymentMethod = methodId;
+            // Just update the selected method without the visual styling for now
+            System.out.println("Selected payment method: " + methodId);
+        });
+        
+        // Make entire option clickable
+        option.setOnMouseClicked(e -> radioButton.fire());
+        
+        return option;
+    }
+    
+    private Label createProcessingFeeLabel(String methodId) {
+        String feeText = "";
+        String feeColor = "#4CAF50";
+        
+        switch (methodId) {
+            case "credit_card":
+                feeText = "Processing fee: 2.5%";
+                feeColor = "#FF9800";
+                break;
+            case "gcash":
+            case "maya":
+                feeText = "Processing fee: 1.0%";
+                feeColor = "#4CAF50";
+                break;
+            case "paypal":
+                feeText = "Processing fee: 3.4%";
+                feeColor = "#FF5722";
+                break;
+            case "bank_transfer":
+                feeText = "No processing fee";
+                feeColor = "#4CAF50";
+                break;
+        }
+        
+        if (!feeText.isEmpty()) {
+            Label feeLabel = new Label(feeText);
+            feeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + feeColor + "; -fx-font-weight: bold;");
+            return feeLabel;
+        }
+        
+        return null;
+    }
+    
+    private void updateSelectedPaymentStyle(HBox selectedOption, VBox container) {
+        // Reset all options to default style
+        for (javafx.scene.Node node : container.getChildren()) {
+            if (node instanceof HBox) {
+                node.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 15; " +
+                             "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1; " +
+                             "-fx-cursor: hand;");
+            }
+        }
+        
+        // Highlight selected option
+        selectedOption.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 10; -fx-padding: 15; " +
+                               "-fx-border-color: #2196F3; -fx-border-radius: 10; -fx-border-width: 2; " +
+                               "-fx-cursor: hand;");
+    }
+    
+    private VBox createPaymentDetailsForm() {
+        VBox detailsContainer = new VBox(15);
+        detailsContainer.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
+                "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+
+        Label titleLabel = new Label("Payment Summary");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        // Payment breakdown
+        VBox summaryBox = new VBox(10);
+        summaryBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
+
+        double flightPrice = currentFlight.getPrice();
+        double processingFee = calculateProcessingFee(flightPrice, selectedPaymentMethod);
+        double totalAmount = flightPrice + processingFee;
+
+        // Create summary rows without problematic casting
+        HBox flightPriceRow = createPriceSummaryRow("Flight Price", flightPrice);
+        HBox processingFeeRow = createPriceSummaryRow("Processing Fee", processingFee);
+
+        Separator separator = new Separator();
+        separator.setStyle("-fx-background-color: #ddd;");
+
+        // Create total row with special styling
+        HBox totalRow = new HBox();
+        totalRow.setAlignment(Pos.CENTER_LEFT);
+        totalRow.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 10; -fx-background-radius: 8;");
+
+        Label totalLabel = new Label("Total Amount");
+        totalLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label totalValue = new Label(currencyFormat.format(totalAmount));
+        totalValue.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+
+        totalRow.getChildren().addAll(totalLabel, spacer, totalValue);
+
+        summaryBox.getChildren().addAll(flightPriceRow, processingFeeRow, separator, totalRow);
+
+        // Payment info
+        VBox infoBox = new VBox(8);
+        infoBox.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 15; -fx-background-radius: 10;");
+
+        Label infoTitle = new Label("🔒 Secure Payment");
+        infoTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+
+        Label infoText = new Label(
+                "Your payment will be processed securely. You'll be redirected to complete the payment after clicking 'Pay Now'.");
+        infoText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
+
+        infoBox.getChildren().addAll(infoTitle, infoText);
+
+        // Pay Now button
+        Button payButton = new Button("Pay Now - " + currencyFormat.format(totalAmount));
+        payButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 15 30; " +
+                "-fx-background-radius: 25; -fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);");
+        payButton.setMaxWidth(Double.MAX_VALUE);
+        payButton.setOnAction(e -> processPayment());
+
+        detailsContainer.getChildren().addAll(titleLabel, summaryBox, infoBox, payButton);
+        return detailsContainer;
+    }
+    
+    private HBox createPriceSummaryRow(String label, double amount) {
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        
+        Label labelText = new Label(label);
+        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        HBox valueBox = new HBox();
+        valueBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        Label valueText = new Label(currencyFormat.format(amount));
+        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
+        
+        valueBox.getChildren().add(valueText);
+        row.getChildren().addAll(labelText, spacer, valueBox);
+        
+        return row;
+    }
+    
+    private double calculateProcessingFee(double amount, String paymentMethod) {
+        switch (paymentMethod) {
+            case "credit_card":
+                return amount * 0.025; // 2.5%
+            case "gcash":
+            case "maya":
+                return amount * 0.01; // 1%
+            case "paypal":
+                return amount * 0.034; // 3.4%
+            case "bank_transfer":
+                return 0.0; // No fee
+            default:
+                return amount * 0.02; // 2%
+        }
     }
 
+    
+    
     private VBox createMobileBookingSummary() {
         VBox card = new VBox(15);
         card.setStyle(
@@ -945,26 +1758,24 @@ public class HomeController {
         return card;
     }
 
+
     
-    private HBox createDetailRow(String label, String value) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setSpacing(10);
+    
+private HBox createDetailRow(String label, String value) {
+    HBox row = new HBox(10);
+    row.setAlignment(Pos.CENTER_LEFT);
+    
+    Label labelText = new Label(label);
+    labelText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    labelText.setPrefWidth(80);
+    
+    Label valueText = new Label(value);
+    valueText.setStyle("-fx-font-size: 12px; -fx-text-fill: #333;");
+    
+    row.getChildren().addAll(labelText, valueText);
+    return row;
+}
 
-        Label labelText = new Label(label);
-        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-font-weight: 500;");
-        labelText.setPrefWidth(120); // Fixed width for alignment
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label valueText = new Label(value);
-        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
-        valueText.setWrapText(true);
-
-        row.getChildren().addAll(labelText, spacer, valueText);
-        return row;
-    }
     
 
     private VBox createMobilePaymentMethods() {
@@ -1017,6 +1828,8 @@ public class HomeController {
         return radio;
     }
 
+    
+
     private VBox createMobileSecurityNote() {
         VBox card = new VBox(10);
         card.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 15; -fx-padding: 15;");
@@ -1040,55 +1853,101 @@ public class HomeController {
     }
 
     private void processPayment() {
-        try {
-            showStatus("Processing payment...", true);
-            
-            String paymentMethod = getSelectedPaymentMethod();
-            currentBookingRef = "JET-" + System.currentTimeMillis() % 10000;
-            String transactionRef = generateTransactionReference(paymentMethod);
-            
-            int userId = 0;
-            if (UserSession.getInstance().isLoggedIn()) {
-                userId = UserSession.getInstance().getUserId();
-            }
-            
-            flightService.createBookingWithPayment(
-                currentFlight, userId,
-                firstNameField.getText().trim(),
-                lastNameField.getText().trim(),
-                emailField.getText().trim(),
-                phoneField.getText().trim(),
-                currentBookingRef,
-                currentTotalPrice,
-                paymentMethod,
-                transactionRef
-            ).thenAccept(success -> {
-                Platform.runLater(() -> {
-                    hideStatus();
-                    if (success) {
-                        showConfirmation();
-                    } else {
-                        showMobileAlert("Payment Failed", "Payment could not be processed. Please try again.");
-                    }
-                });
-            }).exceptionally(ex -> {
-                Platform.runLater(() -> {
-                    hideStatus();
-                    showMobileAlert("Payment Error", "An error occurred: " + ex.getMessage());
-                });
-                return null;
-            });
-            
-        } catch (Exception e) {
+        if (!validateBookingForm()) {
+            return;
+        }
+
+        // Show processing status
+        showStatus("Processing payment...", true);
+
+        // Get form data
+        String firstName = firstNameField.getText().trim();
+        String lastName = lastNameField.getText().trim();
+        String email = emailField.getText().trim();
+        String phone = phoneField.getText().trim();
+        int age = Integer.parseInt(ageField.getText().trim());
+        String address = addressField.getText().trim();
+
+        // Get payment details (you'll need to implement payment form)
+        String paymentMethod = getSelectedPaymentMethod(); // Implement this
+        String paymentProvider = getPaymentProvider(paymentMethod); // Implement this
+        double amount = currentFlight.getPrice();
+
+        // Process booking in background thread
+        Platform.runLater(() -> {
+            BookingService.BookingResult result = BookingService.completeBooking(
+                    currentFlight, firstName, lastName, age, address, email, phone,
+                    amount, paymentMethod, paymentProvider);
+
             hideStatus();
-            showMobileAlert("Payment Error", "Payment processing error: " + e.getMessage());
+
+            if (result.isSuccess()) {
+                // Store booking reference for confirmation screen
+                currentBookingReference = result.getBookingReference();
+
+                // Show confirmation screen
+                buildConfirmationScreen(result);
+                switchToTab("confirmation");
+
+                showMobileAlert("Booking Confirmed",
+                        "Your booking has been confirmed! Reference: " + result.getBookingReference());
+            } else {
+                showMobileAlert("Booking Failed", result.getMessage());
+            }
+        });
+    }
+    
+    private void buildConfirmationScreen(BookingService.BookingResult result) {
+        if (confirmationContent == null) {
+            return;
+        }
+
+        confirmationContent.getChildren().clear();
+
+        // Success card
+        VBox successCard = new VBox(20);
+        successCard.setAlignment(Pos.CENTER);
+        successCard.setStyle(
+                "-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
+
+        Label successIcon = new Label("✅");
+        successIcon.setStyle("-fx-font-size: 48px;");
+
+        Label titleLabel = new Label("Booking Confirmed!");
+        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+
+        Label referenceLabel = new Label("Booking Reference: " + result.getBookingReference());
+        referenceLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        Label messageLabel = new Label(
+                "Your flight has been successfully booked. You will receive a confirmation email shortly.");
+        messageLabel
+                .setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
+
+        successCard.getChildren().addAll(successIcon, titleLabel, referenceLabel, messageLabel);
+        confirmationContent.getChildren().add(successCard);
+    }
+
+
+    private String getSelectedPaymentMethod() {
+        return selectedPaymentMethod;
+    }
+    
+    private String getPaymentProvider(String paymentMethod) {
+        switch (paymentMethod) {
+            case "credit_card":
+                return "Visa/Mastercard";
+            case "gcash":
+                return "GCash";
+            case "maya":
+                return "Maya";
+            case "paypal":
+                return "PayPal";
+            default:
+                return "Unknown";
         }
     }
 
-    private String getSelectedPaymentMethod() {
-        RadioButton selected = (RadioButton) paymentMethodGroup.getSelectedToggle();
-        return selected != null ? selected.getUserData().toString() : "credit_card";
-    }
 
     private String generateTransactionReference(String paymentMethod) {
         String prefix;

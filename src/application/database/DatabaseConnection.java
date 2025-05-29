@@ -24,6 +24,7 @@ public class DatabaseConnection {
                 createBookingsTable();
                 createTransactionsTable();
                 createSeatsTable();
+                createMessagesTable();
 
             } catch (ClassNotFoundException e) {
                 System.err.println("Database Error: MySQL JDBC Driver not found");
@@ -145,20 +146,19 @@ public class DatabaseConnection {
         try {
             Statement stmt = connection.createStatement();
 
-            // Create transactions table with support for different payment methods
             String createTransactionsTable = "CREATE TABLE IF NOT EXISTS transactions ("
                     + "id INT PRIMARY KEY AUTO_INCREMENT,"
                     + "booking_id INT,"
                     + "transaction_reference VARCHAR(30) UNIQUE,"
-                    + "payment_method VARCHAR(20)," // 'credit_card', 'gcash', 'maya', 'paypal'
-                    + "payment_provider VARCHAR(50)," // Additional field for provider details
+                    + "payment_method VARCHAR(20),"
+                    + "payment_provider VARCHAR(50),"
                     + "amount DECIMAL(10,2),"
-                    + "processing_fee DECIMAL(10,2) DEFAULT 0.00," // Track processing fees separately
-                    + "total_amount DECIMAL(10,2)," // Final amount including fees
-                    + "payment_status VARCHAR(20) DEFAULT 'pending'," // 'paid', 'failed', 'pending', 'refunded'
+                    + "processing_fee DECIMAL(10,2) DEFAULT 0.00,"
+                    + "total_amount DECIMAL(10,2),"
+                    + "payment_status VARCHAR(20) DEFAULT 'pending',"
                     + "payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,"
-                    + "gateway_transaction_id VARCHAR(100)," // For tracking with payment gateways
-                    + "gateway_response_code VARCHAR(20)," // Response codes from payment providers
+                    + "gateway_transaction_id VARCHAR(100),"
+                    + "gateway_response_code VARCHAR(20),"
                     + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
                     + "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
                     + "FOREIGN KEY (booking_id) REFERENCES bookings(id)"
@@ -172,31 +172,57 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
     }
+    
 
     
     private static void createSeatsTable() {
         try {
             Statement stmt = connection.createStatement();
-            
+
             // Create seats table to track available seats per flight
             String createSeatsTable = "CREATE TABLE IF NOT EXISTS seats ("
-                + "id INT PRIMARY KEY AUTO_INCREMENT,"
-                + "flight_id INT NOT NULL,"
-                + "seat_number VARCHAR(5) NOT NULL,"
-                + "seat_class VARCHAR(20) DEFAULT 'economy'," // economy, business, first
-                + "is_available BOOLEAN DEFAULT TRUE,"
-                + "is_window BOOLEAN DEFAULT FALSE,"
-                + "is_aisle BOOLEAN DEFAULT FALSE,"
-                + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
-                + "UNIQUE KEY unique_flight_seat (flight_id, seat_number),"
-                + "FOREIGN KEY (flight_id) REFERENCES flights(id)"
-                + ")";
-            
+                    + "id INT PRIMARY KEY AUTO_INCREMENT,"
+                    + "flight_id INT NOT NULL,"
+                    + "seat_number VARCHAR(5) NOT NULL,"
+                    + "seat_class VARCHAR(20) DEFAULT 'economy'," // economy, business, first
+                    + "is_available BOOLEAN DEFAULT TRUE,"
+                    + "is_window BOOLEAN DEFAULT FALSE,"
+                    + "is_aisle BOOLEAN DEFAULT FALSE,"
+                    + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
+                    + "UNIQUE KEY unique_flight_seat (flight_id, seat_number),"
+                    + "FOREIGN KEY (flight_id) REFERENCES flights(id)"
+                    + ")";
+
             stmt.execute(createSeatsTable);
             System.out.println("Seats table initialized successfully!");
-            
+
         } catch (SQLException e) {
             System.err.println("Error initializing seats table: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private static void createMessagesTable() {
+        try {
+            Statement stmt = connection.createStatement();
+            
+            String createMessagesTable = "CREATE TABLE IF NOT EXISTS messages ("
+                + "id INT PRIMARY KEY AUTO_INCREMENT,"
+                + "user_id INT NULL,"
+                + "message_text TEXT NOT NULL,"
+                + "sender_type ENUM('user', 'bot', 'admin') NOT NULL,"
+                + "is_read BOOLEAN DEFAULT FALSE,"
+                + "reply_to INT NULL,"
+                + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
+                + "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,"
+                + "FOREIGN KEY (reply_to) REFERENCES messages(id)"
+                + ")";
+            
+            stmt.execute(createMessagesTable);
+            System.out.println("Messages table initialized successfully!");
+            
+        } catch (SQLException e) {
+            System.err.println("Error initializing messages table: " + e.getMessage());
             e.printStackTrace();
         }
     }
