@@ -905,11 +905,14 @@ public class HomeController {
         Label titleLabel = new Label("Booking Summary");
         titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
 
-        VBox detailsBox = new VBox(10);
+        VBox detailsBox = new VBox(15);
         detailsBox.getChildren().addAll(
                 createDetailRow("Flight", currentFlight.getFlightNo()),
                 createDetailRow("Route", currentFlight.getOrigin() + " → " + currentFlight.getDestination()),
-                createDetailRow("Passenger", firstNameField.getText() + " " + lastNameField.getText()));
+                createDetailRow("Passenger", firstNameField.getText() + " " + lastNameField.getText()),
+                createDetailRow("Date",
+                        currentFlight.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
+                createDetailRow("Duration", currentFlight.getDuration()));
 
         VBox totalBox = new VBox(5);
         totalBox.setStyle("-fx-background-color: #FFF3E0; -fx-padding: 12; -fx-background-radius: 10;");
@@ -926,6 +929,7 @@ public class HomeController {
         return card;
     }
 
+    
     private HBox createDetailRow(String label, String value) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
