@@ -629,11 +629,27 @@ public class HomeController {
         container.setMaxWidth(Double.MAX_VALUE);
 
         // Back button
-        Button backButton = new Button("← Back to Flights");
-        backButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #2196F3; " +
-                "-fx-font-size: 14px; -fx-padding: 8 12; -fx-cursor: hand;");
-        backButton.setOnAction(e -> switchToTab("home"));
-
+        Button backButton = new Button("Back to Flights");
+        backButton.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #333; " +
+                           "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 8; " +
+                           "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1; " +
+                           "-fx-cursor: hand; -fx-font-weight: 500;");
+        
+        // Add hover effect (optional)
+        backButton.setOnMouseEntered(e -> {
+            backButton.setStyle("-fx-background-color: #e8e8e8; -fx-text-fill: #333; " +
+                               "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 8; " +
+                               "-fx-border-color: #ccc; -fx-border-radius: 8; -fx-border-width: 1; " +
+                               "-fx-cursor: hand; -fx-font-weight: 500;");
+        });
+        
+        backButton.setOnMouseExited(e -> {
+            backButton.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #333; " +
+                               "-fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 8; " +
+                               "-fx-border-color: #ddd; -fx-border-radius: 8; -fx-border-width: 1; " +
+                               "-fx-cursor: hand; -fx-font-weight: 500;");
+        });
+        
         // Main flight card
         VBox card = new VBox(20);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
