@@ -3,7 +3,7 @@ package application.service;
 import application.database.DatabaseConnection;
 import application.model.User;
 import application.model.Flight;
-import application.model.UserSession;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Random;

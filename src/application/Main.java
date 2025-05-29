@@ -1,13 +1,12 @@
 // filepath: d:\work\jetsetgo\src\application\Main.java
 package application;
 
+import application.service.UserSession;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
-import application.model.UserSession;
 
 public class Main extends Application {
     @Override

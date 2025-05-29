@@ -36,6 +36,11 @@ public class Flight {
         this.price = price;
     }
     
+    public Flight(int int1, String string, String string2, String string3, String string4, LocalDateTime localDateTime,
+            LocalDateTime localDateTime2, double double1, int int2, int int3) {
+        //TODO Auto-generated constructor stub
+    }
+
     // Getters
     public int getId() {
         return id;

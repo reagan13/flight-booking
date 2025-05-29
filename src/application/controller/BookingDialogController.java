@@ -2,8 +2,8 @@ package application.controller;
 
 import application.model.Flight;
 import application.model.User;
-import application.model.UserSession;
 import application.service.FlightService;
+import application.service.UserSession;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;

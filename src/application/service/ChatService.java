@@ -1,7 +1,7 @@
 package application.service;
 
 import application.database.DatabaseConnection;
-import application.model.UserSession;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

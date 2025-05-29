@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.AdminController">
+   <left>
+      <!-- Admin Sidebar -->
+      <VBox prefWidth="250.0" style="-fx-background-color: #2c3e50;">
+         <VBox style="-fx-padding: 20; -fx-spacing: 10;">
+            <!-- Admin Header -->
+            <VBox style="-fx-alignment: center; -fx-spacing: 10; -fx-padding: 0 0 20 0;">
+               <Label text="🛡️" style="-fx-font-size: 36px;" />
+               <Label text="Admin Panel" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;" />
+               <Label fx:id="adminNameLabel" text="Administrator" style="-fx-font-size: 14px; -fx-text-fill: #bdc3c7;" />
+            </VBox>
+            
+            <!-- Navigation Menu -->
+            <VBox fx:id="navigationMenu" style="-fx-spacing: 5;">
+               <Button fx:id="dashboardBtn" text="📊 Dashboard" onAction="#showDashboard" 
+                       style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+               
+               <Button fx:id="flightsBtn" text="✈️ Manage Flights" onAction="#showFlights" 
+                       style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+               
+               <Button fx:id="bookingsBtn" text="📋 Manage Bookings" onAction="#showBookings" 
+                       style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+               
+               <Button fx:id="usersBtn" text="👥 Manage Users" onAction="#showUsers" 
+                       style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+               
+               <Button fx:id="messagesBtn" text="💬 Messages & Support" onAction="#showMessages" 
+                       style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+               
+               <Button fx:id="reportsBtn" text="📈 Reports" onAction="#showReports" 
+                       style="-fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                       maxWidth="Infinity" />
+            </VBox>
+         </VBox>
+         
+         <!-- Logout Button at Bottom -->
+         <VBox style="-fx-padding: 20;" VBox.vgrow="ALWAYS">
+            <Region VBox.vgrow="ALWAYS" />
+            <Button fx:id="logoutBtn" text="🚪 Logout" onAction="#handleLogout" 
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: 500;" 
+                    maxWidth="Infinity" />
+         </VBox>
+      </VBox>
+   </left>
+   
+   <center>
+      <!-- Main Content Area -->
+      <StackPane fx:id="contentArea" style="-fx-background-color: #ecf0f1;">
+         <!-- Dashboard Content -->
+         <VBox fx:id="dashboardContent" visible="true" style="-fx-padding: 30; -fx-spacing: 20;">
+            <Label text="Dashboard" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+            
+            <!-- Statistics Cards -->
+            <HBox spacing="20.0">
+               <VBox fx:id="totalUsersCard" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20; -fx-spacing: 10; -fx-min-width: 200;" HBox.hgrow="ALWAYS">
+                  <Label text="👥" style="-fx-font-size: 24px;" />
+                  <Label text="Total Users" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" />
+                  <Label fx:id="totalUsersCount" text="0" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+               </VBox>
+               
+               <VBox fx:id="totalFlightsCard" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20; -fx-spacing: 10; -fx-min-width: 200;" HBox.hgrow="ALWAYS">
+                  <Label text="✈️" style="-fx-font-size: 24px;" />
+                  <Label text="Total Flights" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" />
+                  <Label fx:id="totalFlightsCount" text="0" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+               </VBox>
+               
+               <VBox fx:id="pendingBookingsCard" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20; -fx-spacing: 10; -fx-min-width: 200;" HBox.hgrow="ALWAYS">
+                  <Label text="⏳" style="-fx-font-size: 24px;" />
+                  <Label text="Pending Bookings" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" />
+                  <Label fx:id="pendingBookingsCount" text="0" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #f39c12;" />
+               </VBox>
+               
+               <VBox fx:id="totalRevenueCard" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20; -fx-spacing: 10; -fx-min-width: 200;" HBox.hgrow="ALWAYS">
+                  <Label text="💰" style="-fx-font-size: 24px;" />
+                  <Label text="Total Revenue" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" />
+                  <Label fx:id="totalRevenueAmount" text="₱0" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;" />
+               </VBox>
+            </HBox>
+            
+            <!-- Recent Activity -->
+            <VBox style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 20; -fx-spacing: 15;">
+               <Label text="Recent Activity" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+               <ScrollPane fx:id="recentActivityScroll" fitToWidth="true" prefHeight="300">
+                  <VBox fx:id="recentActivityList" spacing="10" />
+               </ScrollPane>
+            </VBox>
+         </VBox>
+         
+         <!-- Other content areas will be added here -->
+         <VBox fx:id="flightsContent" visible="false" style="-fx-padding: 30;">
+            <Label text="Flight Management" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+         </VBox>
+         
+         <VBox fx:id="bookingsContent" visible="false" style="-fx-padding: 30;">
+            <Label text="Booking Management" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+         </VBox>
+         
+         <VBox fx:id="usersContent" visible="false" style="-fx-padding: 30;">
+            <Label text="User Management" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+         </VBox>
+         
+         <VBox fx:id="messagesContent" visible="false" style="-fx-padding: 30;">
+            <Label text="Messages & Support" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+         </VBox>
+         
+         <VBox fx:id="reportsContent" visible="false" style="-fx-padding: 30;">
+            <Label text="Reports & Analytics" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+         </VBox>
+      </StackPane>
+   </center>
+</BorderPane>

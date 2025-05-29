@@ -2,12 +2,12 @@ package application;
 
 import application.model.Flight;
 import application.model.User;
-import application.model.UserSession;
 import application.service.BookingHistoryService;
 import application.service.BookingService;
 import application.service.ChatService;
 import application.service.FlightService;
 import application.service.NotificationService;
+import application.service.UserSession;
 import application.util.FlightListCell;
 
 import javafx.fxml.FXML;

@@ -1,14 +1,10 @@
 package application.controller;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
-import application.database.DatabaseConnection;
 import application.model.User;
-import application.model.UserSession;
+import application.service.UserSession;
+import application.service.AuthService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -43,58 +39,86 @@ public class LoginController {
     private Label errorLabel;
     
     @FXML
-    public void handleLogin(ActionEvent event) {
+    private void handleLogin(ActionEvent event) {
+        // Clear any previous error
+        clearError();
+        
         String email = emailPhoneField.getText().trim();
         String password = passwordField.getText().trim();
-        
-        // Simple validation
+
         if (email.isEmpty() || password.isEmpty()) {
             showError("Please fill in all fields");
             return;
         }
-        
+
         try {
-            Connection conn = DatabaseConnection.getConnection();
-            
-            // Modified query to only check email since there's no phone column
-            String query = "SELECT * FROM users WHERE email = ? AND password = ?";
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, email);
-            pstmt.setString(2, password); // In a real app, use password hashing
-            
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                // Login successful
-                int userId = rs.getInt("id");
-                String firstName = rs.getString("first_name");
-                String lastName = rs.getString("last_name");
-                String userEmail = rs.getString("email");
-                String userType = rs.getString("user_type");
-                String userAddress = rs.getString("address");
-                int userAge = rs.getInt("age");
+            AuthService.LoginResult result = AuthService.login(email, password);
+
+            if (result.isSuccess()) {
+                User user = result.getUser();
                 
-                // Create User object
-                User currentUser = new User(userId, firstName, lastName, userEmail, userAddress, userAge, userType);
-                
-                // Store user info in session
-                UserSession.getInstance().login(currentUser);
-                
-                // Navigate to appropriate screen based on user type
-                if ("admin".equals(userType)) {
-                    navigateToAdminDashboard(event);
+                // This should now work!
+                UserSession.getInstance().setCurrentUser(user);
+
+                // Check user type and redirect accordingly
+                if ("admin".equals(user.getUserType())) {
+                    System.out.println("Redirecting to admin panel...");
+                    navigateToAdminPanel();
                 } else {
-                    navigateToHome(event);
+                    System.out.println("Redirecting to user home...");
+                    navigateToHome();
                 }
             } else {
-                showError("Invalid email or password");
+                showError(result.getMessage());
             }
-            
-        } catch (SQLException e) {
-            showError("Database error: " + e.getMessage());
-            e.printStackTrace();
+
+        } catch (Exception e) {
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();  // This will help us see the full error
+            showError("An error occurred during login. Please try again.");
         }
     }
-    
+    private void navigateToAdminPanel() {
+        try {
+            Stage stage = (Stage) emailPhoneField.getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/AdminPanel.fxml"));
+            Parent adminRoot = loader.load();
+
+            Scene adminScene = new Scene(adminRoot);
+            stage.setScene(adminScene);
+            stage.setTitle("JetSetGO - Admin Panel");
+            stage.setMaximized(true);
+            stage.centerOnScreen();
+
+            System.out.println("Successfully navigated to admin panel");
+
+        } catch (Exception e) {
+            System.err.println("Error navigating to admin panel: " + e.getMessage());
+            e.printStackTrace();
+            showError("Could not load admin panel");
+        }
+    }
+
+    private void navigateToHome() {
+        try {
+            Stage stage = (Stage) emailPhoneField.getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/Home.fxml"));
+            Parent homeRoot = loader.load();
+
+            Scene homeScene = new Scene(homeRoot);
+            stage.setScene(homeScene);
+            stage.setTitle("JetSetGO - Book Your Flight");
+            stage.centerOnScreen();
+
+            System.out.println("Successfully navigated to home");
+
+        } catch (Exception e) {
+            System.err.println("Error navigating to home: " + e.getMessage());
+            e.printStackTrace();
+            showError("Could not load home screen");
+        }
+    }
+
     @FXML
     public void handleForgotPassword(ActionEvent event) {
         try {
@@ -131,38 +155,20 @@ public class LoginController {
         }
     }
     
-    private void navigateToHome(ActionEvent event) {
-        try {
-            Parent homeRoot = FXMLLoader.load(getClass().getResource("/resources/home.fxml"));
-            Scene homeScene = new Scene(homeRoot);
-            
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(homeScene);
-            stage.setTitle("JetSetGO - Home");
-            stage.show();
-        } catch (IOException e) {
-            showError("Could not load home page");
-            e.printStackTrace();
-        }
-    }
-    
-    private void navigateToAdminDashboard(ActionEvent event) {
-        try {
-            Parent adminRoot = FXMLLoader.load(getClass().getResource("/resources/AdminDashboard.fxml"));
-            Scene adminScene = new Scene(adminRoot);
-            
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(adminScene);
-            stage.show();
-        } catch (IOException e) {
-            showError("Could not load admin dashboard");
-            e.printStackTrace();
-        }
-    }
-    
+    // Helper methods for error handling
     private void showError(String message) {
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
-        errorLabel.setManaged(true);
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+            errorLabel.setManaged(true);
+        }
+    }
+    
+    private void clearError() {
+        if (errorLabel != null) {
+            errorLabel.setText("");
+            errorLabel.setVisible(false);
+            errorLabel.setManaged(false);
+        }
     }
 }
