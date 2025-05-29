@@ -211,67 +211,130 @@ public class BookingService {
     /**
      * Complete booking process: update user info, create booking, process payment
      */
-    public static BookingResult completeBooking(Flight flight, String firstName, String lastName, int age, 
-                                              String address, String email, String phone, double amount, 
-                                              String paymentMethod, String paymentProvider) {
+    public static BookingResult completeBooking(Flight flight, String firstName, String lastName, 
+    int age, String address, String email, String phone,
+            double amount, String paymentMethod, String paymentProvider) {
         try {
-            // Start transaction
             Connection conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false);
-            
-            try {
-                // 1. Update user information if logged in
-                if (UserSession.getInstance().isLoggedIn()) {
-                    boolean userUpdated = updateUserInformation(firstName, lastName, age, address, email, phone);
-                    if (!userUpdated) {
-                        conn.rollback();
-                        return new BookingResult(false, "Failed to update user information");
-                    }
-                }
-                
-                // 2. Create booking
-                BookingResult bookingResult = createBooking(flight, firstName, lastName, email, phone);
-                if (!bookingResult.isSuccess()) {
-                    conn.rollback();
-                    return bookingResult;
-                }
-                
-                // 3. Process payment
-                TransactionResult transactionResult = processPayment(bookingResult.getBookingId(), amount, 
-                                                                    paymentMethod, paymentProvider);
-                if (!transactionResult.isSuccess()) {
-                    conn.rollback();
-                    return new BookingResult(false, transactionResult.getMessage());
-                }
-                
-                // Commit transaction
-                conn.commit();
-                conn.setAutoCommit(true);
 
-                if (UserSession.getInstance().isLoggedIn()) {
-                    NotificationService.createBookingNotification(
-                        UserSession.getInstance().getCurrentUser().getId(),
-                        bookingResult.getBookingReference(),
-                        bookingResult.getBookingId()
-                    );
-                }
-                
-                return new BookingResult(true, bookingResult.getBookingReference(), bookingResult.getBookingId(), 
-                                       "Booking completed successfully! Transaction: " + transactionResult.getTransactionReference());
-                
-            } catch (Exception e) {
-                conn.rollback();
-                conn.setAutoCommit(true);
-                throw e;
+            // Generate booking reference
+            String bookingReference = generateBookingReference();
+
+            // Insert booking with "pending" status instead of "confirmed"
+            String bookingSql = "INSERT INTO bookings (user_id, flight_id, booking_reference, seat_number, status) VALUES (?, ?, ?, ?, 'pending')";
+            PreparedStatement bookingStmt = conn.prepareStatement(bookingSql, Statement.RETURN_GENERATED_KEYS);
+
+            if (UserSession.getInstance().isLoggedIn()) {
+                bookingStmt.setInt(1, UserSession.getInstance().getCurrentUser().getId());
+            } else {
+                bookingStmt.setNull(1, Types.INTEGER);
             }
-            
+            bookingStmt.setInt(2, flight.getId());
+            bookingStmt.setString(3, bookingReference);
+            bookingStmt.setString(4, generateSeatNumber()); // You'll need to implement this
+
+            int bookingResult = bookingStmt.executeUpdate();
+
+            if (bookingResult > 0) {
+                // Get booking ID
+                ResultSet rs = bookingStmt.getGeneratedKeys();
+                int bookingId = 0;
+                if (rs.next()) {
+                    bookingId = rs.getInt(1);
+                }
+
+                // Calculate fees
+                double processingFee = calculateProcessingFee(amount, paymentMethod);
+                double totalAmount = amount + processingFee;
+
+                // Insert transaction with "pending" payment status
+                String transactionSql = "INSERT INTO transactions (booking_id, transaction_reference, payment_method, payment_provider, amount, processing_fee, total_amount, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')";
+                PreparedStatement transactionStmt = conn.prepareStatement(transactionSql);
+
+                transactionStmt.setInt(1, bookingId);
+                transactionStmt.setString(2, generateTransactionReference(paymentMethod));
+                transactionStmt.setString(3, paymentMethod);
+                transactionStmt.setString(4, paymentProvider);
+                transactionStmt.setDouble(5, amount);
+                transactionStmt.setDouble(6, processingFee);
+                transactionStmt.setDouble(7, totalAmount);
+
+                int transactionResult = transactionStmt.executeUpdate();
+
+                if (transactionResult > 0) {
+                    // Create notification for pending booking
+                    if (UserSession.getInstance().isLoggedIn()) {
+                        NotificationService.createPendingBookingNotification(
+                                UserSession.getInstance().getCurrentUser().getId(),
+                                bookingReference,
+                                bookingId);
+                    }
+
+                    // Update available seats
+                    updateAvailableSeats(flight.getId(), -1);
+
+                    return new BookingResult(true, bookingReference, bookingId, "Booking submitted successfully! Awaiting admin approval.");
+                }
+            }
+
+            return new BookingResult(false, "Failed to process booking");
+
         } catch (SQLException e) {
             System.err.println("Error completing booking: " + e.getMessage());
             e.printStackTrace();
-            return new BookingResult(false, "Booking failed: " + e.getMessage());
+            return new BookingResult(false, "Database error: " + e.getMessage());
+        }
+    }
+
+    private static double calculateProcessingFee(double amount, String paymentMethod) {
+        switch (paymentMethod) {
+            case "credit_card":
+                return amount * 0.025; // 2.5%
+            case "gcash":
+            case "maya":
+                return amount * 0.01; // 1%
+            case "paypal":
+                return amount * 0.034; // 3.4%
+            case "bank_transfer":
+                return 0.0; // No fee
+            default:
+                return amount * 0.02; // 2%
         }
     }
     
+    private static String generateSeatNumber() {
+        // Simple seat generation - you can make this more sophisticated
+        String[] seatLetters = {"A", "B", "C", "D", "E", "F"};
+        int seatRow = (int) (Math.random() * 30) + 1; // Rows 1-30
+        String seatLetter = seatLetters[(int) (Math.random() * seatLetters.length)];
+        return seatRow + seatLetter;
+    }
+    
+    private static String generateTransactionReference(String paymentMethod) {
+        String prefix;
+        switch (paymentMethod) {
+            case "gcash": prefix = "GC"; break;
+            case "maya": prefix = "MY"; break;
+            case "paypal": prefix = "PP"; break;
+            case "bank_transfer": prefix = "BT"; break;
+            default: prefix = "CC"; break;
+        }
+        return prefix + "-" + System.currentTimeMillis() % 1000000;
+    }
+    
+    private static void updateAvailableSeats(int flightId, int change) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "UPDATE flights SET available_seats = available_seats + ? WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, change);
+            stmt.setInt(2, flightId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating available seats: " + e.getMessage());
+        }
+    }
+
     // Helper methods
     private static String generateBookingReference() {
         return "JG" + System.currentTimeMillis() % 100000000L;
@@ -281,29 +344,10 @@ public class BookingService {
         return "TXN" + System.currentTimeMillis() % 1000000000L;
     }
     
-    private static String generateSeatNumber() {
-        Random random = new Random();
-        char row = (char) ('A' + random.nextInt(26));
-        int number = random.nextInt(30) + 1;
-        return row + String.format("%02d", number);
-    }
+   
     
     private static String generateGatewayTransactionId() {
         return "GTW" + System.currentTimeMillis() + new Random().nextInt(1000);
-    }
-    
-    private static double calculateProcessingFee(double amount, String paymentMethod) {
-        switch (paymentMethod.toLowerCase()) {
-            case "credit_card":
-                return amount * 0.025; // 2.5%
-            case "gcash":
-            case "maya":
-                return amount * 0.01; // 1%
-            case "paypal":
-                return amount * 0.034; // 3.4%
-            default:
-                return amount * 0.02; // 2%
-        }
     }
     
     private static boolean simulatePaymentGateway(String paymentMethod, double amount) {

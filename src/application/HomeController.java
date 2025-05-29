@@ -405,10 +405,6 @@ private VBox createLoggedInProfile(User user) {
     optionsBox.getChildren().addAll(
             createProfileOption("✈️", "My Bookings", "View your flight bookings", () -> switchToTab("bookings")),
             createNotificationOption(), // Special notification option with badge
-            createProfileOption("⚙️", "Settings", "App preferences",
-                    () -> showMobileAlert("Settings", "Settings coming soon!")),
-            createProfileOption("🔒", "Privacy", "Privacy settings",
-                    () -> showMobileAlert("Privacy", "Privacy settings coming soon!")),
             createProfileOption("📞", "Support", "Get help", () -> switchToTab("messages")),
             createProfileOption("🚪", "Logout", "Sign out of your account", this::handleLogout));
 
@@ -432,12 +428,7 @@ private HBox createNotificationOption() {
     
     VBox textBox = new VBox(2);
     Label titleLabel = new Label("Notifications");
-    titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight:private void handleLogout() {\r\n" + //
-                "    UserSession.getInstance().logout();\r\n" + //
-                "    setupProfileScreen(); // Refresh to show guest profile\r\n" + //
-                "    showMobileAlert(\"Logged Out\", \"You have been successfully logged out.\");\r\n" + //
-                "}\r\n" + //
-                " bold; -fx-text-fill: #333;");
+    titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
     Label subtitleLabel = new Label("View your notifications");
     subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
     textBox.getChildren().addAll(titleLabel, subtitleLabel);
@@ -465,7 +456,6 @@ private HBox createNotificationOption() {
     
     return option;
 }
-
 // Update createProfileOption to accept action
 private HBox createProfileOption(String icon, String title, String subtitle, Runnable action) {
     HBox option = new HBox(12);
@@ -494,42 +484,49 @@ private HBox createProfileOption(String icon, String title, String subtitle, Run
 }
 
 // Show notifications screen
+// Show notifications screen
 private void showNotifications() {
     List<NotificationService.Notification> notifications = NotificationService.getUserNotifications();
-    
+
     VBox notificationScreen = new VBox(10);
     notificationScreen.setStyle("-fx-padding: 15;");
-    
-    // Header
-    HBox header = new HBox();
-    header.setAlignment(Pos.CENTER_LEFT);
-    header.setSpacing(10);
-    
-    Button backButton = new Button("← Back");
-    backButton.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #333; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8;");
+
+    // Back button - standalone at the top
+    Button backButton = new Button("Back");
+    backButton.setStyle(
+            "-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8;");
     backButton.setOnAction(e -> setupProfileScreen());
-    
+
+    // Header with Notifications title and Mark All Read button
+    HBox titleHeader = new HBox();
+    titleHeader.setAlignment(Pos.CENTER_LEFT);
+    titleHeader.setSpacing(15);
+
+    // Notifications title
     Label title = new Label("Notifications");
     title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-    
+
+    // Spacer to push Mark All Read to the right
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);
-    
+
+    // Mark All Read button
     Button markAllButton = new Button("Mark All Read");
-    markAllButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 8;");
+    markAllButton.setStyle(
+            "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 8;");
     markAllButton.setOnAction(e -> {
         NotificationService.markAllAsRead();
         showNotifications(); // Refresh
     });
-    
-    header.getChildren().addAll(backButton, title, spacer, markAllButton);
-    
+
+    titleHeader.getChildren().addAll(title, spacer, markAllButton);
+
     // Notifications list
     ScrollPane scrollPane = new ScrollPane();
     scrollPane.setFitToWidth(true);
-    
+
     VBox notificationsList = new VBox(10);
-    
+
     if (notifications.isEmpty()) {
         Label emptyLabel = new Label("No notifications yet");
         emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-padding: 20;");
@@ -540,18 +537,19 @@ private void showNotifications() {
             notificationsList.getChildren().add(notificationCard);
         }
     }
-    
+
     scrollPane.setContent(notificationsList);
     VBox.setVgrow(scrollPane, Priority.ALWAYS);
-    
-    notificationScreen.getChildren().addAll(header, scrollPane);
-    
+
+    notificationScreen.getChildren().addAll(backButton, titleHeader, scrollPane);
+
     // Replace profile content
     profileContent.getChildren().clear();
     profileContent.getChildren().add(notificationScreen);
 }
 
 // Create notification card
+
 private VBox createNotificationCard(NotificationService.Notification notification) {
     VBox card = new VBox(10);
     String backgroundColor = notification.isRead() ? "white" : "#F0F8FF";
@@ -588,17 +586,153 @@ private VBox createNotificationCard(NotificationService.Notification notificatio
 
     card.getChildren().addAll(header, message);
 
-    // Mark as read when clicked
+    // Mark as read and show details when clicked
     card.setOnMouseClicked(e -> {
         if (!notification.isRead()) {
             NotificationService.markAsRead(notification.getId());
-            showNotifications(); // Refresh
         }
+        showNotificationDetails(notification); // Show detailed dialog
     });
 
     return card;
-}
 
+}
+private void showNotificationDetails(NotificationService.Notification notification) {
+    // Create custom dialog
+    Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+    dialog.setTitle("Notification Details");
+    dialog.setHeaderText(null);
+    
+    // Create custom content
+    VBox content = new VBox(15);
+    content.setStyle("-fx-padding: 10;");
+    content.setPrefWidth(350);
+    
+    // Message content (no header, just the message details)
+    VBox messageBox = new VBox(8);
+    messageBox.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-border-width: 1;");
+    
+    Label messageTitle = new Label("Message:");
+    messageTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #666;");
+    
+    Label messageText = new Label(notification.getMessage());
+    messageText.setStyle("-fx-font-size: 14px; -fx-text-fill: #333; -fx-wrap-text: true;");
+    messageText.setMaxWidth(320);
+    
+    messageBox.getChildren().addAll(messageTitle, messageText);
+    
+    // Details section
+    VBox detailsBox = new VBox(8);
+    detailsBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 8;");
+    
+    Label detailsTitle = new Label("Details:");
+    detailsTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #666;");
+    
+    VBox detailsList = new VBox(5);
+    
+    // Time details
+    Label timeDetail = new Label("📅 Received: " + 
+        notification.getCreatedAt().format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy 'at' HH:mm")));
+    timeDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    
+    // Status
+    String statusText = notification.isRead() ? "✅ Read" : "📬 Unread";
+    Label statusDetail = new Label("🔔 Status: " + statusText);
+    statusDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+    
+    // Type-specific details
+    Label typeDetail = new Label();
+    if ("booking".equals(notification.getType())) {
+        typeDetail.setText("✈️ Type: Flight Booking Confirmation");
+        typeDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        
+        // Add related booking info if available
+        if (notification.getRelatedId() > 0) {
+            Label relatedDetail = new Label("📋 Booking ID: #" + notification.getRelatedId());
+            relatedDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+            detailsList.getChildren().add(relatedDetail);
+        }
+    } else if ("message".equals(notification.getType())) {
+        typeDetail.setText("💬 Type: Support Message");
+        typeDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        
+        // Add related message info if available
+        if (notification.getRelatedId() > 0) {
+            Label relatedDetail = new Label("💬 Message ID: #" + notification.getRelatedId());
+            relatedDetail.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+            detailsList.getChildren().add(relatedDetail);
+        }
+    }
+    
+    detailsList.getChildren().addAll(timeDetail, statusDetail, typeDetail);
+    detailsBox.getChildren().addAll(detailsTitle, detailsList);
+    
+    // Action buttons section (if applicable)
+    VBox actionsBox = new VBox(8);
+    HBox actionButtons = new HBox(10);
+    actionButtons.setAlignment(Pos.CENTER);
+    
+    if ("booking".equals(notification.getType())) {
+        Button viewBookingBtn = new Button("View Booking");
+        viewBookingBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
+        viewBookingBtn.setOnAction(e -> {
+            dialog.close();
+            switchToTab("bookings");
+        });
+        actionButtons.getChildren().add(viewBookingBtn);
+    } else if ("message".equals(notification.getType())) {
+        Button viewMessagesBtn = new Button("View Messages");
+        viewMessagesBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
+        viewMessagesBtn.setOnAction(e -> {
+            dialog.close();
+            switchToTab("messages");
+        });
+        actionButtons.getChildren().add(viewMessagesBtn);
+    }
+    
+    if (!actionButtons.getChildren().isEmpty()) {
+        Label actionsTitle = new Label("Quick Actions:");
+        actionsTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #666;");
+        actionsBox.getChildren().addAll(actionsTitle, actionButtons);
+    }
+    
+    // Add sections to content (removed headerBox)
+    content.getChildren().addAll(messageBox, detailsBox);
+    if (!actionsBox.getChildren().isEmpty()) {
+        content.getChildren().add(actionsBox);
+    }
+    
+    // Set custom content in dialog
+    dialog.getDialogPane().setContent(content);
+    
+    // Style the dialog
+    DialogPane dialogPane = dialog.getDialogPane();
+    dialogPane.setPrefSize(380, 350); // Reduced height since we removed header
+    dialogPane.setStyle("-fx-background-radius: 15;");
+    
+    // Custom buttons
+    dialog.getButtonTypes().clear();
+    ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.OK_DONE);
+    
+    if (!notification.isRead()) {
+        ButtonType markReadButton = new ButtonType("Mark as Read", ButtonBar.ButtonData.OTHER);
+        dialog.getButtonTypes().addAll(markReadButton, closeButton);
+        
+        // Handle mark as read
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == markReadButton) {
+                NotificationService.markAsRead(notification.getId());
+                showNotifications(); // Refresh notifications list
+            }
+            return null;
+        });
+    } else {
+        dialog.getButtonTypes().add(closeButton);
+    }
+    
+    // Show dialog
+    dialog.showAndWait();
+}
 
     private VBox createGuestProfile() {
         VBox guestCard = new VBox(20);

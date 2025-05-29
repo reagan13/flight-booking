@@ -159,16 +159,71 @@ public class NotificationService {
         if (!UserSession.getInstance().isLoggedIn()) {
             return;
         }
-        
+
         try {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "UPDATE notifications SET is_read = TRUE WHERE user_id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, UserSession.getInstance().getCurrentUser().getId());
             stmt.executeUpdate();
-            
+
         } catch (SQLException e) {
             System.err.println("Error marking all notifications as read: " + e.getMessage());
+        }
+    }
+
+    public static void createPendingBookingNotification(int userId, String bookingReference, int bookingId) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO notifications (user_id, type, title, message, related_id) VALUES (?, 'booking', ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+
+            stmt.setInt(1, userId);
+            stmt.setString(2, "Booking Submitted ⏳");
+            stmt.setString(3, "Your booking " + bookingReference
+                    + " has been submitted and is pending admin approval. You'll be notified once it's confirmed.");
+            stmt.setInt(4, bookingId);
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Error creating pending booking notification: " + e.getMessage());
+        }
+    }
+
+    public static void createBookingApprovedNotification(int userId, String bookingReference, int bookingId) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO notifications (user_id, type, title, message, related_id) VALUES (?, 'booking', ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+
+            stmt.setInt(1, userId);
+            stmt.setString(2, "Booking Confirmed ✅");
+            stmt.setString(3, "Great news! Your booking " + bookingReference
+                    + " has been approved and confirmed. Have a great trip!");
+            stmt.setInt(4, bookingId);
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Error creating booking approved notification: " + e.getMessage());
+        }
+    }
+    public static void createBookingRejectedNotification(int userId, String bookingReference, int bookingId, String reason) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO notifications (user_id, type, title, message, related_id) VALUES (?, 'booking', ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            
+            stmt.setInt(1, userId);
+            stmt.setString(2, "Booking Rejected ❌");
+            stmt.setString(3, "Unfortunately, your booking " + bookingReference + " has been rejected. Reason: " + reason + ". Please contact support for assistance.");
+            stmt.setInt(4, bookingId);
+            
+            stmt.executeUpdate();
+            
+        } catch (SQLException e) {
+            System.err.println("Error creating booking rejected notification: " + e.getMessage());
         }
     }
 }
