@@ -44,9 +44,7 @@
          
          <PasswordField fx:id="passwordField" promptText="Password" styleClass="auth-field"/>
          
-         <HBox alignment="CENTER_RIGHT">
-            <Hyperlink fx:id="forgotPasswordLink" text="Forgot Password?" onAction="#handleForgotPassword" styleClass="auth-hyperlink-small"/>
-         </HBox>
+       
          
          <Label fx:id="errorLabel" styleClass="auth-error" visible="false" managed="false" />
          
