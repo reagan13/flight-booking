@@ -4,6 +4,10 @@ import application.model.Flight;
 import application.model.User;
 import application.service.BookingHistoryService;
 import application.service.BookingService;
+import application.ui.ProfileScreenBuilder;
+import application.ui.ProfileScreenBuilder.ProfileEventHandler;
+import application.ui.NotificationScreenBuilder;
+
 import application.service.ChatService;
 import application.service.FlightService;
 import application.service.NotificationService;
@@ -37,6 +41,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class HomeController {
+    private ProfileScreenBuilder profileScreenBuilder;
+    private NotificationScreenBuilder notificationScreenBuilder;
+
+
 
     @FXML private VBox timeScreen;
     @FXML private VBox timeTab;
@@ -287,21 +295,44 @@ public class HomeController {
             System.err.println("profileContent is null, skipping profile setup");
             return;
         }
-        
-        profileContent.getChildren().clear();
-        
-        try {
-            if (UserSession.getInstance().isLoggedIn()) {
-                User user = UserSession.getInstance().getCurrentUser();
-                profileContent.getChildren().add(createLoggedInProfile(user));
-            } else {
-                profileContent.getChildren().add(createGuestProfile());
-            }
-        } catch (Exception e) {
-            System.err.println("Error setting up profile screen: " + e.getMessage());
-            profileContent.getChildren().add(createGuestProfile());
+
+        // Initialize builders if not already done
+        if (profileScreenBuilder == null) {
+            profileScreenBuilder = new ProfileScreenBuilder(new ProfileEventHandler() {
+                @Override
+                public void onSwitchToTab(String tabName) {
+                    switchToTab(tabName);
+                }
+
+                @Override
+                public void onLogout() {
+                    handleLogout();
+                }
+
+                @Override
+                public void onShowNotifications() {
+                    showNotifications();
+                }
+
+                @Override
+                public void onNavigateToLogin() {
+                    navigateToLogin();
+                }
+
+                @Override
+                public void onNavigateToSignup() {
+                    // Implement signup navigation if needed
+                    System.out.println("Navigate to signup - implement as needed");
+                }
+            });
         }
+
+        profileContent.getChildren().clear();
+        VBox profileScreen = profileScreenBuilder.createProfileContent();
+        profileContent.getChildren().add(profileScreen);
     }
+
+    
     
 
     private void setupBookingsScreen() {
@@ -443,38 +474,6 @@ private VBox createMessageBubble(String text, String senderType) {
 
 
 
-private VBox createLoggedInProfile(User user) {
-    VBox profileCard = new VBox(15);
-    profileCard.setStyle(
-            "-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-
-    // User avatar and name
-    VBox headerBox = new VBox(8);
-    headerBox.setStyle("-fx-alignment: center;");
-
-    Label avatarLabel = new Label("👤");
-    avatarLabel.setStyle("-fx-font-size: 48px;");
-
-    Label nameLabel = new Label(user.getFirstName() + " " + user.getLastName());
-    nameLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-    Label emailLabel = new Label(user.getEmail());
-    emailLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-
-    headerBox.getChildren().addAll(avatarLabel, nameLabel, emailLabel);
-
-    // Profile options
-    VBox optionsBox = new VBox(10);
-    optionsBox.getChildren().addAll(
-            createProfileOption("✈️", "My Bookings", "View your flight bookings", () -> switchToTab("bookings")),
-            createNotificationOption(), // Special notification option with badge
-            createProfileOption("📞", "Support", "Get help", () -> switchToTab("messages")),
-            createProfileOption("🚪", "Logout", "Sign out of your account", this::handleLogout));
-
-    profileCard.getChildren().addAll(headerBox, new Separator(), optionsBox);
-    return profileCard;
-}
-
 private void handleLogout() {
     UserSession.getInstance().logout();
 
@@ -484,399 +483,56 @@ private void handleLogout() {
     // Navigate to login screen
     navigateToLogin();
 }
+    
 private void navigateToLogin() {
     try {
-        // Get the current stage
         Stage currentStage = (Stage) profileContent.getScene().getWindow();
-        
-        // Load the login FXML
         javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/Login.fxml"));
         javafx.scene.Parent loginRoot = loader.load();
-        
-        // Create new scene and set it to the stage
         javafx.scene.Scene loginScene = new javafx.scene.Scene(loginRoot);
         currentStage.setScene(loginScene);
         currentStage.setTitle("JetSetGO - Login");
-        
-        // Center the window
         currentStage.centerOnScreen();
-        
         System.out.println("Successfully navigated to login screen");
-        
     } catch (Exception e) {
         System.err.println("Error navigating to login: " + e.getMessage());
         e.printStackTrace();
-        
-        // Fallback: refresh profile to show guest profile
         setupProfileScreen();
     }
 }
 
-// Create special notification option with badge
-private HBox createNotificationOption() {
-    HBox option = new HBox(12);
-    option.setStyle("-fx-alignment: center-left; -fx-padding: 12; -fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-cursor: hand;");
-    
-    Label iconLabel = new Label("🔔");
-    iconLabel.setStyle("-fx-font-size: 20px;");
-    
-    VBox textBox = new VBox(2);
-    Label titleLabel = new Label("Notifications");
-    titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
-    Label subtitleLabel = new Label("View your notifications");
-    subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-    textBox.getChildren().addAll(titleLabel, subtitleLabel);
-    
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-    
-    // Notification badge
-    int unreadCount = NotificationService.getUnreadCount();
-    VBox badgeContainer = new VBox();
-    badgeContainer.setAlignment(Pos.CENTER_RIGHT);
-    
-    if (unreadCount > 0) {
-        Label badge = new Label(String.valueOf(unreadCount));
-        badge.setStyle("-fx-background-color: #FF4444; -fx-text-fill: white; -fx-font-size: 11px; " +
-                     "-fx-font-weight: bold; -fx-padding: 2 6; -fx-background-radius: 10; -fx-min-width: 20;");
-        badgeContainer.getChildren().add(badge);
-    }
-    
-    Label arrowLabel = new Label("›");
-    arrowLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
-    
-    option.getChildren().addAll(iconLabel, textBox, spacer, badgeContainer, arrowLabel);
-    option.setOnMouseClicked(e -> showNotifications());
-    
-    return option;
-}
-// Update createProfileOption to accept action
-private HBox createProfileOption(String icon, String title, String subtitle, Runnable action) {
-    HBox option = new HBox(12);
-    option.setStyle("-fx-alignment: center-left; -fx-padding: 12; -fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-cursor: hand;");
-    
-    Label iconLabel = new Label(icon);
-    iconLabel.setStyle("-fx-font-size: 20px;");
-    
-    VBox textBox = new VBox(2);
-    Label titleLabel = new Label(title);
-    titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
-    Label subtitleLabel = new Label(subtitle);
-    subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-    textBox.getChildren().addAll(titleLabel, subtitleLabel);
-    
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-    
-    Label arrowLabel = new Label("›");
-    arrowLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
-    
-    option.getChildren().addAll(iconLabel, textBox, spacer, arrowLabel);
-    option.setOnMouseClicked(e -> action.run());
-    
-    return option;
-}
 
-// Show notifications screen
-// Show notifications screen
+
 private void showNotifications() {
-    List<NotificationService.Notification> notifications = NotificationService.getUserNotifications();
+    if (notificationScreenBuilder == null) {
+        notificationScreenBuilder = new NotificationScreenBuilder(
+                new NotificationScreenBuilder.NotificationEventHandler() {
+                    @Override
+                    public void onBackToProfile() {
+                        setupProfileScreen();
+                    }
 
-    VBox notificationScreen = new VBox(10);
-    notificationScreen.setStyle("-fx-padding: 15;");
+                    @Override
+                    public void onRefreshNotifications() {
+                        showNotifications(); // Refresh the notifications screen
+                    }
 
-    // Back button - standalone at the top
-    Button backButton = new Button("Back");
-    backButton.setStyle(
-            "-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8;");
-    backButton.setOnAction(e -> setupProfileScreen());
-
-    // Header with Notifications title and Mark All Read button
-    HBox titleHeader = new HBox();
-    titleHeader.setAlignment(Pos.CENTER_LEFT);
-    titleHeader.setSpacing(15);
-
-    // Notifications title
-    Label title = new Label("Notifications");
-    title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-    // Spacer to push Mark All Read to the right
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-
-    // Mark All Read button
-    Button markAllButton = new Button("Mark All Read");
-    markAllButton.setStyle(
-            "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 8;");
-    markAllButton.setOnAction(e -> {
-        NotificationService.markAllAsRead();
-        showNotifications(); // Refresh
-    });
-
-    titleHeader.getChildren().addAll(title, spacer, markAllButton);
-
-    // Notifications list
-    ScrollPane scrollPane = new ScrollPane();
-    scrollPane.setFitToWidth(true);
-
-    VBox notificationsList = new VBox(10);
-
-    if (notifications.isEmpty()) {
-        Label emptyLabel = new Label("No notifications yet");
-        emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-padding: 20;");
-        notificationsList.getChildren().add(emptyLabel);
-    } else {
-        for (NotificationService.Notification notification : notifications) {
-            VBox notificationCard = createNotificationCard(notification);
-            notificationsList.getChildren().add(notificationCard);
-        }
+                    @Override
+                    public void onShowNotificationDetails(NotificationService.Notification notification) {
+                        notificationScreenBuilder.showNotificationDetails(notification);
+                    }
+                });
     }
 
-    scrollPane.setContent(notificationsList);
-    VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-    notificationScreen.getChildren().addAll(backButton, titleHeader, scrollPane);
+    VBox notificationScreen = notificationScreenBuilder.createNotificationsScreen();
 
     // Replace profile content
     profileContent.getChildren().clear();
     profileContent.getChildren().add(notificationScreen);
 }
 
-// Create notification card
 
-private VBox createNotificationCard(NotificationService.Notification notification) {
-    VBox card = new VBox(10);
-    String backgroundColor = notification.isRead() ? "white" : "#F0F8FF";
-    card.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 10; -fx-padding: 15; " +
-            "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1; -fx-cursor: hand;");
 
-    HBox header = new HBox();
-    header.setAlignment(Pos.CENTER_LEFT);
-    header.setSpacing(10);
-
-    String typeIcon = "booking".equals(notification.getType()) ? "✈️" : "💬";
-    Label icon = new Label(typeIcon);
-    icon.setStyle("-fx-font-size: 16px;");
-
-    Label title = new Label(notification.getTitle());
-    title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-
-    Label time = new Label(notification.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, HH:mm")));
-    time.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-
-    if (!notification.isRead()) {
-        Label unreadBadge = new Label("●");
-        unreadBadge.setStyle("-fx-text-fill: #2196F3; -fx-font-size: 12px;");
-        header.getChildren().addAll(icon, title, spacer, unreadBadge, time);
-    } else {
-        header.getChildren().addAll(icon, title, spacer, time);
-    }
-
-    Label message = new Label(notification.getMessage());
-    message.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
-
-    card.getChildren().addAll(header, message);
-
-    // Mark as read and show details when clicked
-    card.setOnMouseClicked(e -> {
-        if (!notification.isRead()) {
-            NotificationService.markAsRead(notification.getId());
-        }
-        showNotificationDetails(notification); // Show detailed dialog
-    });
-
-    return card;
-
-}
-
-private void showNotificationDetails(NotificationService.Notification notification) {
-    // Create custom dialog
-    Alert dialog = new Alert(Alert.AlertType.NONE);
-    dialog.setTitle("Notification Details");
-    dialog.setHeaderText(null);
-
-    // Create custom content
-    VBox content = new VBox(15);
-    content.setStyle("-fx-padding: 20;");
-    content.setPrefWidth(450);
-    content.setMaxWidth(450);
-
-    // Title section
-    Label titleLabel = new Label(notification.getTitle());
-    titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-    titleLabel.setWrapText(true);
-    titleLabel.setMaxWidth(430);
-
-    // Message section - expanded for full message display
-    VBox messageBox = new VBox(10);
-    messageBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-border-radius: 10;");
-
-    Label messageText = new Label(notification.getMessage());
-    messageText.setStyle("-fx-font-size: 14px; -fx-text-fill: #333; -fx-wrap-text: true; -fx-line-spacing: 5;");
-    messageText.setWrapText(true);
-    messageText.setMaxWidth(410);
-    messageText.setPrefWidth(410);
-    // Ensure the full message is displayed without truncation
-    messageText.autosize();
-
-    messageBox.getChildren().add(messageText);
-
-    // Details section - simplified
-    VBox detailsBox = new VBox(10);
-    detailsBox.setStyle("-fx-background-color: #ffffff; -fx-padding: 15; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-border-width: 1;");
-
-    // Date received
-    Label dateLabel = new Label("Received: " + 
-        notification.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm")));
-    dateLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-
-    // Type
-    String typeText = "booking".equals(notification.getType()) ? "Booking Notification" : "Support Message";
-    Label typeLabel = new Label("Type: " + typeText);
-    typeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-
-    // Status
-    String statusText = notification.isRead() ? "Read" : "Unread";
-    Label statusLabel = new Label("Status: " + statusText);
-    statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-
-    detailsBox.getChildren().addAll(dateLabel, typeLabel, statusLabel);
-
-    // Add all sections to content
-    content.getChildren().addAll(titleLabel, messageBox, detailsBox);
-
-    // Set custom content in dialog
-    dialog.getDialogPane().setContent(content);
-
-    // Style the dialog - increased size to accommodate full message
-    DialogPane dialogPane = dialog.getDialogPane();
-    dialogPane.setPrefSize(470, 400);
-    dialogPane.setMaxSize(470, 600);
-    dialogPane.setStyle("-fx-background-radius: 15;");
-
-    // Only Close button
-    dialog.getButtonTypes().clear();
-    ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.OK_DONE);
-    dialog.getButtonTypes().add(closeButton);
-
-    // Mark as read when dialog is opened
-    if (!notification.isRead()) {
-        NotificationService.markAsRead(notification.getId());
-        // Refresh notifications list in background
-        Platform.runLater(() -> showNotifications());
-    }
-
-    // Show dialog
-    dialog.showAndWait();
-}
-    private VBox createGuestProfile() {
-        VBox guestCard = new VBox(20);
-        guestCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
-        
-        Label iconLabel = new Label("👋");
-        iconLabel.setStyle("-fx-font-size: 48px;");
-        
-        Label titleLabel = new Label("Welcome to JetSetGO");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        Label subtitleLabel = new Label("Sign in to access your bookings and get personalized recommendations");
-        subtitleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
-        
-        Button loginButton = new Button("Sign In");
-        loginButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 30; -fx-background-radius: 20;");
-        
-        Button signupButton = new Button("Create Account");
-        signupButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #2196F3; -fx-font-size: 14px; -fx-padding: 12 30; -fx-border-color: #2196F3; -fx-border-radius: 20; -fx-background-radius: 20;");
-        
-        guestCard.getChildren().addAll(iconLabel, titleLabel, subtitleLabel, loginButton, signupButton);
-        return guestCard;
-    }
-
-    private HBox createProfileOption(String icon, String title, String subtitle) {
-        HBox option = new HBox(12);
-        option.setStyle("-fx-alignment: center-left; -fx-padding: 12; -fx-background-color: #f8f9fa; -fx-background-radius: 10;");
-        
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 20px;");
-        
-        VBox textBox = new VBox(2);
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        Label subtitleLabel = new Label(subtitle);
-        subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-        textBox.getChildren().addAll(titleLabel, subtitleLabel);
-        
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        Label arrowLabel = new Label("›");
-        arrowLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
-        
-        option.getChildren().addAll(iconLabel, textBox, spacer, arrowLabel);
-        return option;
-    }
-
-    private VBox createLoginPrompt() {
-        VBox promptCard = new VBox(15);
-        promptCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
-        
-        Label iconLabel = new Label("📋");
-        iconLabel.setStyle("-fx-font-size: 48px;");
-        
-        Label titleLabel = new Label("Your Bookings");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        Label messageLabel = new Label("Sign in to view your flight bookings and travel history");
-        messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
-        
-        Button loginButton = new Button("Sign In to View Bookings");
-        loginButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 20;");
-        
-        promptCard.getChildren().addAll(iconLabel, titleLabel, messageLabel, loginButton);
-        return promptCard;
-    }
-
-    private VBox createMessagesLoginPrompt() {
-        VBox promptCard = new VBox(15);
-        promptCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
-        
-        Label iconLabel = new Label("💬");
-        iconLabel.setStyle("-fx-font-size: 48px;");
-        
-        Label titleLabel = new Label("Messages");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        Label messageLabel = new Label("Sign in to view your conversations with travel agents and services");
-        messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
-        
-        Button loginButton = new Button("Sign In to View Messages");
-        loginButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 20;");
-        
-        promptCard.getChildren().addAll(iconLabel, titleLabel, messageLabel, loginButton);
-        return promptCard;
-    }
-
-    private VBox createErrorCard(String message) {
-        VBox errorCard = new VBox(15);
-        errorCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; -fx-alignment: center;");
-        
-        Label iconLabel = new Label("⚠️");
-        iconLabel.setStyle("-fx-font-size: 48px;");
-        
-        Label messageLabel = new Label(message);
-        messageLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666; -fx-wrap-text: true; -fx-text-alignment: center;");
-        
-        Button retryButton = new Button("Try Again");
-        retryButton.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 20;");
-        
-        errorCard.getChildren().addAll(iconLabel, messageLabel, retryButton);
-        return errorCard;
-    }
-
-    
     private void loadUserBookings() {
         if (bookingsContent == null) {
             System.err.println("bookingsContent is null");
