@@ -101,15 +101,7 @@
                     </VBox>
                 </HBox>
                 
-                <!-- Quick Actions -->
-                <VBox style="-fx-background-color: white; -fx-padding: 20;" spacing="15">
-                    <Label text="Quick Actions" style="-fx-font-size: 16px;" />
-                    <HBox spacing="15">
-                        <Button text="Add Flight" onAction="#addNewFlight" />
-                        <Button text="View Users" onAction="#viewAllUsers" />
-                        <Button text="Generate Report" onAction="#generateReport" />
-                    </HBox>
-                </VBox>
+             
             </VBox>
             
             <!-- USERS CONTENT -->

@@ -172,7 +172,6 @@ public void initialize(URL location, ResourceBundle resources) {
 
             // Calculate total revenue from bookings
             double totalRevenue = AdminService.calculateTotalRevenue();
-            double weekRevenue = AdminService.calculateWeeklyRevenue();
 
             // Message counts
             int totalMessages = AdminService.getTotalMessagesCount();
@@ -295,25 +294,7 @@ public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Showing transactions");
     }
     
-    // QUICK ACTION METHODSadadtes
-    @FXML
-    private void addNewFlightQuickAction() {
-        System.out.println("Add new flight clicked");
-        showFlights();
-    }
-    
-    @FXML
-    private void viewAllUsers() {
-        System.out.println("View all users clicked");
-        showUsers();
-    }
-    
-    @FXML
-    private void generateReport() {
-        System.out.println("Generate report clicked");
-        showTransactions();
-    }
-    
+  
     // HELPER METHODS
     private void hideAllContent() {
         dashboardContent.setVisible(false);
