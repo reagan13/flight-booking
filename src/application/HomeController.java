@@ -7,6 +7,7 @@ import application.service.BookingService;
 import application.ui.ProfileScreenBuilder;
 import application.ui.ProfileScreenBuilder.ProfileEventHandler;
 import application.ui.NotificationScreenBuilder;
+import application.ui.HomeScreenBuilder;
 
 import application.service.ChatService;
 import application.service.FlightService;
@@ -43,6 +44,7 @@ import java.util.Locale;
 public class HomeController {
     private ProfileScreenBuilder profileScreenBuilder;
     private NotificationScreenBuilder notificationScreenBuilder;
+    private HomeScreenBuilder homeScreenBuilder;
 
 
 
@@ -268,28 +270,62 @@ public class HomeController {
             System.err.println("flightListView is null, skipping home setup");
             return;
         }
-        
-        // Flight list setup
-        flightListView.setPlaceholder(new Label("No flights available"));
-        
-        // Store controller reference in the ListView for FlightListCell access
-        flightListView.getProperties().put("controller", this);
-        
-        // Custom cell factory for card-like display
-        flightListView.setCellFactory(listView -> new FlightListCell());
-        
-        // Configure ListView for vertical scrolling only
-        flightListView.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; " +
-                "-fx-focus-color: transparent; -fx-faint-focus-color: transparent; " +
-                                "-fx-selection-bar: transparent; -fx-selection-bar-non-focused: transparent;" +
-                               "-fx-cell-size: 200; -fx-vertical-cell-spacing: 100;");
-        
-        // Search functionality
-        if (searchField != null) {
-            searchField.setOnAction(this::handleSearch);
-        }
-    }
 
+        // Initialize builder if not already done
+        if (homeScreenBuilder == null) {
+            homeScreenBuilder = new HomeScreenBuilder(new HomeScreenBuilder.HomeEventHandler() {
+                @Override
+                public void onShowFlightDetails(Flight flight) {
+                    showFlightDetails(flight);
+                }
+
+                @Override
+                public void onShowStatus(String message, boolean showProgress) {
+                    showStatus(message, showProgress);
+                }
+
+                @Override
+                public void onHideStatus() {
+                    hideStatus();
+                }
+
+                @Override
+                public void onLoadAvailableFlights() {
+                    loadAvailableFlights();
+                }
+
+                @Override
+                public void onSearchFlights(String query) {
+                    handleSearchFlights(query);
+                }
+
+                @Override
+                public void onExploreDestinations() {
+                    // Implement explore destinations functionality
+                    System.out.println("Explore destinations clicked");
+                }
+
+                @Override
+                public void onViewAllDestinations() {
+                    // Implement view all destinations functionality
+                    System.out.println("View all destinations clicked");
+                }
+
+                @Override
+                public void onSearchDestination(String destination) {
+                    // Implement search by destination
+                    handleSearchFlights(destination);
+                }
+            }, flightService);
+        }
+
+        // Setup flight list view
+        homeScreenBuilder.setupFlightListView(flightListView);
+
+        // Setup search field
+        homeScreenBuilder.setupSearchField(searchField);
+    }
+    
     private void setupProfileScreen() {
         if (profileContent == null) {
             System.err.println("profileContent is null, skipping profile setup");
@@ -1652,96 +1688,6 @@ private boolean isValidPhone(String phone) {
         return radio;
     }
     
-    private HBox createPaymentMethodOption(String icon, String title, String description, ToggleGroup group, String methodId) {
-        HBox option = new HBox(15);
-        option.setAlignment(Pos.CENTER_LEFT);
-        option.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 15; " +
-                       "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1; " +
-                       "-fx-cursor: hand;");
-        
-        RadioButton radioButton = new RadioButton();
-        radioButton.setToggleGroup(group);
-        radioButton.setStyle("-fx-font-size: 14px;");
-        
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 24px;");
-        
-        VBox textBox = new VBox(3);
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
-        
-        Label descLabel = new Label(description);
-        descLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        descLabel.setWrapText(true);
-        
-        textBox.getChildren().addAll(titleLabel, descLabel);
-        
-        // Add processing fee info
-        Label feeLabel = createProcessingFeeLabel(methodId);
-        if (feeLabel != null) {
-            textBox.getChildren().add(feeLabel);
-        }
-        
-        option.getChildren().addAll(radioButton, iconLabel, textBox);
-        
-        // Handle selection - simplified without the problematic updateSelectedPaymentStyle call
-        radioButton.setOnAction(e -> {
-            selectedPaymentMethod = methodId;
-            // Just update the selected method without the visual styling for now
-            System.out.println("Selected payment method: " + methodId);
-        });
-        
-        // Make entire option clickable
-        option.setOnMouseClicked(e -> radioButton.fire());
-        
-        return option;
-    }
-    
-    private Label createProcessingFeeLabel(String methodId) {
-        String feeText = "";
-        String feeColor = "#4CAF50";
-        
-        switch (methodId) {
-            case "credit_card":
-                feeText = "Processing fee: 2.5%";
-                feeColor = "#FF9800";
-                break;
-            case "gcash":
-            case "maya":
-                feeText = "Processing fee: 1.0%";
-                feeColor = "#4CAF50";
-                break;
-            case "paypal":
-                feeText = "Processing fee: 3.4%";
-                feeColor = "#FF5722";
-                break;
-           
-        }
-        
-        if (!feeText.isEmpty()) {
-            Label feeLabel = new Label(feeText);
-            feeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + feeColor + "; -fx-font-weight: bold;");
-            return feeLabel;
-        }
-        
-        return null;
-    }
-    
-    private void updateSelectedPaymentStyle(HBox selectedOption, VBox container) {
-        // Reset all options to default style
-        for (javafx.scene.Node node : container.getChildren()) {
-            if (node instanceof HBox) {
-                node.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 15; " +
-                             "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1; " +
-                             "-fx-cursor: hand;");
-            }
-        }
-        
-        // Highlight selected option
-        selectedOption.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 10; -fx-padding: 15; " +
-                               "-fx-border-color: #2196F3; -fx-border-radius: 10; -fx-border-width: 2; " +
-                               "-fx-cursor: hand;");
-    }
     
     private VBox createPaymentDetailsForm() {
         VBox detailsContainer = new VBox(15);
@@ -1785,27 +1731,7 @@ private boolean isValidPhone(String phone) {
 
         summaryBox.getChildren().addAll(flightPriceRow, processingFeeRow, separator, totalRow);
 
-        // Payment info
-        // VBox infoBox = new VBox(8);
-        // infoBox.setStyle("-fx-background-color: #E3F2FD; -fx-padding: 15; -fx-background-radius: 10;");
-
-        // Label infoTitle = new Label("🔒 Secure Payment");
-        // infoTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
-
-        // Label infoText = new Label(
-        //         "Your payment will be processed securely. You'll be redirected to complete the payment after clicking 'Pay Now'.");
-        // infoText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
-
-        // infoBox.getChildren().addAll(infoTitle, infoText);
-
-        // Pay Now button
-        // Button payButton = new Button("Pay Now - " + currencyFormat.format(totalAmount));
-        // payButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
-        //         "-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 15 30; " +
-        //         "-fx-background-radius: 25; -fx-cursor: hand; " +
-        //         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);");
-        // payButton.setMaxWidth(Double.MAX_VALUE);
-        // payButton.setOnAction(e -> processPayment());
+       
 
         detailsContainer.getChildren().addAll(titleLabel, summaryBox);
         return detailsContainer;
@@ -1954,28 +1880,7 @@ private HBox createDetailRow(String label, String value) {
 
     
 
-    private VBox createMobileSecurityNote() {
-        VBox card = new VBox(10);
-        card.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 15; -fx-padding: 15;");
-
-        HBox headerBox = new HBox(10);
-        headerBox.setStyle("-fx-alignment: center-left;");
-        
-        Label iconLabel = new Label("🔒");
-        iconLabel.setStyle("-fx-font-size: 18px;");
-        
-        Label titleLabel = new Label("Secure Payment");
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
-        
-        headerBox.getChildren().addAll(iconLabel, titleLabel);
-
-        Label securityLabel = new Label("Your payment information is encrypted and secure. We never store your card details.");
-        securityLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-wrap-text: true;");
-
-        card.getChildren().addAll(headerBox, securityLabel);
-        return card;
-    }
-
+   
     private void processPayment() {
         if (!validateBookingForm()) {
             return;
@@ -2176,73 +2081,12 @@ private HBox createDetailRow(String label, String value) {
         alert.showAndWait();
     }
 
-    private void filterFlightsByDate(String period) {
-        showStatus("Filtering flights by " + period + "...", true);
-        
-        // Simulate filtering (replace with actual implementation)
-        Platform.runLater(() -> {
-            hideStatus();
-            System.out.println("Filtered flights by: " + period);
-        });
-    }
+   
 
     private void loadAvailableFlights() {
-        showStatus("Loading flights...", true);
-        
-        if (loadingIndicator != null) {
-            loadingIndicator.setVisible(true);
-        }
-        
-        if (sectionLabel != null) {
-            sectionLabel.setText("Loading...");
-        }
-        
-        flightService.getAvailableFlights()
-            .thenAccept(flights -> {
-                Platform.runLater(() -> {
-                    try {
-                        flightListView.setItems(flights);
-                        
-                        if (loadingIndicator != null) {
-                            loadingIndicator.setVisible(false);
-                        }
-                        
-                        if (sectionLabel != null) {
-                            sectionLabel.setText("Available Flights (" + flights.size() + ")");
-                        }
-                        
-                        hideStatus();
-                    } catch (Exception e) {
-                        System.err.println("Error updating UI with flights: " + e.getMessage());
-                        e.printStackTrace();
-                        hideStatus();
-                    }
-                });
-            })
-            .exceptionally(ex -> {
-                Platform.runLater(() -> {
-                    if (loadingIndicator != null) {
-                        loadingIndicator.setVisible(false);
-                    }
-                    
-                    if (sectionLabel != null) {
-                        sectionLabel.setText("Error loading flights");
-                    }
-                    
-                    hideStatus();
-                });
-                return null;
-            });
+        homeScreenBuilder.loadAvailableFlights(flightListView, sectionLabel, loadingIndicator);
     }
-
-    private void handleSearch(ActionEvent event) {
-        String query = searchField.getText().trim();
-        
-        if (query.isEmpty()) {
-            loadAvailableFlights();
-            return;
-        }
-        
+    private void handleSearchFlights(String query) {
         showStatus("Searching for \"" + query + "\"...", true);
         
         if (loadingIndicator != null) {
@@ -2270,6 +2114,5 @@ private HBox createDetailRow(String label, String value) {
                 });
             });
     }
-
   
 }
