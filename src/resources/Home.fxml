@@ -70,6 +70,12 @@
                     <VBox fx:id="messagesContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
                 </ScrollPane>
             </VBox>
+
+            <VBox fx:id="timeScreen" visible="false" style="-fx-background-color: #f8f9fa;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
+                    <VBox fx:id="timeContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+                </ScrollPane>
+            </VBox>
             
             <!-- PROFILE SCREEN -->
             <VBox fx:id="profileScreen" visible="false" style="-fx-background-color: #f8f9fa;">
@@ -144,24 +150,28 @@
     
     <!-- BOTTOM: Tab Navigation -->
     <bottom>
-        <HBox fx:id="bottomNav" style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0; -fx-padding: 8 0;">
-            <VBox fx:id="homeTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-                <Label text="🏠" style="-fx-font-size: 20px;" />
-                <Label text="Home" style="-fx-font-size: 10px; -fx-text-fill: #2196F3; -fx-font-weight: bold;" />
-            </VBox>
-            <VBox fx:id="bookingsTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-                <Label text="📋" style="-fx-font-size: 20px;" />
-                <Label text="Bookings" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-            </VBox>
-            <VBox fx:id="messagesTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-                <Label text="💬" style="-fx-font-size: 20px;" />
-                <Label text="Messages" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-            </VBox>
-            <VBox fx:id="profileTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-                <Label text="👤" style="-fx-font-size: 20px;" />
-                <Label text="Profile" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-            </VBox>
-        </HBox>
-    </bottom>
+    <HBox fx:id="bottomNav" style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0; -fx-padding: 8 0;">
+        <VBox fx:id="homeTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+            <Label text="🏠" style="-fx-font-size: 20px;" />
+            <Label text="Home" style="-fx-font-size: 10px; -fx-text-fill: #2196F3; -fx-font-weight: bold;" />
+        </VBox>
+        <VBox fx:id="bookingsTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+            <Label text="📋" style="-fx-font-size: 20px;" />
+            <Label text="Bookings" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
+        </VBox>
+        <VBox fx:id="timeTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+            <Label text="🌍" style="-fx-font-size: 20px;" />
+            <Label text="Time" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
+        </VBox>
+        <VBox fx:id="messagesTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+            <Label text="💬" style="-fx-font-size: 20px;" />
+            <Label text="Messages" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
+        </VBox>
+        <VBox fx:id="profileTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
+            <Label text="👤" style="-fx-font-size: 20px;" />
+            <Label text="Profile" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
+        </VBox>
+    </HBox>
+</bottom>
     
 </BorderPane>

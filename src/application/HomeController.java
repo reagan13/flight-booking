@@ -9,6 +9,16 @@ import application.service.FlightService;
 import application.service.NotificationService;
 import application.service.UserSession;
 import application.util.FlightListCell;
+import application.service.TimeAPIService;
+import application.ui.TimeScreenBuilder;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -27,6 +37,12 @@ import java.util.List;
 import java.util.Locale;
 
 public class HomeController {
+
+    @FXML private VBox timeScreen;
+    @FXML private VBox timeTab;
+    @FXML
+    private VBox timeContent;
+
 
     // Header components
     @FXML private Label headerTitle;
@@ -81,6 +97,7 @@ public class HomeController {
     private FlightService flightService;
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
+    private ScheduledExecutorService timeUpdateService;
 
     // Current booking data
     private Flight currentFlight;
@@ -115,36 +132,31 @@ public class HomeController {
     @FXML
     public void initialize() {
         System.out.println("Mobile HomeController initializing...");
-        
+
         try {
             flightService = new FlightService();
-            
+
             // Check if all required FXML elements are injected
             if (!checkFXMLElements()) {
                 System.err.println("Some FXML elements are not properly injected");
                 return;
             }
-            
+
             setupBottomNavigation();
             setupHomeScreen();
             setupProfileScreen();
             setupBookingsScreen();
             setupMessagesScreen();
+            setupTimeScreen(); // Add this line
             loadAvailableFlights();
-         
-            
-            // Setup menu button
-            // if (menuButton != null) {
-            //     menuButton.setOnAction(e -> toggleMenu());
-            // }
-            
+
             System.out.println("Mobile HomeController initialized successfully");
         } catch (Exception e) {
             System.err.println("Error initializing HomeController: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     // Add this method to check FXML element injection
     private boolean checkFXMLElements() {
         boolean allElementsPresent = true;
@@ -161,6 +173,10 @@ public class HomeController {
             System.err.println("messagesContent is null - check FXML fx:id");
             allElementsPresent = false;
         }
+        if (timeContent == null) { // Add this check
+            System.err.println("timeContent is null - check FXML fx:id");
+            allElementsPresent = false;
+        }
         if (flightDetailsContent == null) {
             System.err.println("flightDetailsContent is null - check FXML fx:id");
             allElementsPresent = false;
@@ -172,29 +188,73 @@ public class HomeController {
 
         return allElementsPresent;
     }
-
     
-    // private void toggleMenu() {
-    //     // Implementation for menu button action
-    //     showMobileAlert("Menu", "Menu functionality coming soon!");
-    // }
+
 
     private void setupBottomNavigation() {
         // Set up tab click handlers - add null checks
-        if (homeTab != null) homeTab.setOnMouseClicked(e -> switchToTab("home"));
-        if (bookingsTab != null) bookingsTab.setOnMouseClicked(e -> switchToTab("bookings"));
-        if (messagesTab != null) messagesTab.setOnMouseClicked(e -> switchToTab("messages"));
-        if (profileTab != null) profileTab.setOnMouseClicked(e -> switchToTab("profile"));
-        
-        // Profile button in header
-        if (profileButton != null) profileButton.setOnAction(e -> switchToTab("profile"));
-        
-        // Action buttons - add null checks
-        if (continueToPaymentBtn != null) continueToPaymentBtn.setOnAction(e -> showPaymentForm());
-        if (confirmPaymentBtn != null) confirmPaymentBtn.setOnAction(e -> processPayment());
-        if (newBookingBtn != null) newBookingBtn.setOnAction(e -> switchToTab("home"));
-    }
+        if (homeTab != null)
+            homeTab.setOnMouseClicked(e -> switchToTab("home"));
+        if (bookingsTab != null)
+            bookingsTab.setOnMouseClicked(e -> switchToTab("bookings"));
+        if (timeTab != null)
+            timeTab.setOnMouseClicked(e -> switchToTab("time")); // Add this line
+        if (messagesTab != null)
+            messagesTab.setOnMouseClicked(e -> switchToTab("messages"));
+        if (profileTab != null)
+            profileTab.setOnMouseClicked(e -> switchToTab("profile"));
 
+        // Profile button in header
+        if (profileButton != null)
+            profileButton.setOnAction(e -> switchToTab("profile"));
+
+        // Action buttons - add null checks
+        if (continueToPaymentBtn != null)
+            continueToPaymentBtn.setOnAction(e -> showPaymentForm());
+        if (confirmPaymentBtn != null)
+            confirmPaymentBtn.setOnAction(e -> processPayment());
+        if (newBookingBtn != null)
+            newBookingBtn.setOnAction(e -> switchToTab("home"));
+    }
+    
+    private void setupTimeScreen() {
+        if (timeContent == null) {
+            System.err.println("timeContent is null, skipping time setup");
+            return;
+        }
+        
+        // Initialize time content
+        loadWorldTimes();
+        
+        // Set up auto-refresh every minute
+        timeUpdateService = Executors.newSingleThreadScheduledExecutor();
+        timeUpdateService.scheduleAtFixedRate(() -> {
+            Platform.runLater(this::loadWorldTimes);
+        }, 60, 60, TimeUnit.SECONDS);
+    }
+    
+    // Add this new method
+    private void loadWorldTimes() {
+        if (timeContent == null) return;
+        
+        timeContent.getChildren().clear();
+        
+        // Header
+        VBox headerCard = TimeScreenBuilder.createHeaderCard();
+        timeContent.getChildren().add(headerCard);
+        
+        // Create time cards for each timezone
+        for (String[] timeZone : TimeAPIService.TIME_ZONES) {
+            VBox timeCard = TimeScreenBuilder.createTimeCardWithAPI(
+                timeZone[0], timeZone[1], timeZone[2], timeZone[3]);
+            timeContent.getChildren().add(timeCard);
+        }
+        
+        // Footer info
+        VBox footerInfo = TimeScreenBuilder.createFooterInfo();
+        timeContent.getChildren().add(footerInfo);
+    }
+    
     private void setupHomeScreen() {
         if (flightListView == null) {
             System.err.println("flightListView is null, skipping home setup");
@@ -1021,19 +1081,20 @@ private void showNotificationDetails(NotificationService.Notification notificati
         // Hide all screens
         homeScreen.setVisible(false);
         bookingsScreen.setVisible(false);
+        timeScreen.setVisible(false); // Add this line
         messagesScreen.setVisible(false);
         profileScreen.setVisible(false);
         flightDetailsScreen.setVisible(false);
         bookingFormScreen.setVisible(false);
         paymentScreen.setVisible(false);
         confirmationScreen.setVisible(false);
-        
+
         // Update tab styles
         updateTabStyles(tabName);
-        
+
         // Update header
         updateHeader(tabName);
-        
+
         // Show selected screen
         switch (tabName) {
             case "home":
@@ -1046,6 +1107,12 @@ private void showNotificationDetails(NotificationService.Notification notificati
                 bottomNav.setVisible(true);
                 setupBookingsScreen(); // Refresh bookings
                 currentTab = "bookings";
+                break;
+            case "time": // Add this case
+                timeScreen.setVisible(true);
+                bottomNav.setVisible(true);
+                loadWorldTimes(); // Refresh times
+                currentTab = "time";
                 break;
             case "messages":
                 messagesScreen.setVisible(true);
@@ -1077,11 +1144,13 @@ private void showNotificationDetails(NotificationService.Notification notificati
                 break;
         }
     }
+    
 
     private void updateTabStyles(String activeTab) {
         // Reset all tabs
         resetTabStyle(homeTab, "🏠", "Home");
         resetTabStyle(bookingsTab, "📋", "Bookings");
+        resetTabStyle(timeTab, "🌍", "Time"); // Add this line
         resetTabStyle(messagesTab, "💬", "Messages");
         resetTabStyle(profileTab, "👤", "Profile");
         
@@ -1092,6 +1161,9 @@ private void showNotificationDetails(NotificationService.Notification notificati
                 break;
             case "bookings":
                 setActiveTabStyle(bookingsTab, "📋", "Bookings");
+                break;
+            case "time": // Add this case
+                setActiveTabStyle(timeTab, "🌍", "Time");
                 break;
             case "messages":
                 setActiveTabStyle(messagesTab, "💬", "Messages");
@@ -1128,6 +1200,9 @@ private void showNotificationDetails(NotificationService.Notification notificati
             case "bookings":
                 headerTitle.setText("📋 My Bookings");
                 break;
+            case "time": // Add this case
+                headerTitle.setText("🌍 World Times");
+                break;
             case "messages":
                 headerTitle.setText("💬 Messages");
                 break;
@@ -1146,6 +1221,20 @@ private void showNotificationDetails(NotificationService.Notification notificati
             case "confirmation":
                 headerTitle.setText("✅ Confirmed");
                 break;
+        }
+    }
+
+    public void cleanup() {
+        if (timeUpdateService != null && !timeUpdateService.isShutdown()) {
+            timeUpdateService.shutdown();
+            try {
+                if (!timeUpdateService.awaitTermination(2, TimeUnit.SECONDS)) {
+                    timeUpdateService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                timeUpdateService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
     @FXML
