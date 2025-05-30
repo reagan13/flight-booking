@@ -18,6 +18,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -26,6 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -724,6 +726,9 @@ public class AdminController implements Initializable {
             ObservableList<Flight> flights = AdminFlightService.getAllFlights();
             flightsTable.setItems(flights);
 
+            // Setup row click handler for flight details
+            setupFlightRowClickHandler();
+
             // Setup search functionality
             setupFlightSearch(flights);
 
@@ -735,28 +740,246 @@ public class AdminController implements Initializable {
         }
     }
 
-    private void setupFlightSearch(ObservableList<Flight> allFlights) {
-    if (flightSearchField != null) {
-        flightSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == null || newValue.trim().isEmpty()) {
-                // Show all flights when search is empty
-                flightsTable.setItems(allFlights);
-            } else {
-                // Filter flights based on search term
-                ObservableList<Flight> filteredFlights = FXCollections.observableArrayList();
-                String searchTerm = newValue.toLowerCase().trim();
-                
-                for (Flight flight : allFlights) {
-                    if (matchesSearchTerm(flight, searchTerm)) {
-                        filteredFlights.add(flight);
-                    }
+    private void setupFlightRowClickHandler() {
+        flightsTable.setRowFactory(tv -> {
+            TableRow<Flight> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    Flight selectedFlight = row.getItem();
+                    showFlightDetails(selectedFlight);
                 }
-                
-                flightsTable.setItems(filteredFlights);
-            }
+            });
+            return row;
         });
     }
-}
+
+    private void showFlightDetails(Flight flight) {
+        try {
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Flight Details");
+            dialog.setHeaderText("Flight Information - " + flight.getFlightNo());
+
+            // Create GridPane for organized layout
+            GridPane grid = new GridPane();
+            grid.setHgap(20);
+            grid.setVgap(15);
+            grid.setPadding(new Insets(20));
+
+            // Set column constraints
+            ColumnConstraints labelCol = new ColumnConstraints();
+            labelCol.setPercentWidth(30);
+            ColumnConstraints valueCol1 = new ColumnConstraints();
+            valueCol1.setPercentWidth(35);
+            ColumnConstraints labelCol2 = new ColumnConstraints();
+            labelCol2.setPercentWidth(30);
+            ColumnConstraints valueCol2 = new ColumnConstraints();
+            valueCol2.setPercentWidth(35);
+            grid.getColumnConstraints().addAll(labelCol, valueCol1, labelCol2, valueCol2);
+
+            // Style for section headers
+            String headerStyle = "-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #2c3e50;";
+            String labelStyle = "-fx-font-weight: bold; -fx-text-fill: #34495e;";
+            String valueStyle = "-fx-text-fill: #2c3e50; -fx-font-size: 14px;";
+
+            int currentRow = 0;
+
+            // Basic Information Section
+            Label basicHeader = new Label("✈ Basic Information");
+            basicHeader.setStyle(headerStyle);
+            grid.add(basicHeader, 0, currentRow++, 4, 1);
+
+            Label flightIdLabel = new Label("Flight ID:");
+            flightIdLabel.setStyle(labelStyle);
+            Label flightIdValue = new Label(String.valueOf(flight.getId()));
+            flightIdValue.setStyle(valueStyle);
+
+            Label flightNoLabel = new Label("Flight Number:");
+            flightNoLabel.setStyle(labelStyle);
+            Label flightNoValue = new Label(flight.getFlightNo());
+            flightNoValue.setStyle(valueStyle);
+
+            grid.add(flightIdLabel, 0, currentRow);
+            grid.add(flightIdValue, 1, currentRow);
+            grid.add(flightNoLabel, 2, currentRow);
+            grid.add(flightNoValue, 3, currentRow++);
+
+            Label airlineLabel = new Label("Airline:");
+            airlineLabel.setStyle(labelStyle);
+            Label airlineValue = new Label(flight.getAirlineName());
+            airlineValue.setStyle(valueStyle);
+
+            Label aircraftLabel = new Label("Aircraft:");
+            aircraftLabel.setStyle(labelStyle);
+            Label aircraftValue = new Label(flight.getAircraft());
+            aircraftValue.setStyle(valueStyle);
+
+            grid.add(airlineLabel, 0, currentRow);
+            grid.add(airlineValue, 1, currentRow);
+            grid.add(aircraftLabel, 2, currentRow);
+            grid.add(aircraftValue, 3, currentRow++);
+
+            // Route Information Section
+            currentRow++; // Add space
+            Label routeHeader = new Label("🌍 Route Information");
+            routeHeader.setStyle(headerStyle);
+            grid.add(routeHeader, 0, currentRow++, 4, 1);
+
+            Label originLabel = new Label("Origin:");
+            originLabel.setStyle(labelStyle);
+            Label originValue = new Label(flight.getOrigin());
+            originValue.setStyle(valueStyle);
+
+            Label destinationLabel = new Label("Destination:");
+            destinationLabel.setStyle(labelStyle);
+            Label destinationValue = new Label(flight.getDestination());
+            destinationValue.setStyle(valueStyle);
+
+            grid.add(originLabel, 0, currentRow);
+            grid.add(originValue, 1, currentRow);
+            grid.add(destinationLabel, 2, currentRow);
+            grid.add(destinationValue, 3, currentRow++);
+
+            Label routeLabel = new Label("Route:");
+            routeLabel.setStyle(labelStyle);
+            Label routeValue = new Label(flight.getRoute());
+            routeValue.setStyle(valueStyle + " -fx-font-size: 16px;");
+
+            grid.add(routeLabel, 0, currentRow);
+            grid.add(routeValue, 1, currentRow, 3, 1);
+            currentRow++;
+
+            // Schedule Information Section
+            currentRow++; // Add space
+            Label scheduleHeader = new Label("🕒 Schedule Information");
+            scheduleHeader.setStyle(headerStyle);
+            grid.add(scheduleHeader, 0, currentRow++, 4, 1);
+
+            Label departureLabel = new Label("Departure:");
+            departureLabel.setStyle(labelStyle);
+            Label departureValue = new Label(flight.getFormattedDeparture());
+            departureValue.setStyle(valueStyle);
+
+            Label arrivalLabel = new Label("Arrival:");
+            arrivalLabel.setStyle(labelStyle);
+            Label arrivalValue = new Label(flight.getFormattedArrival());
+            arrivalValue.setStyle(valueStyle);
+
+            grid.add(departureLabel, 0, currentRow);
+            grid.add(departureValue, 1, currentRow);
+            grid.add(arrivalLabel, 2, currentRow);
+            grid.add(arrivalValue, 3, currentRow++);
+
+            Label durationLabel = new Label("Duration:");
+            durationLabel.setStyle(labelStyle);
+            Label durationValue = new Label(flight.getDuration());
+            durationValue.setStyle(valueStyle);
+
+            grid.add(durationLabel, 0, currentRow);
+            grid.add(durationValue, 1, currentRow);
+            currentRow++;
+
+            // Flight Details Section
+            currentRow++; // Add space
+            Label detailsHeader = new Label("📋 Flight Details");
+            detailsHeader.setStyle(headerStyle);
+            grid.add(detailsHeader, 0, currentRow++, 4, 1);
+
+            Label seatsLabel = new Label("Available Seats:");
+            seatsLabel.setStyle(labelStyle);
+            Label seatsValue = new Label(String.valueOf(flight.getSeats()));
+            seatsValue.setStyle(valueStyle);
+
+            Label statusLabel = new Label("Status:");
+            statusLabel.setStyle(labelStyle);
+            Label statusValue = new Label(flight.getStatus());
+            // Color status based on value
+            String statusColor = getStatusColor(flight.getStatus());
+            statusValue.setStyle(valueStyle + " -fx-text-fill: " + statusColor + "; -fx-font-weight: bold;");
+
+            grid.add(seatsLabel, 0, currentRow);
+            grid.add(seatsValue, 1, currentRow);
+            grid.add(statusLabel, 2, currentRow);
+            grid.add(statusValue, 3, currentRow++);
+
+            Label priceLabel = new Label("Base Price:");
+            priceLabel.setStyle(labelStyle);
+            Label priceValue = new Label(String.format("₱%.2f", flight.getPrice()));
+            priceValue.setStyle(valueStyle + " -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+
+            grid.add(priceLabel, 0, currentRow);
+            grid.add(priceValue, 1, currentRow);
+            currentRow++;
+
+            // Set content and buttons
+            dialog.getDialogPane().setContent(grid);
+
+            // Add action buttons
+            ButtonType editButtonType = new ButtonType("Edit Flight", ButtonBar.ButtonData.OTHER);
+            ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+            dialog.getDialogPane().getButtonTypes().addAll(editButtonType, closeButtonType);
+
+            // Set dialog size
+            dialog.getDialogPane().setPrefSize(650, 500);
+            dialog.getDialogPane().setStyle("-fx-background-color: #f8f9fa;");
+
+            // Handle button actions
+            dialog.setResultConverter(buttonType -> {
+                if (buttonType == editButtonType) {
+                    dialog.close();
+                    editFlight(flight);
+                }
+                return null;
+            });
+
+            dialog.showAndWait();
+
+        } catch (Exception e) {
+            System.err.println("Error showing flight details: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Error", "Unable to display flight details: " + e.getMessage());
+        }
+    }
+    private String getStatusColor(String status) {
+        if (status == null) return "#2c3e50";
+        
+        switch (status.toLowerCase()) {
+            case "active":
+                return "#27ae60"; // Green
+            case "cancelled":
+                return "#e74c3c"; // Red
+            case "delayed":
+                return "#f39c12"; // Orange
+            case "completed":
+                return "#3498db"; // Blue
+            default:
+                return "#2c3e50"; // Dark gray
+        }
+    }
+
+    
+    
+    private void setupFlightSearch(ObservableList<Flight> allFlights) {
+        if (flightSearchField != null) {
+            flightSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue == null || newValue.trim().isEmpty()) {
+                    // Show all flights when search is empty
+                    flightsTable.setItems(allFlights);
+                } else {
+                    // Filter flights based on search term
+                    ObservableList<Flight> filteredFlights = FXCollections.observableArrayList();
+                    String searchTerm = newValue.toLowerCase().trim();
+                    
+                    for (Flight flight : allFlights) {
+                        if (matchesSearchTerm(flight, searchTerm)) {
+                            filteredFlights.add(flight);
+                        }
+                    }
+                    
+                    flightsTable.setItems(filteredFlights);
+                }
+            });
+        }
+    }
 
 // Helper method to check if flight matches search term
 private boolean matchesSearchTerm(Flight flight, String searchTerm) {

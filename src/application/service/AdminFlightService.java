@@ -52,7 +52,7 @@ public class AdminFlightService {
             flight.setArrival(arrTimestamp.toLocalDateTime());
         }
         
-        flight.setDestination(rs.getString("duration"));
+        flight.setDuration(rs.getString("duration")); 
         flight.setAircraft(rs.getString("aircraft_type"));
         flight.setSeats(rs.getInt("available_seats"));
         flight.setStatus(rs.getString("status"));
