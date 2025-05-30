@@ -27,7 +27,6 @@
             <Button fx:id="flightsBtn" text="Flights" maxWidth="Infinity" onAction="#showFlights" />
             <Button fx:id="bookingsBtn" text="Bookings" maxWidth="Infinity" onAction="#showBookings" />
             <Button fx:id="messagesBtn" text="Messages" maxWidth="Infinity" onAction="#showMessages" />
-            <Button fx:id="transactionsBtn" text="Transactions" maxWidth="Infinity" onAction="#showTransactions" />
         </VBox>
     </left>
     
@@ -220,11 +219,7 @@
                 </HBox>
             </VBox>
 
-            <!-- TRANSACTIONS CONTENT -->
-            <VBox fx:id="transactionsContent" visible="false" spacing="15">
-                <Label text="Transactions Management" style="-fx-font-size: 20px;" />
-                <TableView fx:id="transactionsTable" />
-            </VBox>
+      
             
         </StackPane>
     </center>

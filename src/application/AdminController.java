@@ -86,8 +86,7 @@ public class AdminController implements Initializable {
     @FXML private Button flightsBtn;
     @FXML private Button bookingsBtn;
     @FXML private Button messagesBtn;
-    @FXML
-    private Button transactionsBtn;
+   
     @FXML
     private Button addUserBtn;
     @FXML private Button addFlightBtn;
@@ -99,15 +98,13 @@ public class AdminController implements Initializable {
     @FXML private VBox flightsContent;
     @FXML private VBox bookingsContent;
     @FXML private VBox messagesContent;
-    @FXML private VBox transactionsContent;
     
     // ALL TABLES - MATCH EXACTLY WITH FXML fx:id
     @FXML private TableView<User> usersTable;
     @FXML private TableView flightsTable;
     @FXML private TableView bookingsTable;
     @FXML private TableView messagesTable;
-    @FXML
-    private TableView transactionsTable;
+   
 
     @FXML private TextField messageSearchField;
     @FXML private ListView<Message> conversationsList;
@@ -284,16 +281,7 @@ public void initialize(URL location, ResourceBundle resources) {
         loadMessagesData();
         System.out.println("Showing messages");
     }
-    
-    @FXML
-    private void showTransactions() {
-        hideAllContent();
-        transactionsContent.setVisible(true);
-        updateActiveButton(transactionsBtn);
-        loadTransactionsData();
-        System.out.println("Showing transactions");
-    }
-    
+
   
     // HELPER METHODS
     private void hideAllContent() {
@@ -302,12 +290,11 @@ public void initialize(URL location, ResourceBundle resources) {
         flightsContent.setVisible(false);
         bookingsContent.setVisible(false);
         messagesContent.setVisible(false);
-        transactionsContent.setVisible(false);
     }
     
     // FIXED: Removed -fx-alignment which is not supported in JavaFX 8
     private void updateActiveButton(Button activeButton) {
-        Button[] navButtons = {dashboardBtn, usersBtn, flightsBtn, bookingsBtn, messagesBtn, transactionsBtn};
+        Button[] navButtons = {dashboardBtn, usersBtn, flightsBtn, bookingsBtn, messagesBtn};
         
         for (Button btn : navButtons) {
             if (btn == activeButton) {
@@ -2145,16 +2132,7 @@ private void initializeMessageComponents() {
     }
 }
 
-    private void loadTransactionsData() {
-        try {
-            System.out.println("Loading transactions data...");
-            transactionsTable.getItems().clear();
-            transactionsTable.getColumns().clear();
-            System.out.println("Transactions data loaded successfully");
-        } catch (Exception e) {
-            System.err.println("Error loading transactions: " + e.getMessage());
-        }
-    }
+
     
     public void refreshDashboard() {
         loadDashboardStats();
