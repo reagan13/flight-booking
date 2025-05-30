@@ -3,11 +3,14 @@ package application;
 import application.model.Booking;
 import application.model.Flight;
 import application.model.User;
+import application.model.Message;
 import application.service.AdminFlightService;
+import application.service.AdminMessageService;
 import application.service.AdminBookingService;
 import application.service.AdminService;
 import application.service.UserService;
 import application.service.UserSession;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,6 +18,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -26,16 +30,23 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -97,6 +108,20 @@ public class AdminController implements Initializable {
     @FXML private TableView messagesTable;
     @FXML
     private TableView transactionsTable;
+
+    @FXML private TextField messageSearchField;
+    @FXML private ListView<Message> conversationsList;
+    @FXML private VBox chatArea;
+    @FXML private ScrollPane chatScrollPane;
+    @FXML private TextArea messageInputArea;
+    @FXML private Button sendMessageBtn;
+    @FXML private Label chatHeaderLabel;
+    @FXML private ToggleButton automationToggle;
+    @FXML
+    private Label unreadCountLabel;
+
+    private Message currentConversation;
+    private int currentUserId = -1;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -1710,17 +1735,427 @@ private void deleteBooking(Booking booking) {
 }
 
     
-    private void loadMessagesData() {
-        try {
-            System.out.println("Loading messages data...");
-            messagesTable.getItems().clear();
-            messagesTable.getColumns().clear();
-            System.out.println("Messages data loaded successfully");
-        } catch (Exception e) {
-            System.err.println("Error loading messages: " + e.getMessage());
+private void loadMessagesData() {
+    try {
+        System.out.println("Loading messages data...");
+
+        // Clear current selection to avoid index issues
+        if (conversationsList != null) {
+            conversationsList.getSelectionModel().clearSelection();
         }
+
+        // Load conversations list
+        ObservableList<Message> conversations = AdminMessageService.getAllConversations();
+
+        // Set items to ListView
+        if (conversationsList != null) {
+            conversationsList.setItems(conversations);
+
+            // Setup conversation list cell factory
+            conversationsList.setCellFactory(listView -> new ListCell<Message>() {
+                @Override
+                protected void updateItem(Message message, boolean empty) {
+                    super.updateItem(message, empty);
+                    if (empty || message == null) {
+                        setText(null);
+                        setGraphic(null);
+                        setStyle(""); // Clear any previous styling
+                    } else {
+                        try {
+                            VBox conversationItem = createConversationItem(message);
+                            setGraphic(conversationItem);
+                            setText(null); // Important: clear text when using graphic
+                        } catch (Exception e) {
+                            System.err.println("Error creating conversation item: " + e.getMessage());
+                            setText("Error loading conversation");
+                            setGraphic(null);
+                        }
+                    }
+                }
+            });
+
+            // Setup conversation selection with proper error handling
+            conversationsList.getSelectionModel().selectedItemProperty()
+                    .addListener((obs, oldSelection, newSelection) -> {
+                        try {
+                            if (newSelection != null && newSelection.getUserId() > 0) {
+                                loadConversation(newSelection.getUserId());
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error loading conversation: " + e.getMessage());
+                            e.printStackTrace();
+                            showAlert("Error", "Failed to load conversation: " + e.getMessage());
+                        }
+                    });
+        }
+
+        // Setup message search
+        setupMessageSearch(conversations);
+
+        // Update unread count
+        updateUnreadCount();
+
+        System.out.println("Messages data loaded successfully: " + conversations.size() + " conversations");
+
+    } catch (Exception e) {
+        System.err.println("Error loading messages: " + e.getMessage());
+        e.printStackTrace();
+        showAlert("Error", "Failed to load messages: " + e.getMessage());
+    }
+}
+
+private VBox createConversationItem(Message message) {
+    VBox item = new VBox(5);
+    item.setPadding(new Insets(10));
+    item.setStyle("-fx-border-color: #e9ecef; -fx-border-width: 0 0 1 0; -fx-cursor: hand;");
+    
+    try {
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        // Safe name handling
+        String userName = message.getUserName();
+        if (userName == null || userName.trim().isEmpty()) {
+            userName = "Unknown User";
+        }
+        
+        Label nameLabel = new Label(userName);
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label timeLabel = new Label(message.getFormattedTime());
+        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #6c757d;");
+        
+        // Add unread badge if there are unread messages
+        if (message.getUnreadCount() > 0) {
+            Label unreadBadge = new Label(String.valueOf(message.getUnreadCount()));
+            unreadBadge.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; " +
+                               "-fx-background-radius: 10; -fx-padding: 2 6; -fx-font-size: 11px;");
+            header.getChildren().addAll(nameLabel, spacer, unreadBadge, timeLabel);
+        } else {
+            header.getChildren().addAll(nameLabel, spacer, timeLabel);
+        }
+        
+        // Safe preview text handling
+        String previewText = message.getPreviewText();
+        if (previewText == null || previewText.trim().isEmpty()) {
+            previewText = "No message content";
+        }
+        
+        Label previewLabel = new Label(previewText);
+        previewLabel.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 13px;");
+        previewLabel.setWrapText(true);
+        previewLabel.setMaxWidth(300);
+        
+        // Safe email handling
+        String userEmail = message.getUserEmail();
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            userEmail = "No email";
+        }
+        
+        Label emailLabel = new Label(userEmail);
+        emailLabel.setStyle("-fx-text-fill: #adb5bd; -fx-font-size: 11px;");
+        
+        item.getChildren().addAll(header, previewLabel, emailLabel);
+        
+        // Add hover effect
+        item.setOnMouseEntered(e -> item.setStyle("-fx-border-color: #e9ecef; -fx-border-width: 0 0 1 0; " +
+                                                  "-fx-background-color: #f8f9fa; -fx-cursor: hand;"));
+        item.setOnMouseExited(e -> item.setStyle("-fx-border-color: #e9ecef; -fx-border-width: 0 0 1 0; -fx-cursor: hand;"));
+        
+    } catch (Exception e) {
+        System.err.println("Error creating conversation item content: " + e.getMessage());
+        // Fallback to simple text display
+        Label errorLabel = new Label("Error loading conversation");
+        errorLabel.setStyle("-fx-text-fill: red;");
+        item.getChildren().clear();
+        item.getChildren().add(errorLabel);
     }
     
+    return item;
+}
+
+private void loadConversation(int userId) {
+    try {
+        System.out.println("Loading conversation for user ID: " + userId);
+        currentUserId = userId;
+        
+        // Load conversation messages
+        ObservableList<Message> messages = AdminMessageService.getConversationMessages(userId);
+        
+        // Clear chat area
+        if (chatArea != null) {
+            chatArea.getChildren().clear();
+        }
+        
+        // Set chat header
+        if (chatHeaderLabel != null && !messages.isEmpty()) {
+            Message firstMessage = messages.get(0);
+            String userName = firstMessage.getUserName();
+            if (userName == null || userName.trim().isEmpty()) {
+                userName = "Unknown User";
+            }
+            chatHeaderLabel.setText("Chat with " + userName);
+            
+            // Set automation toggle state
+            if (automationToggle != null) {
+                automationToggle.setSelected(AdminMessageService.isAutomationEnabled(userId));
+            }
+        }
+        
+        // Add messages to chat area
+        if (chatArea != null) {
+            for (Message message : messages) {
+                try {
+                    VBox messageItem = createMessageItem(message);
+                    chatArea.getChildren().add(messageItem);
+                } catch (Exception e) {
+                    System.err.println("Error creating message item: " + e.getMessage());
+                    // Continue with other messages
+                }
+            }
+        }
+        
+        // Mark messages as read
+        AdminMessageService.markMessagesAsRead(userId);
+        
+        // Scroll to bottom
+        Platform.runLater(() -> {
+            if (chatScrollPane != null) {
+                chatScrollPane.setVvalue(1.0);
+            }
+        });
+        
+        // Update unread count
+        updateUnreadCount();
+        
+        System.out.println("Conversation loaded successfully: " + messages.size() + " messages");
+        
+    } catch (Exception e) {
+        System.err.println("Error loading conversation: " + e.getMessage());
+        e.printStackTrace();
+        showAlert("Error", "Failed to load conversation: " + e.getMessage());
+    }
+}
+
+private VBox createMessageItem(Message message) {
+    VBox messageContainer = new VBox(5);
+    messageContainer.setPadding(new Insets(10));
+    
+    try {
+        // Message header
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        // Safe sender type handling
+        String senderType = message.getSenderType();
+        if (senderType == null) {
+            senderType = "user";
+        }
+        
+        String senderDisplay;
+        switch (senderType.toLowerCase()) {
+            case "admin":
+                senderDisplay = "👨‍💼 Admin";
+                break;
+            case "bot":
+                senderDisplay = "🤖 Bot";
+                break;
+            default:
+                String userName = message.getUserName();
+                if (userName == null || userName.trim().isEmpty()) {
+                    userName = "User";
+                }
+                senderDisplay = "👤 " + userName;
+                break;
+        }
+        
+        Label senderLabel = new Label(senderDisplay);
+        senderLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + message.getSenderTypeColor() + ";");
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label timeLabel = new Label(message.getFormattedDateTime());
+        timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #6c757d;");
+        
+        header.getChildren().addAll(senderLabel, spacer, timeLabel);
+        
+        // Message content
+        String messageText = message.getMessageText();
+        if (messageText == null || messageText.trim().isEmpty()) {
+            messageText = "No content";
+        }
+        
+        Label contentLabel = new Label(messageText);
+        contentLabel.setWrapText(true);
+        contentLabel.setMaxWidth(400);
+        
+        // Style based on sender
+        switch (senderType.toLowerCase()) {
+            case "admin":
+                contentLabel.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
+                                    "-fx-background-radius: 10; -fx-padding: 10;");
+                messageContainer.setAlignment(Pos.CENTER_RIGHT);
+                break;
+            case "bot":
+                contentLabel.setStyle("-fx-background-color: #f8f9fa; -fx-text-fill: #6c757d; " +
+                                    "-fx-background-radius: 10; -fx-padding: 10; " +
+                                    "-fx-border-color: #dee2e6; -fx-border-radius: 10;");
+                messageContainer.setAlignment(Pos.CENTER_LEFT);
+                break;
+            default:
+                contentLabel.setStyle("-fx-background-color: #e9ecef; -fx-text-fill: #495057; " +
+                                    "-fx-background-radius: 10; -fx-padding: 10;");
+                messageContainer.setAlignment(Pos.CENTER_LEFT);
+                break;
+        }
+        
+        messageContainer.getChildren().addAll(header, contentLabel);
+        
+    } catch (Exception e) {
+        System.err.println("Error creating message item content: " + e.getMessage());
+        // Fallback to simple display
+        Label errorLabel = new Label("Error loading message");
+        errorLabel.setStyle("-fx-text-fill: red;");
+        messageContainer.getChildren().clear();
+        messageContainer.getChildren().add(errorLabel);
+    }
+    
+    return messageContainer;
+}
+
+private void setupMessageSearch(ObservableList<Message> allConversations) {
+    if (messageSearchField != null && allConversations != null) {
+        messageSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            try {
+                if (newValue == null || newValue.trim().isEmpty()) {
+                    conversationsList.setItems(allConversations);
+                } else {
+                    ObservableList<Message> filteredConversations = FXCollections.observableArrayList();
+                    String searchTerm = newValue.toLowerCase().trim();
+                    
+                    for (Message conversation : allConversations) {
+                        if (conversation != null && matchesMessageSearchTerm(conversation, searchTerm)) {
+                            filteredConversations.add(conversation);
+                        }
+                    }
+                    
+                    conversationsList.setItems(filteredConversations);
+                }
+            } catch (Exception e) {
+                System.err.println("Error in message search: " + e.getMessage());
+            }
+        });
+    }
+}
+
+private boolean matchesMessageSearchTerm(Message message, String searchTerm) {
+    if (message == null || searchTerm == null) {
+        return false;
+    }
+    
+    try {
+        return (message.getUserName() != null && message.getUserName().toLowerCase().contains(searchTerm)) ||
+               (message.getUserEmail() != null && message.getUserEmail().toLowerCase().contains(searchTerm)) ||
+               (message.getMessageText() != null && message.getMessageText().toLowerCase().contains(searchTerm));
+    } catch (Exception e) {
+        System.err.println("Error matching search term: " + e.getMessage());
+        return false;
+    }
+}
+
+@FXML
+private void sendMessage() {
+    try {
+        if (currentUserId == -1) {
+            showAlert("Warning", "Please select a conversation first.");
+            return;
+        }
+        
+        if (messageInputArea == null || messageInputArea.getText().trim().isEmpty()) {
+            showAlert("Warning", "Please enter a message.");
+            return;
+        }
+        
+        String messageText = messageInputArea.getText().trim();
+        
+        if (AdminMessageService.sendMessage(currentUserId, messageText, "admin", null)) {
+            messageInputArea.clear();
+            loadConversation(currentUserId); // Refresh chat
+        } else {
+            showAlert("Error", "Failed to send message.");
+        }
+    } catch (Exception e) {
+        System.err.println("Error sending message: " + e.getMessage());
+        showAlert("Error", "An error occurred while sending the message: " + e.getMessage());
+    }
+}
+
+@FXML
+private void toggleAutomation() {
+    try {
+        if (currentUserId == -1) {
+            if (automationToggle != null) {
+                automationToggle.setSelected(!automationToggle.isSelected());
+            }
+            showAlert("Warning", "Please select a conversation first.");
+            return;
+        }
+        
+        boolean isEnabled = automationToggle != null ? automationToggle.isSelected() : false;
+        AdminMessageService.setAutomationEnabled(currentUserId, isEnabled);
+        
+        String status = isEnabled ? "enabled" : "disabled";
+        showAlert("Info", "Automated replies " + status + " for this user.");
+    } catch (Exception e) {
+        System.err.println("Error toggling automation: " + e.getMessage());
+        showAlert("Error", "Failed to toggle automation: " + e.getMessage());
+    }
+}
+
+private void updateUnreadCount() {
+    try {
+        int unreadCount = AdminMessageService.getUnreadMessageCount();
+        if (unreadCountLabel != null) {
+            if (unreadCount > 0) {
+                unreadCountLabel.setText(String.valueOf(unreadCount));
+                unreadCountLabel.setVisible(true);
+            } else {
+                unreadCountLabel.setVisible(false);
+            }
+        }
+    } catch (Exception e) {
+        System.err.println("Error updating unread count: " + e.getMessage());
+    }
+}
+
+@FXML
+private void refreshMessages() {
+    try {
+        loadMessagesData();
+        if (currentUserId != -1) {
+            loadConversation(currentUserId);
+        }
+    } catch (Exception e) {
+        System.err.println("Error refreshing messages: " + e.getMessage());
+        showAlert("Error", "Failed to refresh messages: " + e.getMessage());
+    }
+}
+@FXML
+private void clearMessageSearch() {
+    try {
+        if (messageSearchField != null) {
+            messageSearchField.clear();
+        }
+    } catch (Exception e) {
+        System.err.println("Error clearing message search: " + e.getMessage());
+    }
+}
+
+
     private void loadTransactionsData() {
         try {
             System.out.println("Loading transactions data...");

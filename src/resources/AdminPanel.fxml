@@ -147,9 +147,45 @@
             </VBox>
             
             <!-- MESSAGES CONTENT -->
-            <VBox fx:id="messagesContent" visible="false" spacing="15">
-                <Label text="Messages Management" style="-fx-font-size: 20px;" />
-                <TableView fx:id="messagesTable" />
+            <VBox fx:id="messagesContent" visible="false" spacing="15" style="-fx-padding: 20;">
+                <HBox spacing="10" style="-fx-alignment: center-left;">
+                    <Label text="Messages Management" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+                    <Label fx:id="unreadCountLabel" visible="false" style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 2 6; -fx-font-size: 11px;" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="messageSearchField" promptText="Search conversations..." style="-fx-pref-width: 200px;" />
+                    <Button text="Clear" onAction="#clearMessageSearch" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8 15;" />
+                    <Button text="Refresh" onAction="#refreshMessages" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 8 15;" />
+                </HBox>
+                
+                <HBox spacing="15" VBox.vgrow="ALWAYS">
+                    <!-- Conversations List -->
+                    <VBox spacing="10" style="-fx-pref-width: 350px;">
+                        <Label text="Conversations" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                        <ListView fx:id="conversationsList" VBox.vgrow="ALWAYS" style="-fx-background-color: white;" />
+                    </VBox>
+                    
+                    <!-- Chat Area -->
+                    <VBox spacing="10" HBox.hgrow="ALWAYS">
+                        <!-- Chat Header -->
+                        <HBox spacing="10" style="-fx-alignment: center-left; -fx-padding: 10; -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 0 0 1 0;">
+                            <Label fx:id="chatHeaderLabel" text="Select a conversation" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label text="Auto Reply:" style="-fx-font-size: 14px;" />
+                            <ToggleButton fx:id="automationToggle" text="ON" onAction="#toggleAutomation" />
+                        </HBox>
+                        
+                        <!-- Messages Area -->
+                        <ScrollPane fx:id="chatScrollPane" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 10;">
+                            <VBox fx:id="chatArea" spacing="10" />
+                        </ScrollPane>
+                        
+                        <!-- Message Input -->
+                        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f8f9fa;">
+                            <TextArea fx:id="messageInputArea" promptText="Type your message..." wrapText="true" style="-fx-pref-row-count: 2;" HBox.hgrow="ALWAYS" />
+                            <Button fx:id="sendMessageBtn" text="Send" onAction="#sendMessage" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 10 20;" />
+                        </HBox>
+                    </VBox>
+                </HBox>
             </VBox>
             
             <!-- TRANSACTIONS CONTENT -->
