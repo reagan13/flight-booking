@@ -124,10 +124,12 @@
             </VBox>
             
             <!-- FLIGHTS CONTENT -->
-               <VBox fx:id="flightsContent" visible="false" spacing="15" style="-fx-padding: 20;">
-                <HBox spacing="10">
+            <VBox fx:id="flightsContent" visible="false" spacing="15" style="-fx-padding: 20;">
+                <HBox spacing="10" style="-fx-alignment: center-left;">
                     <Label text="Flights Management" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
                     <Region HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="flightSearchField" promptText="Search flights..." style="-fx-pref-width: 200px;" />
+                    <Button text="Clear" onAction="#clearFlightSearch" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8 15;" />
                     <Button fx:id="addFlightBtn" text="Add New Flight" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 15;" onAction="#addNewFlight" />
                 </HBox>
                 <TableView fx:id="flightsTable" VBox.vgrow="ALWAYS" style="-fx-background-color: white;" />

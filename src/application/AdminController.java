@@ -6,6 +6,7 @@ import application.service.AdminFlightService;
 import application.service.AdminService;
 import application.service.UserService;
 import application.service.UserSession;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -42,6 +43,9 @@ import java.time.LocalTime;
 import java.util.ResourceBundle;
 
 public class AdminController implements Initializable {
+    @FXML
+    private TextField flightSearchField;
+
     
     // ALL LABELS - MATCH EXACTLY WITH FXML fx:id
     @FXML private Label adminNameLabel;
@@ -632,6 +636,7 @@ public class AdminController implements Initializable {
 
     
     
+    
     private void loadFlightsData() {
         try {
             System.out.println("Loading flights data...");
@@ -719,6 +724,9 @@ public class AdminController implements Initializable {
             ObservableList<Flight> flights = AdminFlightService.getAllFlights();
             flightsTable.setItems(flights);
 
+            // Setup search functionality
+            setupFlightSearch(flights);
+
             System.out.println("Flights data loaded successfully: " + flights.size() + " flights");
 
         } catch (Exception e) {
@@ -726,7 +734,53 @@ public class AdminController implements Initializable {
             e.printStackTrace();
         }
     }
-   @FXML
+
+    private void setupFlightSearch(ObservableList<Flight> allFlights) {
+    if (flightSearchField != null) {
+        flightSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.trim().isEmpty()) {
+                // Show all flights when search is empty
+                flightsTable.setItems(allFlights);
+            } else {
+                // Filter flights based on search term
+                ObservableList<Flight> filteredFlights = FXCollections.observableArrayList();
+                String searchTerm = newValue.toLowerCase().trim();
+                
+                for (Flight flight : allFlights) {
+                    if (matchesSearchTerm(flight, searchTerm)) {
+                        filteredFlights.add(flight);
+                    }
+                }
+                
+                flightsTable.setItems(filteredFlights);
+            }
+        });
+    }
+}
+
+// Helper method to check if flight matches search term
+private boolean matchesSearchTerm(Flight flight, String searchTerm) {
+    return (flight.getFlightNo() != null && flight.getFlightNo().toLowerCase().contains(searchTerm)) ||
+           (flight.getAirlineName() != null && flight.getAirlineName().toLowerCase().contains(searchTerm)) ||
+           (flight.getOrigin() != null && flight.getOrigin().toLowerCase().contains(searchTerm)) ||
+           (flight.getDestination() != null && flight.getDestination().toLowerCase().contains(searchTerm)) ||
+           (flight.getStatus() != null && flight.getStatus().toLowerCase().contains(searchTerm)) ||
+           (flight.getAircraft() != null && flight.getAircraft().toLowerCase().contains(searchTerm)) ||
+           String.valueOf(flight.getId()).contains(searchTerm) ||
+           String.valueOf(flight.getPrice()).contains(searchTerm);
+}
+
+// Add method to clear search
+@FXML
+private void clearFlightSearch() {
+    if (flightSearchField != null) {
+        flightSearchField.clear();
+    }
+}
+
+
+    
+    @FXML
     private void addNewFlight() {
         try {
             Dialog<Flight> dialog = new Dialog<>();
