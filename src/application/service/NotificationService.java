@@ -63,19 +63,30 @@ public class NotificationService {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "INSERT INTO notifications (user_id, type, title, message, related_id) VALUES (?, 'message', ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
-            
-            String title = "bot".equals(senderType) ? "New Message 🤖" : "Support Reply 👨‍💼";
-            String message = "bot".equals(senderType) ? 
-                "You have a new automated response from our support bot." :
-                "A support agent has replied to your message.";
-            
+
+            String title;
+            String message;
+
+            // Properly differentiate between admin and bot messages
+            if ("admin".equals(senderType)) {
+                title = "Customer Support Reply 👨‍💼";
+                message = "A customer support agent has replied to your message.";
+            } else if ("bot".equals(senderType)) {
+                title = "Automated Response 🤖";
+                message = "You have received an automated response from our support bot.";
+            } else {
+                // Fallback for any other sender types
+                title = "New Message 💬";
+                message = "You have received a new message.";
+            }
+
             stmt.setInt(1, userId);
             stmt.setString(2, title);
             stmt.setString(3, message);
             stmt.setInt(4, messageId);
-            
+
             stmt.executeUpdate();
-            
+
         } catch (SQLException e) {
             System.err.println("Error creating message notification: " + e.getMessage());
         }

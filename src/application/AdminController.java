@@ -124,38 +124,41 @@ public class AdminController implements Initializable {
     private int currentUserId = -1;
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("AdminController initializing...");
+public void initialize(URL location, ResourceBundle resources) {
+    System.out.println("AdminController initializing...");
 
-        try {
-            // Check if FXML elements are properly injected
-            if (adminNameLabel == null || dashboardContent == null) {
-                System.err.println("FXML elements not properly injected!");
-                return;
-            }
-
-            // Set admin name
-            User currentUser = UserSession.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                String fullName = UserSession.getInstance().getCurrentUserFullName();
-                adminNameLabel.setText("Welcome, " + (fullName != null ? fullName : "Admin"));
-            } else {
-                adminNameLabel.setText("Welcome, Admin");
-            }
-
-            // Load dashboard stats
-            loadDashboardStats();
-
-            // Show dashboard by default
-            showDashboard();
-
-            System.out.println("AdminController initialized successfully");
-
-        } catch (Exception e) {
-            System.err.println("Error initializing AdminController: " + e.getMessage());
-            e.printStackTrace();
+    try {
+        // Check if FXML elements are properly injected
+        if (adminNameLabel == null || dashboardContent == null) {
+            System.err.println("FXML elements not properly injected!");
+            return;
         }
+
+        // Set admin name
+        User currentUser = UserSession.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String fullName = UserSession.getInstance().getCurrentUserFullName();
+            adminNameLabel.setText("Welcome, " + (fullName != null ? fullName : "Admin"));
+        } else {
+            adminNameLabel.setText("Welcome, Admin");
+        }
+
+        // Initialize message components styling
+        initializeMessageComponents();
+
+        // Load dashboard stats
+        loadDashboardStats();
+
+        // Show dashboard by default
+        showDashboard();
+
+        System.out.println("AdminController initialized successfully");
+
+    } catch (Exception e) {
+        System.err.println("Error initializing AdminController: " + e.getMessage());
+        e.printStackTrace();
     }
+}
     
     private void loadDashboardStats() {
         try {
@@ -1774,12 +1777,21 @@ private void loadMessagesData() {
                 }
             });
 
-            // Setup conversation selection with proper error handling
+            // Setup conversation selection with auto-mark as read
             conversationsList.getSelectionModel().selectedItemProperty()
                     .addListener((obs, oldSelection, newSelection) -> {
                         try {
                             if (newSelection != null && newSelection.getUserId() > 0) {
+                                // Auto-mark messages as read when clicked
+                                AdminMessageService.markMessagesAsRead(newSelection.getUserId());
                                 loadConversation(newSelection.getUserId());
+                                // Refresh the conversations list to update unread badges
+                                Platform.runLater(() -> {
+                                    updateUnreadCount();
+                                    // Refresh conversations to remove unread badges
+                                    ObservableList<Message> updatedConversations = AdminMessageService.getAllConversations();
+                                    conversationsList.setItems(updatedConversations);
+                                });
                             }
                         } catch (Exception e) {
                             System.err.println("Error loading conversation: " + e.getMessage());
@@ -1788,9 +1800,6 @@ private void loadMessagesData() {
                         }
                     });
         }
-
-        // Setup message search
-        setupMessageSearch(conversations);
 
         // Update unread count
         updateUnreadCount();
@@ -1838,27 +1847,8 @@ private VBox createConversationItem(Message message) {
             header.getChildren().addAll(nameLabel, spacer, timeLabel);
         }
         
-        // Safe preview text handling
-        String previewText = message.getPreviewText();
-        if (previewText == null || previewText.trim().isEmpty()) {
-            previewText = "No message content";
-        }
-        
-        Label previewLabel = new Label(previewText);
-        previewLabel.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 13px;");
-        previewLabel.setWrapText(true);
-        previewLabel.setMaxWidth(300);
-        
-        // Safe email handling
-        String userEmail = message.getUserEmail();
-        if (userEmail == null || userEmail.trim().isEmpty()) {
-            userEmail = "No email";
-        }
-        
-        Label emailLabel = new Label(userEmail);
-        emailLabel.setStyle("-fx-text-fill: #adb5bd; -fx-font-size: 11px;");
-        
-        item.getChildren().addAll(header, previewLabel, emailLabel);
+        // Only add the header - remove preview text and email
+        item.getChildren().add(header);
         
         // Add hover effect
         item.setOnMouseEntered(e -> item.setStyle("-fx-border-color: #e9ecef; -fx-border-width: 0 0 1 0; " +
@@ -1881,15 +1871,15 @@ private void loadConversation(int userId) {
     try {
         System.out.println("Loading conversation for user ID: " + userId);
         currentUserId = userId;
-        
+
         // Load conversation messages
         ObservableList<Message> messages = AdminMessageService.getConversationMessages(userId);
-        
+
         // Clear chat area
         if (chatArea != null) {
             chatArea.getChildren().clear();
         }
-        
+
         // Set chat header
         if (chatHeaderLabel != null && !messages.isEmpty()) {
             Message firstMessage = messages.get(0);
@@ -1898,13 +1888,18 @@ private void loadConversation(int userId) {
                 userName = "Unknown User";
             }
             chatHeaderLabel.setText("Chat with " + userName);
-            
-            // Set automation toggle state
+
+            // Set automation toggle state, text, and styling
             if (automationToggle != null) {
-                automationToggle.setSelected(AdminMessageService.isAutomationEnabled(userId));
+                boolean isAutomationEnabled = AdminMessageService.isAutomationEnabled(userId);
+                automationToggle.setSelected(isAutomationEnabled);
+                automationToggle.setText(isAutomationEnabled ? "ON" : "OFF");
+                automationToggle.setStyle(isAutomationEnabled
+                        ? "-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;"
+                        : "-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
             }
         }
-        
+
         // Add messages to chat area
         if (chatArea != null) {
             for (Message message : messages) {
@@ -1917,22 +1912,18 @@ private void loadConversation(int userId) {
                 }
             }
         }
-        
-        // Mark messages as read
-        AdminMessageService.markMessagesAsRead(userId);
-        
+
+        // Note: markMessagesAsRead is already called in loadMessagesData
+
         // Scroll to bottom
         Platform.runLater(() -> {
             if (chatScrollPane != null) {
                 chatScrollPane.setVvalue(1.0);
             }
         });
-        
-        // Update unread count
-        updateUnreadCount();
-        
+
         System.out.println("Conversation loaded successfully: " + messages.size() + " messages");
-        
+
     } catch (Exception e) {
         System.err.println("Error loading conversation: " + e.getMessage());
         e.printStackTrace();
@@ -2027,45 +2018,7 @@ private VBox createMessageItem(Message message) {
     return messageContainer;
 }
 
-private void setupMessageSearch(ObservableList<Message> allConversations) {
-    if (messageSearchField != null && allConversations != null) {
-        messageSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                if (newValue == null || newValue.trim().isEmpty()) {
-                    conversationsList.setItems(allConversations);
-                } else {
-                    ObservableList<Message> filteredConversations = FXCollections.observableArrayList();
-                    String searchTerm = newValue.toLowerCase().trim();
-                    
-                    for (Message conversation : allConversations) {
-                        if (conversation != null && matchesMessageSearchTerm(conversation, searchTerm)) {
-                            filteredConversations.add(conversation);
-                        }
-                    }
-                    
-                    conversationsList.setItems(filteredConversations);
-                }
-            } catch (Exception e) {
-                System.err.println("Error in message search: " + e.getMessage());
-            }
-        });
-    }
-}
 
-private boolean matchesMessageSearchTerm(Message message, String searchTerm) {
-    if (message == null || searchTerm == null) {
-        return false;
-    }
-    
-    try {
-        return (message.getUserName() != null && message.getUserName().toLowerCase().contains(searchTerm)) ||
-               (message.getUserEmail() != null && message.getUserEmail().toLowerCase().contains(searchTerm)) ||
-               (message.getMessageText() != null && message.getMessageText().toLowerCase().contains(searchTerm));
-    } catch (Exception e) {
-        System.err.println("Error matching search term: " + e.getMessage());
-        return false;
-    }
-}
 
 @FXML
 private void sendMessage() {
@@ -2082,15 +2035,39 @@ private void sendMessage() {
         
         String messageText = messageInputArea.getText().trim();
         
+        // Update send button to show sending state
+        if (sendMessageBtn != null) {
+            sendMessageBtn.setText("Sending...");
+            sendMessageBtn.setDisable(true);
+        }
+        
         if (AdminMessageService.sendMessage(currentUserId, messageText, "admin", null)) {
             messageInputArea.clear();
             loadConversation(currentUserId); // Refresh chat
+            
+            // Reset send button
+            if (sendMessageBtn != null) {
+                sendMessageBtn.setText("Send");
+                sendMessageBtn.setDisable(false);
+            }
         } else {
             showAlert("Error", "Failed to send message.");
+            
+            // Reset send button
+            if (sendMessageBtn != null) {
+                sendMessageBtn.setText("Send");
+                sendMessageBtn.setDisable(false);
+            }
         }
     } catch (Exception e) {
         System.err.println("Error sending message: " + e.getMessage());
         showAlert("Error", "An error occurred while sending the message: " + e.getMessage());
+        
+        // Reset send button on error
+        if (sendMessageBtn != null) {
+            sendMessageBtn.setText("Send");
+            sendMessageBtn.setDisable(false);
+        }
     }
 }
 
@@ -2108,14 +2085,22 @@ private void toggleAutomation() {
         boolean isEnabled = automationToggle != null ? automationToggle.isSelected() : false;
         AdminMessageService.setAutomationEnabled(currentUserId, isEnabled);
         
+        // Update toggle button text and styling
+        if (automationToggle != null) {
+            automationToggle.setText(isEnabled ? "ON" : "OFF");
+            automationToggle.setStyle(isEnabled ? 
+                "-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;" : 
+                "-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+        }
+        
         String status = isEnabled ? "enabled" : "disabled";
-        showAlert("Info", "Automated replies " + status + " for this user.");
+        showAlert("Info", "Automated replies " + status + " for this user.\n" +
+                         "Bot will " + (isEnabled ? "automatically respond" : "NOT respond") + " to new messages.");
     } catch (Exception e) {
         System.err.println("Error toggling automation: " + e.getMessage());
         showAlert("Error", "Failed to toggle automation: " + e.getMessage());
     }
 }
-
 private void updateUnreadCount() {
     try {
         int unreadCount = AdminMessageService.getUnreadMessageCount();
@@ -2144,17 +2129,40 @@ private void refreshMessages() {
         showAlert("Error", "Failed to refresh messages: " + e.getMessage());
     }
 }
-@FXML
-private void clearMessageSearch() {
+
+private void initializeMessageComponents() {
     try {
-        if (messageSearchField != null) {
-            messageSearchField.clear();
+        // Style the send button
+        if (sendMessageBtn != null) {
+            sendMessageBtn.setText("Send");
+            sendMessageBtn.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
+                                   "-fx-font-weight: bold; -fx-padding: 10 20; " +
+                                   "-fx-background-radius: 5; -fx-cursor: hand;");
+            
+            // Add hover effect
+            sendMessageBtn.setOnMouseEntered(e -> 
+                sendMessageBtn.setStyle("-fx-background-color: #0056b3; -fx-text-fill: white; " +
+                                       "-fx-font-weight: bold; -fx-padding: 10 20; " +
+                                       "-fx-background-radius: 5; -fx-cursor: hand;"));
+            
+            sendMessageBtn.setOnMouseExited(e -> 
+                sendMessageBtn.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
+                                       "-fx-font-weight: bold; -fx-padding: 10 20; " +
+                                       "-fx-background-radius: 5; -fx-cursor: hand;"));
         }
+        
+        // Style the automation toggle initially
+        if (automationToggle != null) {
+            automationToggle.setText("OFF");
+            automationToggle.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; " +
+                                     "-fx-font-weight: bold; -fx-padding: 8 16; " +
+                                     "-fx-background-radius: 5; -fx-cursor: hand;");
+        }
+        
     } catch (Exception e) {
-        System.err.println("Error clearing message search: " + e.getMessage());
+        System.err.println("Error initializing message components: " + e.getMessage());
     }
 }
-
 
     private void loadTransactionsData() {
         try {

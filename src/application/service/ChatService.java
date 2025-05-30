@@ -58,11 +58,11 @@ public class ChatService {
     public static void sendMessageOldWay(String messageText) {
         try {
             Connection conn = DatabaseConnection.getConnection();
-            
+
             // Insert user message
             String sql = "INSERT INTO messages (user_id, message_text, sender_type) VALUES (?, ?, 'user')";
             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            
+
             int userId = 0;
             if (UserSession.getInstance().isLoggedIn()) {
                 userId = UserSession.getInstance().getCurrentUser().getId();
@@ -72,23 +72,24 @@ public class ChatService {
             }
             stmt.setString(2, messageText);
             stmt.executeUpdate();
-            
+
             // Get the message ID
             ResultSet rs = stmt.getGeneratedKeys();
             int messageId = 0;
             if (rs.next()) {
                 messageId = rs.getInt(1);
             }
-            
+
             // Check if automation is enabled before sending bot reply
             if (userId > 0 && AdminMessageService.isAutomationEnabled(userId)) {
                 System.out.println("Automation enabled for user " + userId + ", sending bot reply");
+                // Use the same bot reply generator
                 String botReply = generateBotReply(messageText);
-                sendBotReply(messageId, botReply);
+                sendBotReply(userId, messageId, botReply);
             } else {
                 System.out.println("Automation disabled for user " + userId + ", no bot reply sent");
             }
-            
+
         } catch (SQLException e) {
             System.err.println("Error sending message: " + e.getMessage());
             e.printStackTrace();
@@ -111,7 +112,7 @@ public class ChatService {
         }
     }
     
-    private static String generateBotReply(String userMessage) {
+    public static String generateBotReply(String userMessage) {
         String message = userMessage.toLowerCase();
 
         if (containsBadWords(message)) {
@@ -239,39 +240,31 @@ public class ChatService {
         return false;
     }
     
-    private static void sendBotReply(int replyToId, String replyText) {
+    private static void sendBotReply(int userId, int replyToId, String replyText) {
         try {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "INSERT INTO messages (user_id, message_text, sender_type, reply_to) VALUES (?, ?, 'bot', ?)";
+            // Add Statement.RETURN_GENERATED_KEYS here too
             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
-            if (UserSession.getInstance().isLoggedIn()) {
-                stmt.setInt(1, UserSession.getInstance().getCurrentUser().getId());
-            } else {
-                stmt.setNull(1, Types.INTEGER);
-            }
+            stmt.setInt(1, userId);
             stmt.setString(2, replyText);
             stmt.setInt(3, replyToId);
             stmt.executeUpdate();
             
             // Create notification for bot reply
-            if (UserSession.getInstance().isLoggedIn()) {
-                ResultSet rs = stmt.getGeneratedKeys();
-                if (rs.next()) {
-                    int messageId = rs.getInt(1);
-                    NotificationService.createMessageNotification(
-                        UserSession.getInstance().getCurrentUser().getId(),
-                        "bot",
-                        messageId
-                    );
-                }
+            ResultSet rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                int messageId = rs.getInt(1);
+                // This will now show "Automated Response 🤖"
+                NotificationService.createMessageNotification(userId, "bot", messageId);
             }
             
         } catch (SQLException e) {
             System.err.println("Error sending bot reply: " + e.getMessage());
             e.printStackTrace();
         }
-    }
+    } 
     
     // Get messages for current user
     public static List<Message> getUserMessages() {

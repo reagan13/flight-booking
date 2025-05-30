@@ -3,6 +3,7 @@ package application.service;
 import application.model.Message;
 import application.database.DatabaseConnection;
 import javafx.collections.FXCollections;
+import application.service.ChatService;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
@@ -107,27 +108,41 @@ public class AdminMessageService {
         return message;
     }
     
-    public static boolean sendMessage(int userId, String messageText, String senderType, Integer replyTo) {
-        String query = "INSERT INTO messages (user_id, message_text, sender_type, reply_to, created_at) VALUES (?, ?, ?, ?, NOW())";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
+    public static boolean sendMessage(int userId, String messageText, String senderType, Integer replyToId) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO messages (user_id, message_text, sender_type, reply_to) VALUES (?, ?, ?, ?)";
+            // ADD THIS LINE - that's the only issue
+            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
             stmt.setInt(1, userId);
             stmt.setString(2, messageText);
             stmt.setString(3, senderType);
-            if (replyTo != null) {
-                stmt.setInt(4, replyTo);
+            if (replyToId != null) {
+                stmt.setInt(4, replyToId);
             } else {
                 stmt.setNull(4, Types.INTEGER);
             }
-            
+
             int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-            
+
+            if (rowsAffected > 0) {
+                ResultSet generatedKeys = stmt.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    int messageId = generatedKeys.getInt(1);
+
+                    // Create notification
+                    if ("admin".equals(senderType) || "bot".equals(senderType)) {
+                        NotificationService.createMessageNotification(userId, senderType, messageId);
+                    }
+                }
+                return true;
+            }
+
+            return false;
+
         } catch (SQLException e) {
             System.err.println("Error sending message: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -193,6 +208,7 @@ public class AdminMessageService {
         }
     }
     
+    
     public static void sendAutomatedReply(int userId, String userMessage) {
         // Check if automation is enabled for this user
         if (!isAutomationEnabled(userId)) {
@@ -200,7 +216,8 @@ public class AdminMessageService {
             return; // Don't send automated reply if disabled
         }
         
-        String automatedResponse = generateAutomatedResponse(userMessage);
+        // Use ChatService's bot response generator (more comprehensive)
+        String automatedResponse = ChatService.generateBotReply(userMessage);
         boolean sent = sendMessage(userId, automatedResponse, "bot", null);
         
         if (sent) {
@@ -243,24 +260,7 @@ public class AdminMessageService {
         }
     }
     
-    
-    private static String generateAutomatedResponse(String userMessage) {
-        String message = userMessage.toLowerCase();
-        
-        if (message.contains("booking") || message.contains("reservation")) {
-            return "Hi! Thank you for contacting us about your booking. Our support team will assist you shortly. You can check your booking status in the 'My Bookings' section of your account.";
-        } else if (message.contains("cancel") || message.contains("refund")) {
-            return "We understand you'd like to cancel or get a refund. Please note that cancellation policies vary by fare type. An admin will review your request and get back to you soon.";
-        } else if (message.contains("flight") || message.contains("schedule")) {
-            return "For flight-related inquiries, please check our real-time flight status or contact our support team. We're here to help with any schedule changes or flight information.";
-        } else if (message.contains("payment") || message.contains("charge")) {
-            return "For payment-related concerns, please provide your booking reference and we'll investigate immediately. Our team will verify the transaction details for you.";
-        } else if (message.contains("help") || message.contains("support")) {
-            return "We're here to help! Please describe your issue in detail and our support team will assist you. You can also check our FAQ section for common questions.";
-        } else {
-            return "Thank you for your message! Our support team has received your inquiry and will respond within 24 hours. For urgent matters, please call our hotline.";
-        }
-    }
+   
     
     public static int getUnreadMessageCount() {
         String query = "SELECT COUNT(*) FROM messages WHERE sender_type = 'user' AND is_read = FALSE";
