@@ -150,22 +150,99 @@ public class AdminMessageService {
     }
     
     public static boolean isAutomationEnabled(int userId) {
-        return automationSettings.getOrDefault(userId, true); // Default is enabled
+        String query = "SELECT automation_enabled FROM users WHERE id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getBoolean("automation_enabled");
+            } else {
+                // User not found, default to enabled
+                return true;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error checking automation setting: " + e.getMessage());
+            return true; // Default to enabled on error
+        }
     }
     
     public static void setAutomationEnabled(int userId, boolean enabled) {
-        automationSettings.put(userId, enabled);
-        System.out.println("Automation for user " + userId + " set to: " + enabled);
+        String query = "UPDATE users SET automation_enabled = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setBoolean(1, enabled);
+            stmt.setInt(2, userId);
+            
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Automation setting updated for user " + userId + ": " + enabled);
+            } else {
+                System.err.println("User not found with ID: " + userId);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error updating automation setting: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     public static void sendAutomatedReply(int userId, String userMessage) {
+        // Check if automation is enabled for this user
         if (!isAutomationEnabled(userId)) {
+            System.out.println("Automation disabled for user " + userId + ", skipping automated reply");
             return; // Don't send automated reply if disabled
         }
         
         String automatedResponse = generateAutomatedResponse(userMessage);
-        sendMessage(userId, automatedResponse, "bot", null);
+        boolean sent = sendMessage(userId, automatedResponse, "bot", null);
+        
+        if (sent) {
+            System.out.println("Automated reply sent to user " + userId);
+        } else {
+            System.err.println("Failed to send automated reply to user " + userId);
+        }
     }
+    
+    public static boolean handleIncomingUserMessage(int userId, String messageText) {
+        try {
+            // First, save the user's message
+            boolean messageSaved = sendMessage(userId, messageText, "user", null);
+
+            if (messageSaved) {
+                // Check if automation is enabled for this user
+                if (isAutomationEnabled(userId)) {
+                    System.out.println("Automation enabled for user " + userId + ", sending auto-reply");
+                    // Send automated reply after a small delay to make it feel more natural
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1000); // 1 second delay
+                            sendAutomatedReply(userId, messageText);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }).start();
+                } else {
+                    System.out.println("Automation disabled for user " + userId + ", no auto-reply sent");
+                }
+                return true;
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            System.err.println("Error handling incoming user message: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
     
     private static String generateAutomatedResponse(String userMessage) {
         String message = userMessage.toLowerCase();

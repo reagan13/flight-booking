@@ -62,10 +62,20 @@ public class DatabaseConnection {
                     + "age INT,"
                     + "address VARCHAR(255) NOT NULL,"
                     + "user_type ENUM('regular', 'admin') DEFAULT 'regular',"
+                    + "automation_enabled BOOLEAN DEFAULT TRUE," // ADD THIS LINE
                     + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                     + ")";
 
             stmt.execute(createUsersTable);
+
+            // For existing databases, add the column if it doesn't exist
+            try {
+                String addColumnQuery = "ALTER TABLE users ADD COLUMN automation_enabled BOOLEAN DEFAULT TRUE";
+                stmt.execute(addColumnQuery);
+            } catch (SQLException e) {
+                // Column already exists, which is fine
+            }
+
             System.out.println("Users table initialized successfully!");
 
         } catch (SQLException e) {
@@ -73,6 +83,7 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
     }
+    
     
     /**
      * Create the flights table if it doesn't exist

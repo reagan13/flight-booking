@@ -1,6 +1,7 @@
 package application.service;
 
 import application.database.DatabaseConnection;
+import application.service.AdminMessageService; // Add this import
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -28,8 +29,33 @@ public class ChatService {
         public LocalDateTime getTimestamp() { return timestamp; }
     }
     
-    // Send user message and get bot reply
+    // Updated sendMessage method with automation check
     public static void sendMessage(String messageText) {
+        try {
+            if (!UserSession.getInstance().isLoggedIn()) {
+                System.err.println("User not logged in, cannot send message");
+                return;
+            }
+            
+            int userId = UserSession.getInstance().getCurrentUser().getId();
+            
+            // Use AdminMessageService to handle the message with automation check
+            boolean messageSent = AdminMessageService.handleIncomingUserMessage(userId, messageText);
+            
+            if (messageSent) {
+                System.out.println("Message sent successfully by user " + userId);
+            } else {
+                System.err.println("Failed to send message for user " + userId);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error sending message: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // Keep this method for backward compatibility, but add automation check
+    public static void sendMessageOldWay(String messageText) {
         try {
             Connection conn = DatabaseConnection.getConnection();
             
@@ -37,8 +63,10 @@ public class ChatService {
             String sql = "INSERT INTO messages (user_id, message_text, sender_type) VALUES (?, ?, 'user')";
             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
+            int userId = 0;
             if (UserSession.getInstance().isLoggedIn()) {
-                stmt.setInt(1, UserSession.getInstance().getCurrentUser().getId());
+                userId = UserSession.getInstance().getCurrentUser().getId();
+                stmt.setInt(1, userId);
             } else {
                 stmt.setNull(1, Types.INTEGER);
             }
@@ -52,13 +80,34 @@ public class ChatService {
                 messageId = rs.getInt(1);
             }
             
-            // Generate and send bot reply (if no admin intervenes)
-            String botReply = generateBotReply(messageText);
-            sendBotReply(messageId, botReply);
+            // Check if automation is enabled before sending bot reply
+            if (userId > 0 && AdminMessageService.isAutomationEnabled(userId)) {
+                System.out.println("Automation enabled for user " + userId + ", sending bot reply");
+                String botReply = generateBotReply(messageText);
+                sendBotReply(messageId, botReply);
+            } else {
+                System.out.println("Automation disabled for user " + userId + ", no bot reply sent");
+            }
             
         } catch (SQLException e) {
             System.err.println("Error sending message: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    
+    // Method to check if automation is enabled for current user
+    public static boolean isAutomationEnabled() {
+        try {
+            if (!UserSession.getInstance().isLoggedIn()) {
+                return true; // Default for guest users
+            }
+            
+            int userId = UserSession.getInstance().getCurrentUser().getId();
+            return AdminMessageService.isAutomationEnabled(userId);
+            
+        } catch (Exception e) {
+            System.err.println("Error checking automation status: " + e.getMessage());
+            return true; // Default to enabled on error
         }
     }
     
@@ -71,17 +120,6 @@ public class ChatService {
                     "Our team is here to help resolve any issues you're experiencing. Let's work together to find a solution.\n\n"
                     +
                     "How can we assist you with your travel needs today? 🤝";
-        }
-
-        // Automated Response 1: Booking & Reservations
-        if (message.contains("book") || message.contains("reservation") || message.contains("reserve")) {
-            return "🛫 I can help you book a flight! Here's how:\n\n" +
-                    "1. Go to the Home tab\n" +
-                    "2. Search for your destination\n" +
-                    "3. Select your preferred flight\n" +
-                    "4. Fill in passenger details\n" +
-                    "5. Complete payment\n\n" +
-                    "Need help with a specific route? Just tell me where you want to go! ✈️";
         }
 
         // Automated Response 1: Booking & Reservations
@@ -267,5 +305,17 @@ public class ChatService {
         }
         
         return messages;
+    }
+    
+    // New method to get automation status text for UI
+    public static String getAutomationStatusText() {
+        boolean isEnabled = isAutomationEnabled();
+        return isEnabled ? "🤖 Auto-replies: ON" : "🤖 Auto-replies: OFF (Admin disabled)";
+    }
+    
+    // New method to get automation status color for UI
+    public static String getAutomationStatusColor() {
+        boolean isEnabled = isAutomationEnabled();
+        return isEnabled ? "green" : "red";
     }
 }
