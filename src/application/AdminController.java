@@ -1,8 +1,10 @@
 package application;
 
+import application.model.Booking;
 import application.model.Flight;
 import application.model.User;
 import application.service.AdminFlightService;
+import application.service.AdminBookingService;
 import application.service.AdminService;
 import application.service.UserService;
 import application.service.UserSession;
@@ -47,6 +49,8 @@ import java.util.ResourceBundle;
 public class AdminController implements Initializable {
     @FXML
     private TextField flightSearchField;
+    @FXML private TextField bookingSearchField;
+
 
     
     // ALL LABELS - MATCH EXACTLY WITH FXML fx:id
@@ -1381,15 +1385,330 @@ private void clearFlightSearch() {
     
     
     private void loadBookingsData() {
-        try {
-            System.out.println("Loading bookings data...");
-            bookingsTable.getItems().clear();
-            bookingsTable.getColumns().clear();
-            System.out.println("Bookings data loaded successfully");
-        } catch (Exception e) {
-            System.err.println("Error loading bookings: " + e.getMessage());
-        }
+    try {
+        System.out.println("Loading bookings data...");
+        bookingsTable.getItems().clear();
+        bookingsTable.getColumns().clear();
+
+        // Create columns
+        TableColumn<Booking, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        idCol.setPrefWidth(50);
+
+        TableColumn<Booking, String> refCol = new TableColumn<>("Reference");
+        refCol.setCellValueFactory(new PropertyValueFactory<>("bookingReference"));
+        refCol.setPrefWidth(100);
+
+        TableColumn<Booking, String> customerCol = new TableColumn<>("Customer");
+        customerCol.setCellValueFactory(new PropertyValueFactory<>("customerName"));
+        customerCol.setPrefWidth(120);
+
+        TableColumn<Booking, String> flightCol = new TableColumn<>("Flight");
+        flightCol.setCellValueFactory(new PropertyValueFactory<>("flightInfo"));
+        flightCol.setPrefWidth(200);
+
+        TableColumn<Booking, String> seatCol = new TableColumn<>("Seat");
+        seatCol.setCellValueFactory(new PropertyValueFactory<>("seatNumber"));
+        seatCol.setPrefWidth(60);
+
+        TableColumn<Booking, String> dateCol = new TableColumn<>("Booking Date");
+        dateCol.setCellValueFactory(new PropertyValueFactory<>("formattedBookingDate"));
+        dateCol.setPrefWidth(130);
+
+        TableColumn<Booking, String> amountCol = new TableColumn<>("Amount");
+        amountCol.setCellValueFactory(new PropertyValueFactory<>("formattedAmount"));
+        amountCol.setPrefWidth(80);
+
+        TableColumn<Booking, String> paymentStatusCol = new TableColumn<>("Payment");
+        paymentStatusCol.setCellValueFactory(new PropertyValueFactory<>("paymentStatus"));
+        paymentStatusCol.setPrefWidth(80);
+
+        // Status column with colored text
+        TableColumn<Booking, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusCol.setPrefWidth(90);
+        statusCol.setCellFactory(column -> new TableCell<Booking, String>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status.toUpperCase());
+                    Booking booking = getTableView().getItems().get(getIndex());
+                    setStyle("-fx-text-fill: " + booking.getStatusColor() + "; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        // Actions column
+        TableColumn<Booking, Void> actionsCol = new TableColumn<>("Actions");
+        actionsCol.setPrefWidth(200);
+        actionsCol.setCellFactory(param -> new TableCell<Booking, Void>() {
+            private final Button viewBtn = new Button("View");
+            private final Button statusBtn = new Button("Status");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox buttonsBox = new HBox(5);
+
+            {
+                viewBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 8;");
+                statusBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 8;");
+                deleteBtn.setStyle("-fx-font-size: 11px; -fx-padding: 4 8;");
+                buttonsBox.getChildren().addAll(viewBtn, statusBtn, deleteBtn);
+                buttonsBox.setPadding(new Insets(3));
+
+                viewBtn.setOnAction(event -> {
+                    Booking booking = getTableView().getItems().get(getIndex());
+                    showBookingDetails(booking);
+                });
+
+                statusBtn.setOnAction(event -> {
+                    Booking booking = getTableView().getItems().get(getIndex());
+                    changeBookingStatus(booking);
+                });
+
+                deleteBtn.setOnAction(event -> {
+                    Booking booking = getTableView().getItems().get(getIndex());
+                    deleteBooking(booking);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(buttonsBox);
+                }
+            }
+        });
+
+        bookingsTable.getColumns().addAll(idCol, refCol, customerCol, flightCol, seatCol, 
+                dateCol, amountCol, paymentStatusCol, statusCol, actionsCol);
+
+        // Load data
+        ObservableList<Booking> bookings = AdminBookingService.getAllBookings();
+        bookingsTable.setItems(bookings);
+
+        // Setup search functionality
+        setupBookingSearch(bookings);
+
+        System.out.println("Bookings data loaded successfully: " + bookings.size() + " bookings");
+
+    } catch (Exception e) {
+        System.err.println("Error loading bookings: " + e.getMessage());
+        e.printStackTrace();
     }
+}
+
+private void setupBookingSearch(ObservableList<Booking> allBookings) {
+    if (bookingSearchField != null) {
+        bookingSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.trim().isEmpty()) {
+                bookingsTable.setItems(allBookings);
+            } else {
+                ObservableList<Booking> filteredBookings = FXCollections.observableArrayList();
+                String searchTerm = newValue.toLowerCase().trim();
+                
+                for (Booking booking : allBookings) {
+                    if (matchesBookingSearchTerm(booking, searchTerm)) {
+                        filteredBookings.add(booking);
+                    }
+                }
+                
+                bookingsTable.setItems(filteredBookings);
+            }
+        });
+    }
+}
+
+private boolean matchesBookingSearchTerm(Booking booking, String searchTerm) {
+    return (booking.getBookingReference() != null && booking.getBookingReference().toLowerCase().contains(searchTerm)) ||
+           (booking.getCustomerName() != null && booking.getCustomerName().toLowerCase().contains(searchTerm)) ||
+           (booking.getCustomerEmail() != null && booking.getCustomerEmail().toLowerCase().contains(searchTerm)) ||
+           (booking.getFlightInfo() != null && booking.getFlightInfo().toLowerCase().contains(searchTerm)) ||
+           (booking.getStatus() != null && booking.getStatus().toLowerCase().contains(searchTerm)) ||
+           (booking.getSeatNumber() != null && booking.getSeatNumber().toLowerCase().contains(searchTerm)) ||
+           String.valueOf(booking.getId()).contains(searchTerm);
+}
+
+@FXML
+private void clearBookingSearch() {
+    if (bookingSearchField != null) {
+        bookingSearchField.clear();
+    }
+}
+
+private void showBookingDetails(Booking booking) {
+    try {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Booking Details");
+        dialog.setHeaderText("Booking Information - " + booking.getBookingReference());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(20);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+
+        // Set column constraints
+        ColumnConstraints labelCol = new ColumnConstraints();
+        labelCol.setPercentWidth(30);
+        ColumnConstraints valueCol1 = new ColumnConstraints();
+        valueCol1.setPercentWidth(35);
+        ColumnConstraints labelCol2 = new ColumnConstraints();
+        labelCol2.setPercentWidth(30);
+        ColumnConstraints valueCol2 = new ColumnConstraints();
+        valueCol2.setPercentWidth(35);
+        grid.getColumnConstraints().addAll(labelCol, valueCol1, labelCol2, valueCol2);
+
+        String headerStyle = "-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #2c3e50;";
+        String labelStyle = "-fx-font-weight: bold; -fx-text-fill: #34495e;";
+        String valueStyle = "-fx-text-fill: #2c3e50; -fx-font-size: 14px;";
+
+        int currentRow = 0;
+
+        // Booking Information
+        Label bookingHeader = new Label("📋 Booking Information");
+        bookingHeader.setStyle(headerStyle);
+        grid.add(bookingHeader, 0, currentRow++, 4, 1);
+
+        grid.add(new Label("Booking ID:"), 0, currentRow);
+        grid.add(new Label(String.valueOf(booking.getId())), 1, currentRow);
+        grid.add(new Label("Reference:"), 2, currentRow);
+        grid.add(new Label(booking.getBookingReference()), 3, currentRow++);
+
+        grid.add(new Label("Status:"), 0, currentRow);
+        Label statusLabel = new Label(booking.getStatus().toUpperCase());
+        statusLabel.setStyle(valueStyle + " -fx-text-fill: " + booking.getStatusColor() + "; -fx-font-weight: bold;");
+        grid.add(statusLabel, 1, currentRow);
+        grid.add(new Label("Seat Number:"), 2, currentRow);
+        grid.add(new Label(booking.getSeatNumber()), 3, currentRow++);
+
+        // Customer Information
+        currentRow++;
+        Label customerHeader = new Label("👤 Customer Information");
+        customerHeader.setStyle(headerStyle);
+        grid.add(customerHeader, 0, currentRow++, 4, 1);
+
+        grid.add(new Label("Name:"), 0, currentRow);
+        grid.add(new Label(booking.getCustomerName()), 1, currentRow);
+        grid.add(new Label("Email:"), 2, currentRow);
+        grid.add(new Label(booking.getCustomerEmail() != null ? booking.getCustomerEmail() : "N/A"), 3, currentRow++);
+
+        // Flight Information
+        currentRow++;
+        Label flightHeader = new Label("✈ Flight Information");
+        flightHeader.setStyle(headerStyle);
+        grid.add(flightHeader, 0, currentRow++, 4, 1);
+
+        grid.add(new Label("Flight:"), 0, currentRow);
+        grid.add(new Label(booking.getFlightInfo()), 1, currentRow, 3, 1);
+        currentRow++;
+
+        // Payment Information
+        currentRow++;
+        Label paymentHeader = new Label("💳 Payment Information");
+        paymentHeader.setStyle(headerStyle);
+        grid.add(paymentHeader, 0, currentRow++, 4, 1);
+
+        grid.add(new Label("Amount:"), 0, currentRow);
+        grid.add(new Label(booking.getFormattedAmount()), 1, currentRow);
+        grid.add(new Label("Payment Status:"), 2, currentRow);
+        grid.add(new Label(booking.getPaymentStatus() != null ? booking.getPaymentStatus() : "N/A"), 3, currentRow++);
+
+        grid.add(new Label("Payment Method:"), 0, currentRow);
+        grid.add(new Label(booking.getPaymentMethod() != null ? booking.getPaymentMethod() : "N/A"), 1, currentRow);
+        grid.add(new Label("Booking Date:"), 2, currentRow);
+        grid.add(new Label(booking.getFormattedBookingDate()), 3, currentRow++);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefSize(700, 400);
+        dialog.getDialogPane().setStyle("-fx-background-color: #f8f9fa;");
+
+        dialog.showAndWait();
+
+    } catch (Exception e) {
+        System.err.println("Error showing booking details: " + e.getMessage());
+        e.printStackTrace();
+        showAlert("Error", "Unable to display booking details: " + e.getMessage());
+    }
+}
+
+private void changeBookingStatus(Booking booking) {
+    try {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Change Booking Status");
+        dialog.setHeaderText("Change status for booking: " + booking.getBookingReference());
+
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        Label currentStatusLabel = new Label("Current Status: " + booking.getStatus().toUpperCase());
+        currentStatusLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        ComboBox<String> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll("pending", "confirmed", "cancelled", "completed", "payment_failed");
+        statusBox.setValue(booking.getStatus());
+        statusBox.setPrefWidth(200);
+
+        Label noteLabel = new Label("Note: Changing to 'confirmed' will also mark payment as 'paid'");
+        noteLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #6c757d;");
+
+        content.getChildren().addAll(currentStatusLabel, new Label("New Status:"), statusBox, noteLabel);
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                return statusBox.getValue();
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(newStatus -> {
+            if (!newStatus.equals(booking.getStatus())) {
+                if (AdminBookingService.updateBookingStatus(booking.getId(), newStatus)) {
+                    showAlert("Success", "Booking status updated successfully!");
+                    loadBookingsData(); // Refresh the table
+                } else {
+                    showAlert("Error", "Failed to update booking status.");
+                }
+            }
+        });
+
+    } catch (Exception e) {
+        showAlert("Error", "An unexpected error occurred: " + e.getMessage());
+    }
+}
+
+private void deleteBooking(Booking booking) {
+    try {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Delete Booking");
+        alert.setHeaderText("Are you sure?");
+        alert.setContentText("Delete booking: " + booking.getBookingReference()
+                + "?\n\nThis action cannot be undone and will also delete associated transactions.");
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                if (AdminBookingService.deleteBooking(booking.getId())) {
+                    showAlert("Success", "Booking deleted successfully!");
+                    loadBookingsData();
+                } else {
+                    showAlert("Error", "Failed to delete booking.");
+                }
+            }
+        });
+
+    } catch (Exception e) {
+        showAlert("Error", "Error deleting booking: " + e.getMessage());
+    }
+}
+
     
     private void loadMessagesData() {
         try {

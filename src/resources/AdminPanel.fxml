@@ -136,9 +136,14 @@
             </VBox>
             
             <!-- BOOKINGS CONTENT -->
-            <VBox fx:id="bookingsContent" visible="false" spacing="15">
-                <Label text="Bookings Management" style="-fx-font-size: 20px;" />
-                <TableView fx:id="bookingsTable" />
+            <VBox fx:id="bookingsContent" visible="false" spacing="15" style="-fx-padding: 20;">
+                <HBox spacing="10" style="-fx-alignment: center-left;">
+                    <Label text="Bookings Management" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="bookingSearchField" promptText="Search bookings..." style="-fx-pref-width: 200px;" />
+                    <Button text="Clear" onAction="#clearBookingSearch" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8 15;" />
+                </HBox>
+                <TableView fx:id="bookingsTable" VBox.vgrow="ALWAYS" style="-fx-background-color: white;" />
             </VBox>
             
             <!-- MESSAGES CONTENT -->
