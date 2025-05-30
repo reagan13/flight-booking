@@ -914,22 +914,23 @@ public class AdminController implements Initializable {
             dialog.getDialogPane().setContent(grid);
 
             // Add action buttons
-            ButtonType editButtonType = new ButtonType("Edit Flight", ButtonBar.ButtonData.OTHER);
+            // ButtonType editButtonType = new ButtonType("Edit Flight", ButtonBar.ButtonData.OTHER);
             ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
-            dialog.getDialogPane().getButtonTypes().addAll(editButtonType, closeButtonType);
+            dialog.getDialogPane().getButtonTypes().addAll( closeButtonType);
 
             // Set dialog size
             dialog.getDialogPane().setPrefSize(650, 500);
             dialog.getDialogPane().setStyle("-fx-background-color: #f8f9fa;");
 
             // Handle button actions
-            dialog.setResultConverter(buttonType -> {
-                if (buttonType == editButtonType) {
-                    dialog.close();
-                    editFlight(flight);
-                }
-                return null;
-            });
+            // dialog.setResultConverter(buttonType -> {
+            //     if (buttonType == editButtonType) {
+            //         dialog.close();
+            //         editFlight(flight);
+                    
+            //     }
+            //     return null;
+            // });
 
             dialog.showAndWait();
 
