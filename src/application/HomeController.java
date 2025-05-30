@@ -35,6 +35,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import application.ui.BookingsScreenBuilder;
+import application.ui.MessagesScreenBuilder;
 
 
 import java.time.LocalDateTime;
@@ -48,7 +49,8 @@ public class HomeController {
     private NotificationScreenBuilder notificationScreenBuilder;
     private HomeScreenBuilder homeScreenBuilder;
     private BookingsScreenBuilder bookingsScreenBuilder;
-    
+    private MessagesScreenBuilder messagesScreenBuilder;
+
 
 
     @FXML private VBox timeScreen;
@@ -410,137 +412,36 @@ public class HomeController {
     
     
 
-   private void setupMessagesScreen() {
-    if (messagesContent == null) {
-        System.err.println("messagesContent is null");
-        return;
-    }
-    
-    messagesContent.getChildren().clear();
-    messagesContent.setStyle("-fx-background-color: #f5f5f5; -fx-padding: 0;");
-    
-    // Chat header
-    HBox header = new HBox();
-    header.setAlignment(Pos.CENTER_LEFT);
-    header.setStyle("-fx-background-color: #2196F3; -fx-padding: 15;");
-    
-    Label headerTitle = new Label("💬 Customer Support");
-    headerTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
-    
-    Label statusLabel = new Label("🟢 Online");
-    statusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #E8F5E8;");
-    
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-    
-    header.getChildren().addAll(headerTitle, spacer, statusLabel);
-    
-    // Chat messages container
-    ScrollPane chatScroll = new ScrollPane();
-    chatScroll.setFitToWidth(true);
-    chatScroll.setStyle("-fx-background-color: #f5f5f5; -fx-background: #f5f5f5;");
-    
-    chatContainer = new VBox(10);
-    chatContainer.setStyle("-fx-padding: 15; -fx-background-color: #f5f5f5;");
-    chatScroll.setContent(chatContainer);
-    
-    VBox.setVgrow(chatScroll, Priority.ALWAYS);
-    
-    // Message input area
-    HBox inputArea = new HBox(10);
-    inputArea.setAlignment(Pos.CENTER);
-    inputArea.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;");
-    
-    messageInput = new TextField();
-    messageInput.setPromptText("Type your message...");
-    messageInput.setStyle("-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #ddd; -fx-border-width: 1;");
-    HBox.setHgrow(messageInput, Priority.ALWAYS);
-    
-    Button sendButton = new Button("Send");
-    sendButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 12 20; -fx-background-radius: 20;");
-    
-    inputArea.getChildren().addAll(messageInput, sendButton);
-    
-    // Send message handlers
-    sendButton.setOnAction(e -> sendMessage());
-    messageInput.setOnAction(e -> sendMessage());
-    
-    messagesContent.getChildren().addAll(header, chatScroll, inputArea);
-    
-    // Load existing messages
-    loadMessages();
-    
-    // Auto-scroll to bottom
-    Platform.runLater(() -> chatScroll.setVvalue(1.0));
-}
-
-private void sendMessage() {
-    String messageText = messageInput.getText().trim();
-    if (messageText.isEmpty()) return;
-    
-    // Clear input
-    messageInput.clear();
-    
-    // Send message through service
-    ChatService.sendMessage(messageText);
-    
-    // Reload messages
-    loadMessages();
-    
-    // Auto-scroll to bottom
-    Platform.runLater(() -> {
-        ScrollPane scroll = (ScrollPane) messagesContent.getChildren().get(1);
-        scroll.setVvalue(1.0);
-    });
-}
-
-private void loadMessages() {
-    chatContainer.getChildren().clear();
-    
-    List<ChatService.Message> messages = ChatService.getUserMessages();
-    
-    if (messages.isEmpty()) {
-        // Show welcome message
-        VBox welcomeBox = createMessageBubble("👋 Hello! Welcome to JetSetGo customer support. How can I help you today?", "bot");
-        chatContainer.getChildren().add(welcomeBox);
-    } else {
-        for (ChatService.Message message : messages) {
-            VBox bubble = createMessageBubble(message.getText(), message.getSenderType());
-            chatContainer.getChildren().add(bubble);
+    private void setupMessagesScreen() {
+        if (messagesContent == null) {
+            System.err.println("messagesContent is null, skipping messages setup");
+            return;
         }
+
+        // Initialize builder if not already done
+        if (messagesScreenBuilder == null) {
+            messagesScreenBuilder = new MessagesScreenBuilder(new MessagesScreenBuilder.MessagesEventHandler() {
+                @Override
+                public void onMessageSent(String message) {
+                    // Auto-scroll to bottom after sending message
+                    Platform.runLater(() -> {
+                        if (messagesContent.getChildren().size() > 1) {
+                            ScrollPane chatScroll = (ScrollPane) messagesContent.getChildren().get(1);
+                            chatScroll.setVvalue(1.0);
+                        }
+                    });
+                }
+
+                @Override
+                public void onRefreshMessages() {
+                    setupMessagesScreen(); // Refresh the entire messages screen
+                }
+            });
+        }
+
+        messagesScreenBuilder.setupMessagesContent(messagesContent);
     }
-}
-
-private VBox createMessageBubble(String text, String senderType) {
-    VBox bubble = new VBox(5);
-
-    boolean isUser = "user".equals(senderType);
-    bubble.setAlignment(isUser ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-
-    Label messageLabel = new Label(text);
-    messageLabel.setWrapText(true);
-    messageLabel.setMaxWidth(250);
-
-    if (isUser) {
-        messageLabel.setStyle(
-                "-fx-background-color: #2196F3; -fx-text-fill: white; -fx-padding: 12; -fx-background-radius: 18 18 4 18; -fx-font-size: 13px;");
-    } else {
-        String bgColor = "bot".equals(senderType) ? "#e0e0e0" : "#4CAF50";
-        String textColor = "bot".equals(senderType) ? "#333" : "white";
-        messageLabel.setStyle("-fx-background-color: " + bgColor + "; -fx-text-fill: " + textColor
-                + "; -fx-padding: 12; -fx-background-radius: 18 18 18 4; -fx-font-size: 13px;");
-    }
-
-    Label timeLabel = new Label(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
-    timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #999;");
-    timeLabel.setAlignment(isUser ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-
-    bubble.getChildren().addAll(messageLabel, timeLabel);
-    return bubble;
-}
-
-
-
+    
 private void handleLogout() {
     UserSession.getInstance().logout();
 
