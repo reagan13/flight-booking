@@ -6,8 +6,7 @@ import application.service.UserSession;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+
 
 public class ProfileScreenBuilder {
     

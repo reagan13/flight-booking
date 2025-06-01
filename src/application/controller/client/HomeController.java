@@ -657,10 +657,7 @@ public class HomeController extends BaseController {
             "Seat: " + booking.getSeatNumber() + "\n" +
             "Amount: ₱" + String.format("%.2f", booking.getAmount()));
     }
-    
-    private void downloadTicket(BookingHistoryService.BookingHistory booking) {
-        showMobileAlert("Download", "Ticket download feature will be available soon!");
-    }
+   
     
     // UTILITY METHODS
     public void showStatus(String message, boolean showProgress) {
