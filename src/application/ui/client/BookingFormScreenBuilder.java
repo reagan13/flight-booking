@@ -1,4 +1,4 @@
-package application.controller.client;
+package application.ui.client;
 
 import application.model.Flight;
 import application.model.User;
@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-public class BookingFormController {
+public class BookingFormScreenBuilder {
     
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
     
@@ -26,7 +26,7 @@ public class BookingFormController {
     
     private final BookingFormEventHandler eventHandler;
     
-    public BookingFormController(BookingFormEventHandler eventHandler) {
+    public BookingFormScreenBuilder(BookingFormEventHandler eventHandler) {
         this.eventHandler = eventHandler;
     }
     

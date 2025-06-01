@@ -1,7 +1,7 @@
-package application.controller.client;
+package application.ui.client;
 
 import application.model.Flight;
-import application.controller.client.BookingFormController.BookingFormData;
+import application.ui.client.BookingFormScreenBuilder.BookingFormData;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-public class PaymentController {
+public class PaymentScreenBuilder {
     
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
     private String selectedPaymentMethod = "credit_card";
@@ -21,7 +21,7 @@ public class PaymentController {
     
     private final PaymentEventHandler eventHandler;
     
-    public PaymentController(PaymentEventHandler eventHandler) {
+    public PaymentScreenBuilder(PaymentEventHandler eventHandler) {
         this.eventHandler = eventHandler;
     }
     

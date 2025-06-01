@@ -2,7 +2,7 @@ package application.ui.client;
 
 import application.model.Flight;
 import application.service.BookingService;
-import application.controller.client.BookingFormController.BookingFormData;
+import application.ui.client.BookingFormScreenBuilder.BookingFormData;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

@@ -1,8 +1,8 @@
 package application.controller.client;
 
-import application.controller.client.BookingFormController.BookingFormData;
-import application.controller.client.PaymentController.PaymentData;
 import application.ui.client.*;
+import application.ui.client.BookingFormScreenBuilder.BookingFormData;
+import application.ui.client.PaymentScreenBuilder.PaymentData;
 import application.model.Flight;
 import application.service.*;
 import javafx.application.Platform;
@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 public class HomeController extends BaseController {
     
     // COMPOSITION - Controllers for different functionalities
-    private FlightDetailsController flightDetailsController;
-    private BookingFormController bookingFormController;
-    private PaymentController paymentController;
+    private FlightDetailsBuilder flightDetailsController;
+    private BookingFormScreenBuilder bookingFormController;
+    private PaymentScreenBuilder paymentController;
     
     // COMPOSITION - UI Builders
     private HomeScreenBuilder homeScreenBuilder;
@@ -111,14 +111,14 @@ public class HomeController extends BaseController {
     
     private void initializeControllers() {
         // Initialize flight details controller
-        flightDetailsController = new FlightDetailsController(
+        flightDetailsController = new FlightDetailsBuilder(
             this::handleBookFlight,
-            () -> switchToTab("home")
+            this::returnToHome
         );
         
         // Initialize booking form controller
-        bookingFormController = new BookingFormController(
-            new BookingFormController.BookingFormEventHandler() {
+        bookingFormController = new BookingFormScreenBuilder(
+            new BookingFormScreenBuilder.BookingFormEventHandler() {
                 @Override
                 public void onFormValidated(BookingFormData formData) {
                     currentBookingData = formData;
@@ -133,8 +133,8 @@ public class HomeController extends BaseController {
         );
         
         // Initialize payment controller
-        paymentController = new PaymentController(
-            new PaymentController.PaymentEventHandler() {
+        paymentController = new PaymentScreenBuilder(
+            new PaymentScreenBuilder.PaymentEventHandler() {
                 @Override
                 public void onPaymentProcessed(PaymentData paymentData) {
                     processBooking(paymentData);
@@ -150,7 +150,9 @@ public class HomeController extends BaseController {
         // Initialize UI builders with proper event handlers
         initializeUIBuilders();
     }
-    
+    private void returnToHome() {
+        switchToTab("home");
+    }
     private void initializeUIBuilders() {
         // Initialize home screen builder
         homeScreenBuilder = new HomeScreenBuilder(new HomeScreenBuilder.HomeEventHandler() {
@@ -416,19 +418,19 @@ public class HomeController extends BaseController {
                 break;
             case "flight-details":
                 flightDetailsScreen.setVisible(true);
-                bottomNav.setVisible(false);
+                bottomNav.setVisible(true);
                 break;
             case "booking-form":
                 bookingFormScreen.setVisible(true);
-                bottomNav.setVisible(false);
+                bottomNav.setVisible(true);
                 break;
             case "payment":
                 paymentScreen.setVisible(true);
-                bottomNav.setVisible(false);
+                bottomNav.setVisible(true);
                 break;
             case "confirmation":
                 confirmationScreen.setVisible(true);
-                bottomNav.setVisible(false);
+                bottomNav.setVisible(true);
                 break;
         }
     }
