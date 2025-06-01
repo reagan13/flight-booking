@@ -112,52 +112,98 @@ public class HomeController extends BaseController {
     private void initializeControllers() {
         // Initialize flight details controller
         flightDetailsController = new FlightDetailsBuilder(
-            this::handleBookFlight,
-            this::returnToHome
-        );
-        
+                this::handleBookFlight,
+                this::returnToHome);
+
         // Initialize booking form controller
         bookingFormController = new BookingFormScreenBuilder(
-            new BookingFormScreenBuilder.BookingFormEventHandler() {
-                @Override
-                public void onFormValidated(BookingFormData formData) {
-                    currentBookingData = formData;
-                    showPaymentForm();
-                }
-                
-                @Override
-                public void onShowAlert(String title, String message) {
-                    showMobileAlert(title, message);
-                }
-            }
-        );
-        
-        // Initialize payment controller
-        paymentController = new PaymentScreenBuilder(
-            new PaymentScreenBuilder.PaymentEventHandler() {
-                @Override
-                public void onPaymentProcessed(PaymentData paymentData) {
-                    processBooking(paymentData);
-                }
-                
-                @Override
+                new BookingFormScreenBuilder.BookingFormEventHandler() {
+                    @Override
+                    public void onFormValidated(BookingFormData formData) {
+                        currentBookingData = formData;
+                        showPaymentForm();
+                    }
+
+                    @Override
                     public void onShowAlert(String title, String message) {
                         showMobileAlert(title, message);
                     }
-                
+                });
+
+        // Initialize payment controller
+        paymentController = new PaymentScreenBuilder(
+                new PaymentScreenBuilder.PaymentEventHandler() {
+                    @Override
+                    public void onPaymentProcessed(PaymentData paymentData) {
+                        processBooking(paymentData);
+                    }
+
+                    @Override
+                    public void onShowAlert(String title, String message) {
+                        showMobileAlert(title, message);
+                    }
+
                     @Override
                     public void onBackToBooking() {
                         // Add this missing method
                         switchToTab("booking-form");
                     }
 
-                
-            }
-        );
-        
+                    @Override
+                    public void onShowConfirmation(PaymentData paymentData) {
+                        // Navigate to confirmation screen after successful payment
+                        showConfirmationAfterPayment(paymentData);
+                    }
+
+                });
+
         // Initialize UI builders with proper event handlers
         initializeUIBuilders();
     }
+
+    private void showConfirmationAfterPayment(PaymentData paymentData) {
+        // Process the booking first
+        BookingService.BookingResult result = BookingService.completeBooking(
+                currentFlight,
+                paymentData.getFormData().getFirstName(),
+                paymentData.getFormData().getLastName(),
+                paymentData.getFormData().getAge(),
+                paymentData.getFormData().getAddress(),
+                paymentData.getFormData().getEmail(),
+                paymentData.getFormData().getPhone(),
+                paymentData.getTotalAmount(),
+                paymentData.getPaymentMethod(),
+                paymentData.getPaymentProvider());
+
+        if (result.isSuccess()) {
+            // Show confirmation screen
+            confirmationContent.getChildren().clear();
+            VBox confirmationScreen = ConfirmationScreenBuilder.createConfirmationScreen(
+                    result,
+                    currentFlight,
+                    paymentData.getFormData(),
+                    new ConfirmationScreenBuilder.ConfirmationEventHandler() {
+                        @Override
+                        public void onNavigateToHome() {
+                            switchToTab("home");
+                        }
+                    });
+            confirmationContent.getChildren().add(confirmationScreen);
+
+            // Switch to confirmation screen (NOT home)
+            switchToTab("confirmation");
+
+            // Show success alert
+            showMobileAlert("Payment Successful",
+                    "Your booking has been confirmed! Reference: " + result.getBookingReference());
+        } else {
+            // Show error alert if booking failed
+            showMobileAlert("Booking Failed", result.getMessage());
+        }
+    }
+    
+    
+    
     private void returnToHome() {
         switchToTab("home");
     }
@@ -255,10 +301,7 @@ public class HomeController extends BaseController {
                 showBookingDetails(booking);
             }
             
-            @Override
-            public void onDownloadTicket(BookingHistoryService.BookingHistory booking) {
-                downloadTicket(booking);
-            }
+        
         });
         
         // Messages screen builder
@@ -305,36 +348,33 @@ public class HomeController extends BaseController {
         setupTimeScreen();
     }
     
+    
     private void setupTimeScreen() {
         if (timeContent == null) {
             System.err.println("timeContent is null, skipping time setup");
             return;
         }
         
+        // USE NEW METHOD - Replace old implementation
         loadWorldTimes();
         
+        // Keep the auto-update service
         timeUpdateService = Executors.newSingleThreadScheduledExecutor();
         timeUpdateService.scheduleAtFixedRate(() -> 
             Platform.runLater(this::loadWorldTimes), 60, 60, TimeUnit.SECONDS);
     }
-    
+
     private void loadWorldTimes() {
-        if (timeContent == null) return;
-        
+        if (timeContent == null)
+            return;
+
+        // UPDATED - Use new createTimeScreenContent method
         timeContent.getChildren().clear();
-        
-        VBox headerCard = TimeScreenBuilder.createHeaderCard();
-        timeContent.getChildren().add(headerCard);
-        
-        for (String[] timeZone : TimeAPIService.TIME_ZONES) {
-            VBox timeCard = TimeScreenBuilder.createTimeCardWithAPI(
-                timeZone[0], timeZone[1], timeZone[2], timeZone[3]);
-            timeContent.getChildren().add(timeCard);
-        }
-        
-        VBox footerInfo = TimeScreenBuilder.createFooterInfo();
-        timeContent.getChildren().add(footerInfo);
+
+        VBox timeScreenContent = TimeScreenBuilder.createTimeScreenContent();
+        timeContent.getChildren().add(timeScreenContent);
     }
+
     
     private void setupHomeScreen() {
         if (homeScreenBuilder != null) {
@@ -356,8 +396,8 @@ public class HomeController extends BaseController {
         }
         
         profileContent.getChildren().clear();
-        VBox profileScreen = profileScreenBuilder.createProfileContent();
-        profileContent.getChildren().add(profileScreen);
+        VBox profileScreen = profileScreenBuilder.createProfileScreenContent();
+    profileContent.getChildren().add(profileScreen);
     }
     
     private void setupBookingsScreen() {
@@ -370,12 +410,11 @@ public class HomeController extends BaseController {
     }
     
     private void setupMessagesScreen() {
-        if (messagesContent == null) {
-            System.err.println("messagesContent is null, skipping messages setup");
-            return;
-        }
+        if (messagesContent == null) return;
         
-        messagesScreenBuilder.setupMessagesContent(messagesContent);
+        messagesContent.getChildren().clear();
+        VBox messageScreenContent = messagesScreenBuilder.createMessagesScreenContent();
+        messagesContent.getChildren().add(messageScreenContent);
     }
     
     // PUBLIC INTERFACE - Tab switching
@@ -560,11 +599,21 @@ public class HomeController extends BaseController {
     
     private void showConfirmationScreen(BookingService.BookingResult result) {
         confirmationContent.getChildren().clear();
-        VBox confirmation = ConfirmationScreenBuilder.createConfirmationScreen(
-            result, currentFlight, currentBookingData);
-        confirmationContent.getChildren().add(confirmation);
-        switchToTab("confirmation");
+        VBox confirmationScreen = ConfirmationScreenBuilder.createConfirmationScreen(
+            result, 
+            currentFlight, 
+            currentBookingData,
+            new ConfirmationScreenBuilder.ConfirmationEventHandler() {
+                @Override
+                public void onNavigateToHome() {
+                    switchToTab("home");
+                }
+            }
+        );
+        confirmationContent.getChildren().add(confirmationScreen);
+        switchToTab("confirmation"); 
     }
+    
     
     // DELEGATION - User operations
     private void handleLogout() {
@@ -594,7 +643,7 @@ public class HomeController extends BaseController {
                 });
         }
         
-        VBox notificationScreen = notificationScreenBuilder.createNotificationsScreen();
+        VBox notificationScreen = notificationScreenBuilder.createNotificationScreenContent();
         profileContent.getChildren().clear();
         profileContent.getChildren().add(notificationScreen);
     }

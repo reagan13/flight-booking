@@ -106,39 +106,40 @@ public class BookingsScreenBuilder {
         return noBookingsBox;
     }
     
+    
     /**
      * Create booking card (moved from createBookingCard in HomeController)
      */
     private VBox createBookingCard(BookingHistoryService.BookingHistory booking) {
         VBox card = new VBox(15);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                     "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
-                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
-        
+                "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
+
         // Header with booking reference and status
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
-        
+
         VBox refBox = new VBox(2);
         Label refLabel = new Label("Booking Reference");
         refLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
         Label refValue = new Label(booking.getBookingReference());
         refValue.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
         refBox.getChildren().addAll(refLabel, refValue);
-        
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+
         Label statusBadge = createStatusBadge(booking.getBookingStatus(), booking.getPaymentStatus());
-        
+
         header.getChildren().addAll(refBox, spacer, statusBadge);
-        
+
         // Flight info
         HBox flightInfo = new HBox();
         flightInfo.setAlignment(Pos.CENTER);
         flightInfo.setSpacing(15);
         flightInfo.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
-        
+
         VBox originBox = new VBox(3);
         originBox.setAlignment(Pos.CENTER);
         Label originCode = new Label(booking.getOrigin());
@@ -146,10 +147,10 @@ public class BookingsScreenBuilder {
         Label depTime = new Label(booking.getDeparture().format(DateTimeFormatter.ofPattern("HH:mm")));
         depTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
         originBox.getChildren().addAll(originCode, depTime);
-        
+
         Label arrow = new Label("→");
         arrow.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
-        
+
         VBox destBox = new VBox(3);
         destBox.setAlignment(Pos.CENTER);
         Label destCode = new Label(booking.getDestination());
@@ -157,38 +158,36 @@ public class BookingsScreenBuilder {
         Label arrTime = new Label(booking.getArrival().format(DateTimeFormatter.ofPattern("HH:mm")));
         arrTime.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
         destBox.getChildren().addAll(destCode, arrTime);
-        
+
         flightInfo.getChildren().addAll(originBox, arrow, destBox);
-        
+
         // Details
         VBox details = new VBox(8);
         details.getChildren().addAll(
-            createDetailRow("✈️ Flight", booking.getFlightNo() + " • " + booking.getAirlineName()),
-            createDetailRow("📅 Date", booking.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
-            createDetailRow("💺 Seat", booking.getSeatNumber()),
-            createDetailRow("💳 Payment", booking.getPaymentMethod() + " • " + currencyFormat.format(booking.getAmount()))
-        );
-        
-        // Action buttons
+                createDetailRow("✈️ Flight", booking.getFlightNo() + " • " + booking.getAirlineName()),
+                createDetailRow("📅 Date", booking.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
+                createDetailRow("💺 Seat", booking.getSeatNumber()),
+                createDetailRow("💳 Payment",
+                        booking.getPaymentMethod() + " • " + currencyFormat.format(booking.getAmount())));
+
+        // Action buttons - REMOVED download ticket button
         HBox actions = new HBox(10);
         actions.setAlignment(Pos.CENTER);
-        
+
         Button viewButton = new Button("View Details");
         viewButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; " +
-                           "-fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
+                "-fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
         viewButton.setOnAction(e -> eventHandler.onViewBookingDetails(booking));
-        
-        Button downloadButton = new Button("Download Ticket");
-        downloadButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
-                               "-fx-font-size: 12px; -fx-padding: 8 15; -fx-background-radius: 15;");
-        downloadButton.setOnAction(e -> eventHandler.onDownloadTicket(booking));
-        
-        actions.getChildren().addAll(viewButton, downloadButton);
-        
+
+
+        actions.getChildren().add(viewButton);
+
         card.getChildren().addAll(header, flightInfo, details, actions);
         return card;
     }
-    
+
+
+
     /**
      * Create status badge (moved from createStatusBadge in HomeController)
      */
@@ -239,6 +238,5 @@ public class BookingsScreenBuilder {
         void onGoToLogin();
         void onExploreFlights();
         void onViewBookingDetails(BookingHistoryService.BookingHistory booking);
-        void onDownloadTicket(BookingHistoryService.BookingHistory booking);
     }
 }

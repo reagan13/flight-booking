@@ -4,9 +4,7 @@ import application.model.Flight;
 import application.service.BookingService;
 import application.ui.client.BookingFormScreenBuilder.BookingFormData;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -19,28 +17,31 @@ public class ConfirmationScreenBuilder {
     
     private static final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
-    
     public static VBox createConfirmationScreen(BookingService.BookingResult result, 
                                               Flight flight, 
-                                              BookingFormData bookingData) {
+            BookingFormData bookingData, ConfirmationEventHandler confirmationEventHandler) {
+
+        
+
         VBox container = new VBox(20);
         container.setStyle("-fx-padding: 20;");
         container.setAlignment(Pos.CENTER);
-        
+
         // Success header
         VBox successHeader = createSuccessHeader(result.getBookingReference());
-        
+
         // Booking details card
         VBox bookingDetails = createBookingDetailsCard(result, flight, bookingData);
-        
+
         // Important information
         VBox importantInfo = createImportantInfoCard(result.getBookingReference(), bookingData.getEmail());
-        
-        // Action buttons
-        VBox actionButtons = createActionButtons();
-        
-        container.getChildren().addAll(successHeader, bookingDetails, importantInfo, actionButtons);
+
+    
+        container.getChildren().addAll(successHeader, bookingDetails, importantInfo);
         return container;
+    }
+    public interface ConfirmationEventHandler {
+        void onNavigateToHome();
     }
     
     private static VBox createSuccessHeader(String bookingReference) {
@@ -197,37 +198,7 @@ public class ConfirmationScreenBuilder {
         return infoCard;
     }
     
-    private static VBox createActionButtons() {
-        VBox buttonSection = new VBox(10);
-        buttonSection.setAlignment(Pos.CENTER);
-        
-        Button downloadButton = new Button("Download E-Ticket");
-        downloadButton.setStyle(
-            "-fx-background-color: #2196F3; -fx-text-fill: white; " +
-            "-fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 25; " +
-            "-fx-font-weight: bold; -fx-cursor: hand; -fx-min-width: 200;"
-        );
-        downloadButton.setOnAction(e -> {
-            // TODO: Implement download functionality
-            System.out.println("Download e-ticket clicked");
-        });
-        
-        Button newBookingButton = new Button("Book Another Flight");
-        newBookingButton.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #2196F3; " +
-            "-fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 25; " +
-            "-fx-border-color: #2196F3; -fx-border-radius: 25; -fx-border-width: 1; " +
-            "-fx-font-weight: bold; -fx-cursor: hand; -fx-min-width: 200;"
-        );
-        newBookingButton.setOnAction(e -> {
-            // TODO: Navigate to home/search screen
-            System.out.println("Book another flight clicked");
-        });
-        
-        buttonSection.getChildren().addAll(downloadButton, newBookingButton);
-        return buttonSection;
-    }
-    
+
     private static HBox createDetailRow(String label, String value) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);

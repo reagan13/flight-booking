@@ -62,6 +62,7 @@ public class PaymentScreenBuilder {
         );
 
         eventHandler.onPaymentProcessed(paymentData);
+        eventHandler.onShowConfirmation(paymentData);
     }
     
     private VBox createHeaderSection() {
@@ -201,7 +202,6 @@ public class PaymentScreenBuilder {
 
         radio.setOnAction(e -> {
             selectedPaymentMethod = methodId;
-            updatePaymentSummary(); // ADD THIS LINE - Update summary when method changes
             System.out.println("Selected payment method: " + methodId);
         });
 
@@ -404,6 +404,8 @@ public class PaymentScreenBuilder {
     public interface PaymentEventHandler {
         void onBackToBooking();
         void onPaymentProcessed(PaymentData paymentData);
+
         void onShowAlert(String title, String message);
+        void onShowConfirmation(PaymentData paymentData); 
     }
 }

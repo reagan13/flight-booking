@@ -7,6 +7,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,93 +17,116 @@ import java.util.concurrent.CompletableFuture;
 public class TimeScreenBuilder {
     
     /**
-     * Create the header card for the time screen
+     * Create the main time screen content - matches other builders' pattern
      */
-    public static VBox createHeaderCard() {
-        VBox headerCard = new VBox(15);
-        headerCard.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                           "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
-                           "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
+    public static VBox createTimeScreenContent() {
+        VBox container = new VBox(15);
+        container.setStyle("-fx-padding: 15; -fx-background-color: #f5f5f5;");
         
+        // Header section (same style as other builders)
+        VBox headerSection = createHeaderSection();
+        
+        // Time cards container
+        VBox timeCardsSection = createTimeCardsSection();
+        
+        // Footer section
+        VBox footerSection = createFooterSection();
+        
+        container.getChildren().addAll(headerSection, timeCardsSection, footerSection);
+        return container;
+    }
+    
+    /**
+     * Create header section - matches PaymentScreenBuilder header style
+     */
+    private static VBox createHeaderSection() {
+        VBox headerCard = new VBox(12);
+        headerCard.setStyle(
+            "-fx-background-color: white; -fx-background-radius: 8; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 8; " +
+            "-fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);"
+        );
+        
+        // Title section
         HBox titleBox = new HBox(10);
         titleBox.setAlignment(Pos.CENTER_LEFT);
         
         Label titleIcon = new Label("🌍");
-        titleIcon.setStyle("-fx-font-size: 24px;");
+        titleIcon.setStyle("-fx-font-size: 20px;");
         
-        Label titleLabel = new Label("World Times");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        Label titleLabel = new Label("World Clock");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
         
         titleBox.getChildren().addAll(titleIcon, titleLabel);
         
-        Label subtitleLabel = new Label("Current time in major destinations ");
-        subtitleLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+        // Subtitle
+        Label subtitleLabel = new Label("Current time in major destinations worldwide");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
         
         headerCard.getChildren().addAll(titleBox, subtitleLabel);
         return headerCard;
     }
     
     /**
-     * Create the footer with update information
+     * Create time cards section with all destinations
      */
-    public static VBox createFooterInfo() {
-        VBox updateInfo = new VBox(5);
-        updateInfo.setAlignment(Pos.CENTER);
-        updateInfo.setStyle("-fx-padding: 15;");
+    private static VBox createTimeCardsSection() {
+        VBox timeCardsContainer = new VBox(12);
         
-        Label updateLabel = new Label("🔄 Auto-updates every minute • Powered by TimeAPI.io");
-        updateLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #999; -fx-font-style: italic;");
+        // Popular destinations (same as your flight data)
+        timeCardsContainer.getChildren().addAll(
+            createTimeCard("🇵🇭", "Philippines", "Asia/Manila", "Manila"),
+            createTimeCard("🇺🇸", "United States", "America/New_York", "New York"),
+            createTimeCard("🇬🇧", "United Kingdom", "Europe/London", "London"),
+            createTimeCard("🇯🇵", "Japan", "Asia/Tokyo", "Tokyo"),
+            createTimeCard("🇸🇬", "Singapore", "Asia/Singapore", "Singapore"),
+            createTimeCard("🇦🇺", "Australia", "Australia/Sydney", "Sydney")
+        );
         
-        Label lastUpdateLabel = new Label("Last updated: " + 
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        lastUpdateLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #999;");
-        
-        updateInfo.getChildren().addAll(updateLabel, lastUpdateLabel);
-        return updateInfo;
+        return timeCardsContainer;
     }
     
     /**
-     * Create a time card that loads data asynchronously
+     * Create individual time card - matches BookingsScreenBuilder card style
      */
-    public static VBox createTimeCardWithAPI(String flag, String country, String timeZone, String city) {
-        VBox card = new VBox(15);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                     "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
-                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+    private static VBox createTimeCard(String flag, String country, String timeZone, String city) {
+        VBox card = new VBox(12);
+        card.setStyle(
+            "-fx-background-color: white; -fx-background-radius: 8; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 8; " +
+            "-fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);"
+        );
         
-        // Header with flag and country (immediate display)
+        // Header with flag and country (same pattern as flight route)
         HBox headerBox = createCountryHeader(flag, country, city);
         
-        // Loading state
-        VBox loadingBox = createLoadingBox();
+        // Loading state initially
+        VBox contentBox = createLoadingContent();
         
-        card.getChildren().addAll(headerBox, loadingBox);
+        card.getChildren().addAll(headerBox, contentBox);
         
-        // Fetch time from API asynchronously
+        // Fetch time asynchronously
         TimeAPIService.fetchTimeAsync(timeZone)
             .thenAccept(timeData -> {
                 Platform.runLater(() -> {
-                    // Remove loading box
-                    card.getChildren().remove(loadingBox);
+                    // Replace loading with actual time
+                    card.getChildren().remove(contentBox);
                     
                     if (timeData != null) {
-                        // Add time display
-                        VBox timeBox = createTimeDisplay(timeData);
-                        card.getChildren().add(timeBox);
+                        VBox timeContent = createTimeContent(timeData);
+                        card.getChildren().add(timeContent);
                     } else {
-                        // Add error display
-                        VBox errorBox = createErrorDisplay(country, timeZone);
-                        card.getChildren().add(errorBox);
+                        VBox errorContent = createErrorContent();
+                        card.getChildren().add(errorContent);
                     }
                 });
             })
             .exceptionally(ex -> {
                 Platform.runLater(() -> {
-                    card.getChildren().remove(loadingBox);
-                    VBox errorBox = createErrorDisplay(country, timeZone);
-                    card.getChildren().add(errorBox);
+                    card.getChildren().remove(contentBox);
+                    VBox errorContent = createErrorContent();
+                    card.getChildren().add(errorContent);
                 });
-                System.err.println("Error fetching time for " + country + ": " + ex.getMessage());
                 return null;
             });
         
@@ -109,100 +134,151 @@ public class TimeScreenBuilder {
     }
     
     /**
-     * Create the country header section
+     * Create country header - matches airport code display pattern
      */
     private static HBox createCountryHeader(String flag, String country, String city) {
-        HBox headerBox = new HBox(15);
+        HBox headerBox = new HBox(12);
         headerBox.setAlignment(Pos.CENTER_LEFT);
         
         Label flagLabel = new Label(flag);
-        flagLabel.setStyle("-fx-font-size: 28px;");
+        flagLabel.setStyle("-fx-font-size: 24px;");
         
-        VBox countryBox = new VBox(2);
+        VBox countryInfo = new VBox(2);
+        
         Label countryLabel = new Label(country);
-        countryLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        countryLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
         
         Label cityLabel = new Label(city);
-        cityLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        cityLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-font-weight: bold;");
         
-        countryBox.getChildren().addAll(countryLabel, cityLabel);
-        headerBox.getChildren().addAll(flagLabel, countryBox);
+        countryInfo.getChildren().addAll(countryLabel, cityLabel);
+        headerBox.getChildren().addAll(flagLabel, countryInfo);
         
         return headerBox;
     }
     
     /**
-     * Create loading indicator
+     * Create loading content - matches your loading patterns
      */
-    private static VBox createLoadingBox() {
+    private static VBox createLoadingContent() {
         VBox loadingBox = new VBox(8);
         loadingBox.setAlignment(Pos.CENTER);
-        loadingBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
+        loadingBox.setStyle(
+            "-fx-background-color: #f8f9fa; -fx-padding: 12; -fx-background-radius: 6;"
+        );
         
         ProgressIndicator progressIndicator = new ProgressIndicator();
-        progressIndicator.setPrefSize(30, 30);
+        progressIndicator.setPrefSize(20, 20);
         
         Label loadingLabel = new Label("Loading time...");
-        loadingLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        loadingLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
         
         loadingBox.getChildren().addAll(progressIndicator, loadingLabel);
         return loadingBox;
     }
     
     /**
-     * Create time display from API data
+     * Create time content - matches detail row style from other builders
      */
-    private static VBox createTimeDisplay(TimeData timeData) {
+    private static VBox createTimeContent(TimeData timeData) {
         VBox timeBox = new VBox(8);
-        timeBox.setAlignment(Pos.CENTER);
-        timeBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
         
-        // Current time (from API)
-        Label timeLabel = new Label(timeData.getTime());
-        timeLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        // Main time display
+        HBox timeRow = createDetailRow("🕐 Time", timeData.getTime());
+        timeRow.setStyle(
+            "-fx-background-color: #E8F5E8; -fx-padding: 8; -fx-background-radius: 6;"
+        );
         
-        // Date with day of week (from API)
+        // Update the time label to be more prominent
+        ((Label) timeRow.getChildren().get(2)).setStyle(
+            "-fx-font-size: 16px; -fx-text-fill: #4CAF50; -fx-font-weight: bold;"
+        );
+        
+        // Date info
         String displayDate = timeData.getDayOfWeek().isEmpty() ? 
             timeData.getDate() : 
             timeData.getDayOfWeek() + ", " + timeData.getDate();
-            
-        Label dateLabel = new Label(displayDate);
-        dateLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+        HBox dateRow = createDetailRow("📅 Date", displayDate);
         
         // Timezone info
-        Label timezoneLabel = new Label("📡 " + timeData.getTimeZone());
-        timezoneLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #999; " +
-                              "-fx-background-color: #e3f2fd; -fx-padding: 4 8; -fx-background-radius: 12;");
+        HBox timezoneRow = createDetailRow("🌐 Zone", timeData.getTimeZone());
         
-        // API source indicator
-        String sourceText = timeData.isFromAPI() ? "⚡ Live from TimeAPI.io" : "🔄 System Time (Fallback)";
-        String sourceColor = timeData.isFromAPI() ? "#4CAF50" : "#FF9800";
+        // Source indicator
+        String sourceText = timeData.isFromAPI() ? "Live" : "System";
+        String sourceIcon = timeData.isFromAPI() ? "⚡" : "🔄";
+        HBox sourceRow = createDetailRow(sourceIcon + " Source", sourceText);
         
-        Label sourceLabel = new Label(sourceText);
-        sourceLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: " + sourceColor + "; -fx-font-style: italic;");
-        
-        timeBox.getChildren().addAll(timeLabel, dateLabel, timezoneLabel, sourceLabel);
+        timeBox.getChildren().addAll(timeRow, dateRow, timezoneRow, sourceRow);
         return timeBox;
     }
     
     /**
-     * Create error display with fallback
+     * Create error content
      */
-    private static VBox createErrorDisplay(String country, String timeZone) {
+    private static VBox createErrorContent() {
         VBox errorBox = new VBox(8);
         errorBox.setAlignment(Pos.CENTER);
-        errorBox.setStyle("-fx-background-color: #ffebee; -fx-padding: 15; -fx-background-radius: 10;");
+        errorBox.setStyle(
+            "-fx-background-color: #ffebee; -fx-padding: 12; -fx-background-radius: 6;"
+        );
         
         Label errorIcon = new Label("⚠️");
-        errorIcon.setStyle("-fx-font-size: 20px;");
+        errorIcon.setStyle("-fx-font-size: 16px;");
         
-        Label errorLabel = new Label("Unable to load live time");
-        errorLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #c62828; -fx-font-weight: bold;");
+        Label errorLabel = new Label("Unable to load time");
+        errorLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #c62828; -fx-font-weight: bold;");
         
-        Label fallbackLabel = new Label("Please check your internet connection");
-        fallbackLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        Label detailLabel = new Label("Check connection");
+        detailLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
         
-        errorBox.getChildren().addAll(errorIcon, errorLabel, fallbackLabel);
+        errorBox.getChildren().addAll(errorIcon, errorLabel, detailLabel);
         return errorBox;
+    }
+    
+    /**
+     * Create detail row - exactly matches other builders' pattern
+     */
+    private static HBox createDetailRow(String label, String value) {
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 8; -fx-background-radius: 6;");
+        
+        Label labelText = new Label(label);
+        labelText.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        labelText.setPrefWidth(80);
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label valueText = new Label(value);
+        valueText.setStyle("-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;");
+        
+        row.getChildren().addAll(labelText, spacer, valueText);
+        return row;
+    }
+    
+    /**
+     * Create footer section
+     */
+    private static VBox createFooterSection() {
+        VBox footerCard = new VBox(8);
+        footerCard.setStyle(
+            "-fx-background-color: white; -fx-background-radius: 8; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 8; " +
+            "-fx-padding: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);"
+        );
+        
+        Label updateInfo = new Label("🔄 Auto-updates every minute");
+        updateInfo.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-font-style: italic;");
+        
+        Label lastUpdate = new Label("Last updated: " + 
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        lastUpdate.setStyle("-fx-font-size: 10px; -fx-text-fill: #999;");
+        
+        Label apiInfo = new Label("⚡ Powered by TimeAPI.io");
+        apiInfo.setStyle("-fx-font-size: 10px; -fx-text-fill: #2196F3;");
+        
+        footerCard.getChildren().addAll(updateInfo, lastUpdate, apiInfo);
+        return footerCard;
     }
 }
