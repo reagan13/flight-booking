@@ -3,16 +3,14 @@ package application.model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class Booking {
-    private int id;
+public class Booking extends BaseEntity { // INHERITANCE
+    // ENCAPSULATION - private fields
     private int userId;
     private int flightId;
     private String bookingReference;
     private String seatNumber;
     private LocalDateTime bookingDate;
     private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     
     // Additional display properties
     private String customerName;
@@ -23,47 +21,57 @@ public class Booking {
     private String paymentMethod;
     
     // Constructors
-    public Booking() {}
+    public Booking() {
+        super();
+    }
     
     public Booking(int userId, int flightId, String bookingReference, String status) {
+        super();
         this.userId = userId;
         this.flightId = flightId;
         this.bookingReference = bookingReference;
         this.status = status;
         this.bookingDate = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
     
-    // Getters and setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    
+    // ENCAPSULATION - controlled access through getters/setters
     public int getUserId() { return userId; }
-    public void setUserId(int userId) { this.userId = userId; }
+    public void setUserId(int userId) { 
+        this.userId = userId; 
+        updateTimestamp();
+    }
     
     public int getFlightId() { return flightId; }
-    public void setFlightId(int flightId) { this.flightId = flightId; }
+    public void setFlightId(int flightId) { 
+        this.flightId = flightId; 
+        updateTimestamp();
+    }
     
     public String getBookingReference() { return bookingReference; }
-    public void setBookingReference(String bookingReference) { this.bookingReference = bookingReference; }
+    public void setBookingReference(String bookingReference) { 
+        this.bookingReference = bookingReference; 
+        updateTimestamp();
+    }
     
     public String getSeatNumber() { return seatNumber; }
-    public void setSeatNumber(String seatNumber) { this.seatNumber = seatNumber; }
+    public void setSeatNumber(String seatNumber) { 
+        this.seatNumber = seatNumber; 
+        updateTimestamp();
+    }
     
     public LocalDateTime getBookingDate() { return bookingDate; }
-    public void setBookingDate(LocalDateTime bookingDate) { this.bookingDate = bookingDate; }
+    public void setBookingDate(LocalDateTime bookingDate) { 
+        this.bookingDate = bookingDate; 
+        updateTimestamp();
+    }
     
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String status) { 
+        this.status = status; 
+        updateTimestamp();
+    }
     
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    
-    // Display properties getters and setters
+    // Display properties
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     
@@ -82,7 +90,7 @@ public class Booking {
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     
-    // Formatted display methods
+    // Business methods
     public String getFormattedBookingDate() {
         if (bookingDate == null) return "N/A";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
@@ -93,22 +101,9 @@ public class Booking {
         return String.format("₱%.2f", paymentAmount);
     }
     
-    public String getStatusColor() {
-        if (status == null) return "#6c757d";
-        
-        switch (status.toLowerCase()) {
-            case "confirmed":
-                return "#28a745"; // Green
-            case "pending":
-                return "#ffc107"; // Yellow
-            case "cancelled":
-                return "#dc3545"; // Red
-            case "completed":
-                return "#007bff"; // Blue
-            case "payment_failed":
-                return "#fd7e14"; // Orange
-            default:
-                return "#6c757d"; // Gray
-        }
+    // POLYMORPHISM - implementing abstract method
+    @Override
+    public String getDisplayName() {
+        return bookingReference + " - " + customerName;
     }
 }

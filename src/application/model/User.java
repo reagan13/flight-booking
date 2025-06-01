@@ -2,34 +2,33 @@ package application.model;
 
 import java.time.LocalDateTime;
 
-public class User {
-    private int id;
+public class User extends BaseEntity { // INHERITANCE
+    // ENCAPSULATION - private fields
     private String firstName;
     private String lastName;
     private String email;
     private String address;
     private int age;
     private String userType;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     // Default constructor
     public User() {
+        super();
     }
     
-    // Constructor with essential fields (for AuthService compatibility)
+    // Constructor with essential fields
     public User(int id, String firstName, String lastName, String email, String userType) {
-        this.id = id;
+        super(id);
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.userType = userType;
     }
     
-    // Full constructor with all fields
+    // Full constructor
     public User(int id, String firstName, String lastName, String email, 
                 String address, int age, String userType) {
-        this.id = id;
+        super(id);
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -41,91 +40,49 @@ public class User {
     // Constructor with timestamps
     public User(int id, String firstName, String lastName, String email, 
                 String address, int age, String userType, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.address = address;
-        this.age = age;
-        this.userType = userType;
+        this(id, firstName, lastName, email, address, age, userType);
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    // Getters and setters
-    public int getId() {
-        return id;
+    // ENCAPSULATION - controlled access through getters/setters
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { 
+        this.firstName = firstName; 
+        updateTimestamp(); // inherited method
     }
     
-    public void setId(int id) {
-        this.id = id;
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { 
+        this.lastName = lastName; 
+        updateTimestamp();
     }
     
-    public String getFirstName() {
-        return firstName;
+    public String getEmail() { return email; }
+    public void setEmail(String email) { 
+        this.email = email; 
+        updateTimestamp();
     }
     
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public String getAddress() { return address; }
+    public void setAddress(String address) { 
+        this.address = address; 
+        updateTimestamp();
     }
     
-    public String getLastName() {
-        return lastName;
+    public int getAge() { return age; }
+    public void setAge(int age) { 
+        this.age = age; 
+        updateTimestamp();
     }
     
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public String getUserType() { return userType; }
+    public void setUserType(String userType) { 
+        this.userType = userType; 
+        updateTimestamp();
     }
     
-    public String getEmail() {
-        return email;
-    }
-    
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
-    public String getAddress() {
-        return address;
-    }
-    
-    public void setAddress(String address) {
-        this.address = address;
-    }
-    
-    public int getAge() {
-        return age;
-    }
-    
-    public void setAge(int age) {
-        this.age = age;
-    }
-    
-    public String getUserType() {
-        return userType;
-    }
-    
-    public void setUserType(String userType) {
-        this.userType = userType;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-    
-    // Utility methods
+    // Business methods
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -138,6 +95,12 @@ public class User {
         return "regular".equals(userType) || "user".equals(userType);
     }
     
+    // POLYMORPHISM - implementing abstract method
+    @Override
+    public String getDisplayName() {
+        return getFullName();
+    }
+    
     @Override
     public String toString() {
         return "User{" +
@@ -145,22 +108,7 @@ public class User {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
-                ", address='" + address + '\'' +
-                ", age=" + age +
                 ", userType='" + userType + '\'' +
                 '}';
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        User user = (User) obj;
-        return id == user.id;
-    }
-    
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(id);
     }
 }
