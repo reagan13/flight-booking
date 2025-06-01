@@ -1,12 +1,10 @@
 package application.controller.client;
 
-import application.controller.*;
 import application.controller.client.BookingFormController.BookingFormData;
 import application.controller.client.PaymentController.PaymentData;
 import application.ui.client.*;
 import application.model.Flight;
 import application.service.*;
-import application.ui.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -32,7 +30,6 @@ public class HomeController extends BaseController {
     
     // FXML Components - Core Navigation
     @FXML private VBox timeScreen, timeContent;
-    @FXML private VBox timeTab;
     @FXML private Label headerTitle;
     @FXML private Button profileButton;
     @FXML private HBox statusBar, bottomNav;
@@ -41,14 +38,14 @@ public class HomeController extends BaseController {
     
     // FXML Components - Screen Management
     @FXML private StackPane contentStack;
-    @FXML private VBox homeScreen, bookingsScreen, messagesScreen, profileScreen;
+    @FXML
+    private VBox homeScreen, bookingsScreen, messagesScreen, profileScreen;
     @FXML private VBox flightDetailsScreen, bookingFormScreen, paymentScreen, confirmationScreen;
     
     // FXML Components - Navigation Tabs
-    @FXML private VBox homeTab, bookingsTab, messagesTab, profileTab;
-    
-    // FXML Components - Home Screen
-    @FXML private ListView<Flight> flightListView;
+    @FXML
+    private VBox homeTab, bookingsTab, messagesTab, profileTab, timeTab;
+        
     @FXML private TextField searchField;
     @FXML private Label sectionLabel;
     @FXML private ProgressIndicator loadingIndicator;
@@ -65,8 +62,6 @@ public class HomeController extends BaseController {
     private ScheduledExecutorService timeUpdateService;
     private Flight currentFlight;
     private BookingFormData currentBookingData;
-    private String currentTab = "home";
-    
     @Override
     @FXML
     public void initialize() {
@@ -111,7 +106,7 @@ public class HomeController extends BaseController {
     private boolean checkFXMLElements() {
         return profileContent != null && bookingsContent != null && 
                messagesContent != null && timeContent != null && 
-               flightDetailsContent != null && flightListView != null;
+               flightDetailsContent != null && homeScreen != null; 
     }
     
     private void initializeControllers() {
@@ -276,7 +271,7 @@ public class HomeController extends BaseController {
     }
     
     private void setupNavigation() {
-        // Set up tab click handlers
+        // Set up tab click handlers for VBox tabs
         if (homeTab != null) homeTab.setOnMouseClicked(e -> switchToTab("home"));
         if (bookingsTab != null) bookingsTab.setOnMouseClicked(e -> switchToTab("bookings"));
         if (timeTab != null) timeTab.setOnMouseClicked(e -> switchToTab("time"));
@@ -332,13 +327,16 @@ public class HomeController extends BaseController {
     }
     
     private void setupHomeScreen() {
-        if (flightListView == null) {
-            System.err.println("flightListView is null, skipping home setup");
-            return;
+        if (homeScreenBuilder != null) {
+            
+            homeScreenBuilder.setupFlightGridView(homeScreen);
+            
+            // Setup search field
+            homeScreenBuilder.setupSearchField(searchField);
+            
+            // Load flights initially
+            homeScreenBuilder.loadAvailableFlights(homeScreen, sectionLabel, loadingIndicator);
         }
-        
-        homeScreenBuilder.setupFlightListView(flightListView);
-        homeScreenBuilder.setupSearchField(searchField);
     }
     
     private void setupProfileScreen() {
@@ -395,31 +393,26 @@ public class HomeController extends BaseController {
             case "home":
                 homeScreen.setVisible(true);
                 bottomNav.setVisible(true);
-                currentTab = "home";
                 break;
             case "bookings":
                 bookingsScreen.setVisible(true);
                 bottomNav.setVisible(true);
                 setupBookingsScreen();
-                currentTab = "bookings";
                 break;
             case "time":
                 timeScreen.setVisible(true);
                 bottomNav.setVisible(true);
                 loadWorldTimes();
-                currentTab = "time";
                 break;
             case "messages":
                 messagesScreen.setVisible(true);
                 bottomNav.setVisible(true);
                 setupMessagesScreen();
-                currentTab = "messages";
                 break;
             case "profile":
                 profileScreen.setVisible(true);
                 bottomNav.setVisible(true);
                 setupProfileScreen();
-                currentTab = "profile";
                 break;
             case "flight-details":
                 flightDetailsScreen.setVisible(true);
@@ -458,22 +451,34 @@ public class HomeController extends BaseController {
     
     private void resetTabStyle(VBox tab, String icon, String text) {
         if (tab == null) return;
+        
+        // Clear existing children and add icon + text labels
         tab.getChildren().clear();
+        
         Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 20px;");
+        iconLabel.setStyle("-fx-font-size: 24px;");
+        
         Label textLabel = new Label(text);
-        textLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-padding: 2 0 0 0;");
+        
         tab.getChildren().addAll(iconLabel, textLabel);
+        tab.setStyle("-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100; -fx-alignment: center;");
     }
     
     private void setActiveTabStyle(VBox tab, String icon, String text) {
         if (tab == null) return;
+        
+        // Clear existing children and add icon + text labels
         tab.getChildren().clear();
+        
         Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 20px;");
+        iconLabel.setStyle("-fx-font-size: 24px;");
+        
         Label textLabel = new Label(text);
-        textLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #2196F3; -fx-font-weight: bold;");
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 2 0 0 0;");
+        
         tab.getChildren().addAll(iconLabel, textLabel);
+        tab.setStyle("-fx-background-color: linear-gradient(#ffffff, #e0e0e0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100; -fx-alignment: center;");
     }
     
     private void updateHeader(String tabName) {
@@ -612,7 +617,7 @@ public class HomeController extends BaseController {
     }
     
     private void loadAvailableFlights() {
-        homeScreenBuilder.loadAvailableFlights(flightListView, sectionLabel, loadingIndicator);
+        homeScreenBuilder.loadAvailableFlights(homeScreen, sectionLabel, loadingIndicator);
     }
     
     private void handleSearchFlights(String query) {
@@ -625,7 +630,16 @@ public class HomeController extends BaseController {
         flightService.searchFlights(query)
                 .thenAccept(results -> {
                     Platform.runLater(() -> {
-                        flightListView.setItems(results);
+                        FlowPane flightGrid = (FlowPane) homeScreen.getProperties().get("flightGrid");
+                        if (flightGrid != null) {
+                            flightGrid.getChildren().clear();
+                            
+                            // Add search result cards to grid
+                            for (Flight flight : results) {
+                                VBox flightCard = homeScreenBuilder.createSimpleFlightCard(flight);
+                                flightGrid.getChildren().add(flightCard);
+                            }
+                        }
 
                         if (loadingIndicator != null) {
                             loadingIndicator.setVisible(false);
@@ -640,6 +654,7 @@ public class HomeController extends BaseController {
                         }
 
                         hideStatus();
+                
                     });
                 });
     }

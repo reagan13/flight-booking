@@ -6,141 +6,139 @@
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" 
            xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="application.controller.client.HomeController"
-           prefWidth="350" prefHeight="700"
-           style="-fx-background-color: #f8f9fa;">
+           prefWidth="530" prefHeight="800"
+           style="-fx-background-color: #e0e0e0;">
     
     <!-- TOP: Header -->
     <top>
-        <VBox>
+        <VBox style="-fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 0 0 2 0;">
             <!-- Status Bar -->
-            <HBox fx:id="statusBar" style="-fx-background-color: #2196F3; -fx-padding: 5 10;" visible="false" managed="false">
-                <ProgressIndicator fx:id="headerProgress" prefHeight="16" prefWidth="16" visible="false" />
-                <Label fx:id="statusLabel" style="-fx-text-fill: white; -fx-font-size: 12px;" />
+            <HBox fx:id="statusBar" style="-fx-background-color: #d0d0d0; -fx-padding: 4 10;" visible="false" managed="false">
+                <ProgressIndicator fx:id="headerProgress" prefHeight="12" prefWidth="12" visible="false" />
+                <Label fx:id="statusLabel" style="-fx-text-fill: #2c2c2c; -fx-font-size: 11px;" />
             </HBox>
             
             <!-- Main Header -->
-            <HBox style="-fx-background-color: white; -fx-padding: 10 15; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
-                <!-- <Button fx:id="menuButton" text="☰" style="-fx-background-color: transparent; -fx-font-size: 18px;" /> -->
-                <Label fx:id="headerTitle" text="✈️ JetSetGO" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333; -fx-padding: 5 0 0 10;" />
-                <Region HBox.hgrow="ALWAYS" />
-                <Button fx:id="profileButton" text="👤" style="-fx-background-color: transparent; -fx-font-size: 18px;" />
+            <HBox alignment="CENTER" spacing="15" style="-fx-background-color: #d0d0d0; -fx-padding: 15;">
+                <Label fx:id="headerTitle" text=" JETSETGO " 
+                    style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c; -fx-text-alignment: center;" />
+            </HBox>
+            
+            <!-- Search toolbar -->
+            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 10; -fx-background-color: #f0f0f0;">
+                <Label text="Search:" style="-fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
+                <TextField fx:id="searchField" promptText="Enter destination..." 
+                          style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 4;" 
+                          prefWidth="300" />
+                <Button fx:id="searchButton" text="Find Flights" 
+                        style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 4 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
             </HBox>
         </VBox>
     </top>
     
     <!-- CENTER: Content Stack -->
     <center>
-        <StackPane fx:id="contentStack">
+        <StackPane fx:id="contentStack" style="-fx-background-color: #f5f5f5;">
             
             <!-- HOME SCREEN -->
-            <VBox fx:id="homeScreen" style="-fx-background-color: #f8f9fa;">
-                <!-- Search Bar -->
-                <HBox style="-fx-padding: 15 15 10 15;">
-                    <TextField fx:id="searchField" promptText="Search flights..." 
-                              style="-fx-font-size: 14px; -fx-padding: 12; -fx-background-radius: 20; -fx-border-radius: 20;" 
-                              HBox.hgrow="ALWAYS" />
+            <VBox fx:id="homeScreen" style="-fx-padding: 15; -fx-background-color: #f5f5f5;">
+                <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-padding: 0 0 10 0;">
+                    <Label fx:id="sectionLabel" text="Available Flights" 
+                           style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
+                    <ProgressIndicator fx:id="loadingIndicator" prefHeight="16" prefWidth="16" visible="false" />
                 </HBox>
                 
-                <!-- Flight List Section -->
-                <VBox VBox.vgrow="ALWAYS" style="-fx-padding: 0 5 15 5;" spacing="8">
-                    <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-padding: 0 10;">
-                        <Label fx:id="sectionLabel" text="Available Flights" 
-                               style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;" />
-                        <ProgressIndicator fx:id="loadingIndicator" prefHeight="16" prefWidth="16" visible="false" />
-                    </HBox>
-                    
-                    <ListView fx:id="flightListView" VBox.vgrow="ALWAYS" 
-                              style="-fx-background-color: transparent; -fx-border-color: transparent; 
-                                     -fx-focus-color: transparent; -fx-faint-focus-color: transparent;
-                                     -fx-selection-bar: transparent; -fx-selection-bar-non-focused: transparent;"
-                              prefHeight="400" />
-                </VBox>
+              
             </VBox>
             
             <!-- BOOKINGS SCREEN -->
-            <VBox fx:id="bookingsScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="bookingsContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <VBox fx:id="bookingsScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
+                           style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="bookingsContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
             </VBox>
             
             <!-- MESSAGES SCREEN -->
-            <VBox fx:id="messagesScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="messagesContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <VBox fx:id="messagesScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
+                           style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="messagesContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
             </VBox>
 
-            <VBox fx:id="timeScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="timeContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <!-- TIME SCREEN -->
+            <VBox fx:id="timeScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
+                           style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="timeContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
             </VBox>
             
             <!-- PROFILE SCREEN -->
-            <VBox fx:id="profileScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="profileContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <VBox fx:id="profileScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
+                           style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="profileContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
             </VBox>
             
            <!-- FLIGHT DETAILS SCREEN -->
-            <VBox fx:id="flightDetailsScreen" visible="false" style="-fx-background-color: #f8f9fa;">
+            <VBox fx:id="flightDetailsScreen" visible="false" style="-fx-background-color: #f5f5f5;">
                 <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" 
-                            style="-fx-background-color: transparent; -fx-background: transparent;" 
+                            style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;" 
                             vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
                     <VBox fx:id="flightDetailsContent" 
-                        style="-fx-background-color: transparent; -fx-padding: 10; -fx-spacing: 15;" 
+                        style="-fx-background-color: #f5f5f5; -fx-padding: 15; -fx-spacing: 15;" 
                         fillWidth="true" />
                 </ScrollPane>
             </VBox>
 
-            
             <!-- BOOKING FORM SCREEN -->
-            <VBox fx:id="bookingFormScreen" visible="false" style="-fx-background-color: #f8f9fa;">
+            <VBox fx:id="bookingFormScreen" visible="false" style="-fx-background-color: #f5f5f5;">
                 <!-- Back Navigation -->
-                <HBox style="-fx-padding: 10 15; -fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
+                <HBox style="-fx-padding: 10 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 0 0 1 0;">
                     <Button fx:id="backToDetailsBtn" text="← Flight Details" 
-                        style="-fx-background-color: transparent; -fx-text-fill: #2196F3; -fx-font-size: 14px; -fx-cursor: hand;" 
+                        style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" 
                         onAction="#goBackToFlightDetails" />
                 </HBox>
                 
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="bookingFormContent" style="-fx-background-color: transparent; -fx-padding: 15; -fx-spacing: 15;" />
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="bookingFormContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15; -fx-spacing: 15;" />
                 </ScrollPane>
                 
                 <!-- Continue Button -->
-                <VBox style="-fx-padding: 15; -fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;">
+                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
                     <Button fx:id="continueToPaymentBtn" text="Continue to Payment" 
-                        style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 25; -fx-font-weight: bold;" 
+                        style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
                         maxWidth="Infinity" />
                 </VBox>
             </VBox>
             
             <!-- PAYMENT SCREEN -->
-            <VBox fx:id="paymentScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="paymentContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <VBox fx:id="paymentScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="paymentContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
                 
                 <!-- Confirm Payment Button -->
-                <VBox style="-fx-padding: 15;">
+                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
                     <Button fx:id="confirmPaymentBtn" text="Confirm Payment" 
-                           style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 25;" 
+                           style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
                            maxWidth="Infinity" />
                 </VBox>
             </VBox>
             
             <!-- CONFIRMATION SCREEN -->
-            <VBox fx:id="confirmationScreen" visible="false" style="-fx-background-color: #f8f9fa;">
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: transparent;">
-                    <VBox fx:id="confirmationContent" style="-fx-background-color: transparent; -fx-padding: 15;" />
+            <VBox fx:id="confirmationScreen" visible="false" style="-fx-background-color: #f5f5f5;">
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" style="-fx-background-color: #f5f5f5; -fx-border-color: transparent;">
+                    <VBox fx:id="confirmationContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
                 
                 <!-- New Booking Button -->
-                <VBox style="-fx-padding: 15;">
+                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
                     <Button fx:id="newBookingBtn" text="Book Another Flight" 
-                           style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 25;" 
+                           style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
                            maxWidth="Infinity" />
                 </VBox>
             </VBox>
@@ -148,30 +146,63 @@
         </StackPane>
     </center>
     
-    <!-- BOTTOM: Tab Navigation -->
+    <!-- BOTTOM: Mobile-Style Tab Navigation -->
     <bottom>
-    <HBox fx:id="bottomNav" style="-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0; -fx-padding: 8 0;">
-        <VBox fx:id="homeTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-            <Label text="🏠" style="-fx-font-size: 20px;" />
-            <Label text="Home" style="-fx-font-size: 10px; -fx-text-fill: #2196F3; -fx-font-weight: bold;" />
+        <VBox style="-fx-background-color: #d0d0d0; -fx-border-color: #808080; -fx-border-width: 2 0 0 0;">
+            
+            <!-- Mobile-Style Navigation tabs with icons -->
+            <HBox fx:id="bottomNav" alignment="CENTER" style="-fx-padding: 8 0; -fx-background-color: #e0e0e0; -fx-spacing: 0;">
+                
+                <!-- HOME TAB -->
+                <VBox fx:id="homeTab" alignment="CENTER" onMouseClicked="#handleGoHome" 
+                      style="-fx-background-color: linear-gradient(#ffffff, #e0e0e0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100;" 
+                      HBox.hgrow="ALWAYS">
+                    <Label text="🏠" style="-fx-font-size: 24px;" />
+                    <Label text="Home" style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 2 0 0 0;" />
+                </VBox>
+                        
+                <!-- BOOKINGS TAB -->
+                <VBox fx:id="bookingsTab" alignment="CENTER" onMouseClicked="#handleGoToBookings" 
+                      style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100;" 
+                      HBox.hgrow="ALWAYS">
+                    <Label text="📋" style="-fx-font-size: 24px;" />
+                    <Label text="Bookings" style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-padding: 2 0 0 0;" />
+                </VBox>
+                        
+                <!-- TIME TAB -->
+                <VBox fx:id="timeTab" alignment="CENTER" onMouseClicked="#handleGoToTime" 
+                      style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100;" 
+                      HBox.hgrow="ALWAYS">
+                    <Label text="🌍" style="-fx-font-size: 24px;" />
+                    <Label text="Time" style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-padding: 2 0 0 0;" />
+                </VBox>
+                        
+                <!-- MESSAGES TAB -->
+                <VBox fx:id="messagesTab" alignment="CENTER" onMouseClicked="#handleGoToMessages" 
+                      style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100;" 
+                      HBox.hgrow="ALWAYS">
+                    <Label text="💬" style="-fx-font-size: 24px;" />
+                    <Label text="Messages" style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-padding: 2 0 0 0;" />
+                </VBox>
+                        
+                <!-- PROFILE TAB -->
+                <VBox fx:id="profileTab" alignment="CENTER" onMouseClicked="#handleGoToProfile" 
+                      style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 15 0; -fx-cursor: hand; -fx-min-width: 100; -fx-pref-width: 100;" 
+                      HBox.hgrow="ALWAYS">
+                    <Label text="👤" style="-fx-font-size: 24px;" />
+                    <Label text="Profile" style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-padding: 2 0 0 0;" />
+                </VBox>
+            </HBox>
+            
+            <!-- Status bar -->
+            <HBox alignment="CENTER_LEFT" style="-fx-padding: 4 10; -fx-background-color: #c0c0c0;">
+                <Label fx:id="statusLabel" text="Ready" 
+                       style="-fx-text-fill: #2c2c2c; -fx-font-size: 11px;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="JetSetGO v1.0" 
+                       style="-fx-text-fill: #2c2c2c; -fx-font-size: 11px;" />
+            </HBox>
         </VBox>
-        <VBox fx:id="bookingsTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-            <Label text="📋" style="-fx-font-size: 20px;" />
-            <Label text="Bookings" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-        </VBox>
-        <VBox fx:id="timeTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-            <Label text="🌍" style="-fx-font-size: 20px;" />
-            <Label text="Time" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-        </VBox>
-        <VBox fx:id="messagesTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-            <Label text="💬" style="-fx-font-size: 20px;" />
-            <Label text="Messages" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-        </VBox>
-        <VBox fx:id="profileTab" style="-fx-alignment: center; -fx-spacing: 2; -fx-cursor: hand;" HBox.hgrow="ALWAYS">
-            <Label text="👤" style="-fx-font-size: 20px;" />
-            <Label text="Profile" style="-fx-font-size: 10px; -fx-text-fill: #666;" />
-        </VBox>
-    </HBox>
-</bottom>
+    </bottom>
     
 </BorderPane>
