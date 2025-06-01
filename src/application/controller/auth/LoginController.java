@@ -1,4 +1,4 @@
-package application.controller;
+package application.controller.auth;
 
 import java.io.IOException;
 

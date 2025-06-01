@@ -7,7 +7,7 @@
 <?import java.net.URL?>
 
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" 
-           fx:controller="application.controller.SignupController" styleClass="auth-background"
+           fx:controller="application.controller.auth.SignupController" styleClass="auth-background"
            prefWidth="350" prefHeight="700">
    <stylesheets>
       <URL value="@auth.css" />
