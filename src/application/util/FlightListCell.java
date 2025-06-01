@@ -1,7 +1,7 @@
 package application.util;
 
 import application.model.Flight;
-import application.ui.HomeScreenBuilder;
+import application.ui.client.HomeScreenBuilder;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;

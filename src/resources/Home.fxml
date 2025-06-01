@@ -5,7 +5,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" 
            xmlns:fx="http://javafx.com/fxml/1" 
-           fx:controller="application.HomeController"
+           fx:controller="application.controller.client.HomeController"
            prefWidth="350" prefHeight="700"
            style="-fx-background-color: #f8f9fa;">
     
