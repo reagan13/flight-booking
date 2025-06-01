@@ -3,63 +3,61 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.text.*?>
-<?import java.net.URL?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" 
-           fx:controller="application.controller.auth.LoginController" styleClass="auth-background"
-           prefWidth="350" prefHeight="700">
-   <stylesheets>
-      <URL value="@auth.css" />
-   </stylesheets>
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="application.controller.auth.LoginController"
+           prefWidth="350" prefHeight="700"
+           style="-fx-background-color: #e0e0e0;">
    
    <center>
-      <VBox alignment="CENTER" spacing="15" prefWidth="350" prefHeight="700" styleClass="auth-container">
-         <padding>
-            <Insets top="30" right="30" bottom="30" left="30" />
-         </padding>
+      <VBox alignment="CENTER" spacing="15" 
+            style="-fx-background-color: #f0f0f0; -fx-padding: 35; -fx-border-color: #808080; -fx-border-width: 2; -fx-border-style: solid;">
          
-         <!-- Airplane icon as a Text element -->
-         <Text text="✈" styleClass="airplane-icon">
-            <font>
-               <Font size="40.0" />
-            </font>
-         </Text>
+         <!-- TITLE -->
+         <Label text="JETSETGO" 
+                style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
          
-         <Label text="JetSetGO" styleClass="logo-title">
-            <font>
-               <Font name="System Bold" size="16.0" />
-            </font>
-         </Label>
+         <Label text="Flight Booking System" 
+                style="-fx-font-size: 14px; -fx-text-fill: #555555;" />
          
-         <Separator />
+         <!-- Separator line -->
+         <Separator style="-fx-background-color: #808080;" />
          
-         <Label text="Sign In" styleClass="auth-header">
-            <font>
-               <Font name="System Bold" size="24.0" />
-            </font>
-         </Label>
+         <Label text="User Login" 
+                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
          
-         <TextField fx:id="emailPhoneField" promptText="Email" styleClass="auth-field"/>
+         <!-- Email input field  -->
+         <VBox spacing="6">
+            <Label text="Email:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <TextField fx:id="emailPhoneField" 
+                      style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <PasswordField fx:id="passwordField" promptText="Password" styleClass="auth-field"/>
+         <VBox spacing="6">
+            <Label text="Password:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <PasswordField fx:id="passwordField" 
+                          style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <HBox alignment="CENTER_RIGHT">
-            <Hyperlink fx:id="forgotPasswordLink" text="Forgot Password?" onAction="#handleForgotPassword" styleClass="auth-hyperlink-small"/>
+         <!-- Error message  -->
+         <Label fx:id="errorLabel" 
+                style="-fx-text-fill: #cc0000; -fx-font-size: 12px; -fx-background-color: #ffe6e6; -fx-padding: 6; -fx-border-color: #cc0000; -fx-border-width: 1;" 
+                visible="false" managed="false" />
+         
+         <!--  button with hand cursor -->
+         <Button fx:id="loginButton" text="Login" onAction="#handleLogin" 
+                style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 10 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" 
+                maxWidth="150" />
+         
+         <Separator style="-fx-background-color: #c0c0c0;" />
+         
+         <!--  link  -->
+         <HBox alignment="CENTER" spacing="5">
+            <Label text="Don't have an account?" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px;" />
+            <Hyperlink fx:id="signupLink" text="Register Here" onAction="#switchToSignup" 
+                      style="-fx-text-fill: #87CEEB; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: bold;" />
          </HBox>
          
-         <Label fx:id="errorLabel" styleClass="auth-error" visible="false" managed="false" />
-         
-         <Button fx:id="loginButton" text="Sign in" onAction="#handleLogin" styleClass="primary-button" maxWidth="Infinity" />
-         
-         <HBox alignment="CENTER" spacing="5" styleClass="auth-link-box">
-            <Label text="Don't have an Account?" />
-            <Hyperlink fx:id="signupLink" text="Sign up" onAction="#switchToSignup" styleClass="auth-hyperlink"/>
-         </HBox>
-         
-         <Region VBox.vgrow="ALWAYS" />
-         
-         <Separator />
       </VBox>
    </center>
 </BorderPane>

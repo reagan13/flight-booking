@@ -3,69 +3,81 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.text.*?>
-<?import java.net.URL?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" 
-           fx:controller="application.controller.auth.SignupController" styleClass="auth-background"
-           prefWidth="350" prefHeight="700">
-   <stylesheets>
-      <URL value="@auth.css" />
-   </stylesheets>
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="application.controller.auth.SignupController"
+           prefWidth="350" prefHeight="700"
+           style="-fx-background-color: #e0e0e0;">
    
    <center>
-      <VBox alignment="CENTER" spacing="15" prefWidth="350" prefHeight="700" styleClass="auth-container">
-         <padding>
-            <Insets top="30" right="30" bottom="30" left="30" />
-         </padding>
+      <VBox alignment="CENTER" spacing="15" 
+            style="-fx-background-color: #f0f0f0; -fx-padding: 35; -fx-border-color: #808080; -fx-border-width: 2; -fx-border-style: solid;">
          
-         <!-- Airplane icon as a Text element -->
-         <Text text="✈" styleClass="airplane-icon">
-            <font>
-               <Font size="40.0" />
-            </font>
-         </Text>
+         <!-- TITLE -->
+         <Label text="JETSETGO" 
+                style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
          
-         <Label text="JetSetGO" styleClass="logo-title">
-            <font>
-               <Font name="System Bold" size="16.0" />
-            </font>
-         </Label>
+         <!-- Separator line -->
+         <Separator style="-fx-background-color: #808080;" />
          
-         <Separator />
+         <Label text="Create Account" 
+                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
          
-         <Label text="Sign Up" styleClass="auth-header">
-            <font>
-               <Font name="System Bold" size="24.0" />
-            </font>
-         </Label>
+         <!-- Form fields  -->
+         <VBox spacing="6">
+            <Label text="First Name:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <TextField fx:id="firstNameField" 
+                      style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <TextField fx:id="fullNameField" promptText="Full Name" styleClass="auth-field"/>
+         <VBox spacing="6">
+            <Label text="Last Name:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <TextField fx:id="lastNameField" 
+                      style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <TextField fx:id="phoneNumberField" promptText="Phone Number" styleClass="auth-field"/>
+         <VBox spacing="6">
+            <Label text="Phone Number:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <TextField fx:id="phoneNumberField" 
+                      style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <TextField fx:id="emailField" promptText="Email Address" styleClass="auth-field"/>
+         <VBox spacing="6">
+            <Label text="Email Address:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <TextField fx:id="emailField" 
+                      style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <PasswordField fx:id="passwordField" promptText="Password" styleClass="auth-field"/>
+         <VBox spacing="6">
+            <Label text="Password:" style="-fx-text-fill: #2c2c2c; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            <PasswordField fx:id="passwordField" 
+                          style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 8; -fx-font-size: 13px;" />
+         </VBox>
          
-         <Label fx:id="errorLabel" styleClass="auth-error" visible="false" managed="false" />
+         <!-- Error message  -->
+         <Label fx:id="errorLabel" 
+                style="-fx-text-fill: #cc0000; -fx-font-size: 12px; -fx-background-color: #ffe6e6; -fx-padding: 6; -fx-border-color: #cc0000; -fx-border-width: 1;" 
+                visible="false" managed="false" />
          
-         <!-- Hidden fields that will be calculated or set programmatically -->
-         <TextField fx:id="firstNameField" visible="false" managed="false"/>
-         <TextField fx:id="lastNameField" visible="false" managed="false"/>
+         <!-- Hidden fields  -->
+         <TextField fx:id="fullNameField" visible="false" managed="false"/>
          <TextField fx:id="ageField" visible="false" managed="false"/>
          <TextField fx:id="addressField" visible="false" managed="false"/>
          
-         <Button fx:id="signupButton" text="Sign Up" onAction="#handleSignup" styleClass="primary-button" maxWidth="Infinity" />
+         <!-- Classic raised button with hand cursor -->
+         <Button fx:id="signupButton" text="Create Account" onAction="#handleSignup" 
+                style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 10 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" 
+                maxWidth="200" />
          
-         <HBox alignment="CENTER" spacing="5" styleClass="auth-link-box">
-            <Label text="Already have an Account?" />
-            <Hyperlink fx:id="loginLink" text="Sign In" onAction="#switchToLogin" styleClass="auth-hyperlink"/>
+         <Separator style="-fx-background-color: #c0c0c0;" />
+         
+         <!-- link  -->
+         <HBox alignment="CENTER" spacing="5">
+            <Label text="Already have an account?" style="-fx-text-fill: #2c2c2c; -fx-font-size: 15px;" />
+            <Hyperlink fx:id="loginLink" text="Sign In" onAction="#switchToLogin" 
+                      style="-fx-text-fill: #87CEEB; -fx-font-size: 15px; -fx-cursor: hand; -fx-font-weight: bold;" />
          </HBox>
          
-         <Region VBox.vgrow="ALWAYS" />
-         
-         <Separator />
       </VBox>
    </center>
 </BorderPane>

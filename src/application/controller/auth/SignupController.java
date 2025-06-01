@@ -1,12 +1,8 @@
 package application.controller.auth;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
-import application.database.DatabaseConnection;
+import application.service.AuthService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,8 +19,11 @@ import javafx.stage.Stage;
 public class SignupController {
     
     @FXML
-    private TextField fullNameField;
-    
+    private TextField firstNameField;    
+
+    @FXML
+    private TextField lastNameField;     
+
     @FXML
     private TextField phoneNumberField;
     
@@ -33,13 +32,6 @@ public class SignupController {
     
     @FXML
     private PasswordField passwordField;
-    
-    // Hidden fields that will be set programmatically
-    @FXML
-    private TextField firstNameField;
-    
-    @FXML
-    private TextField lastNameField;
     
     @FXML
     private TextField ageField;
@@ -57,98 +49,49 @@ public class SignupController {
     private Label errorLabel;
     
     /**
-     * Handle signup button click action
-     */
+     * Handle signup 
+     */     
     @FXML
     public void handleSignup(ActionEvent event) {
-        // Get form data
-        String fullName = fullNameField.getText().trim();
+
+        // Get data from separate fields
+        String firstName = firstNameField.getText().trim();
+        String lastName = lastNameField.getText().trim();
         String phoneNumber = phoneNumberField.getText().trim();
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
-        
-        // Form validation
-        if (fullName.isEmpty()) {
-            showError("Please enter your full name");
+
+        // Validation
+        if (firstName.isEmpty() || lastName.isEmpty() || phoneNumber.isEmpty() ||
+                email.isEmpty() || password.isEmpty()) {
+            showError("Please fill in all fields");
             return;
         }
-        
-        if (phoneNumber.isEmpty()) {
-            showError("Please enter your phone number");
-            return;
-        }
-        
-        if (!isValidPhoneNumber(phoneNumber)) {
-            showError("Please enter a valid phone number");
-            return;
-        }
-        
-        if (email.isEmpty()) {
-            showError("Please enter your email address");
-            return;
-        }
-        
+
         if (!isValidEmail(email)) {
             showError("Please enter a valid email address");
             return;
         }
-        
-        if (password.isEmpty()) {
-            showError("Please enter a password");
-            return;
-        }
-        
+
         if (password.length() < 6) {
-            showError("Password must be at least 6 characters");
+            showError("Password must be at least 6 characters long");
             return;
         }
-        
-        // Split full name into first and last name
-        String[] nameParts = fullName.split(" ", 2);
-        String firstName = nameParts[0];
-        String lastName = nameParts.length > 1 ? nameParts[1] : "";
-        
-        // Set default values for the fields not in the UI but required in the database
-        int age = 18;  // Default age
-        String address = phoneNumber;  // Use phone number as address temporarily
-        
-        // Database operations
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-            
-            // Check if email already exists
-            String checkQuery = "SELECT COUNT(*) FROM users WHERE email = ?";
-            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
-            checkStmt.setString(1, email);
-            
-            ResultSet rs = checkStmt.executeQuery();
-            if (rs.next() && rs.getInt(1) > 0) {
-                showError("Email is already registered");
-                return;
-            }
-            
-            // Insert new user - note the fields match our table structure
-            String insertQuery = "INSERT INTO users (first_name, last_name, email, password, age, address) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
-            insertStmt.setString(1, firstName);
-            insertStmt.setString(2, lastName);
-            insertStmt.setString(3, email);
-            insertStmt.setString(4, password); // In a real app, use password hashing
-            insertStmt.setInt(5, age);
-            insertStmt.setString(6, address);
-            
-            int rowsAffected = insertStmt.executeUpdate();
-            if (rowsAffected > 0) {
-                // Registration successful, switch to login screen
+        if (!isValidPhoneNumber(phoneNumber)) {
+            showError("Please enter a valid phone number");
+            return;
+        }
+
+       
+            AuthService.RegistrationResult result = AuthService.register(firstName, lastName, email, phoneNumber, password);
+            if (result.isSuccess()) {
+                System.out.println("Registration successful!");
                 switchToLogin(event);
             } else {
-                showError("Failed to create account. Please try again.");
+                showError(result.getMessage());
             }
-            
-        } catch (SQLException e) {
-            showError("Database error: " + e.getMessage());
-            e.printStackTrace();
-        }
+
+       
     }
     
     /**
@@ -162,12 +105,7 @@ public class SignupController {
             
             // Get current stage reference
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            
-            // Apply existing stylesheets
-            if (((Node) event.getSource()).getScene().getStylesheets() != null) {
-                scene.getStylesheets().addAll(((Node) event.getSource()).getScene().getStylesheets());
-            }
-            
+        
             // Set the new scene
             stage.setScene(scene);
             stage.show();
@@ -190,17 +128,15 @@ public class SignupController {
      * Validate email format
      */
     private boolean isValidEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        return email.matches(emailRegex);
+        return email.contains("@") && email.contains(".") && email.length() > 5;
     }
     
     /**
      * Validate phone number format
-     * Basic validation for demonstration purposes
+     * Basic validation ]
      */
     private boolean isValidPhoneNumber(String phoneNumber) {
         // Allow digits, possibly with hyphens, parentheses, spaces
-        // This is a simple validation - adjust to your specific requirements
         String phoneRegex = "^[+]?[(]?[0-9]{1,4}[)]?[-\\s\\./0-9]*$";
         return phoneNumber.matches(phoneRegex) && phoneNumber.replaceAll("[^0-9]", "").length() >= 7;
     }

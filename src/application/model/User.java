@@ -8,6 +8,7 @@ public class User extends BaseEntity { // INHERITANCE
     private String lastName;
     private String email;
     private String address;
+    private String phoneNumber; 
     private int age;
     private String userType;
 
@@ -47,10 +48,14 @@ public class User extends BaseEntity { // INHERITANCE
 
     // ENCAPSULATION - controlled access through getters/setters
     public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { 
-        this.firstName = firstName; 
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
         updateTimestamp(); // inherited method
     }
+    
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { 

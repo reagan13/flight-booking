@@ -60,7 +60,8 @@ public class DatabaseConnection {
                     + "email VARCHAR(100) NOT NULL UNIQUE,"
                     + "password VARCHAR(255) NOT NULL,"
                     + "age INT,"
-                    + "address VARCHAR(255) NOT NULL,"
+                    + "phone_number VARCHAR(20),"
+                    + "address VARCHAR(255) NULL,"
                     + "user_type ENUM('regular', 'admin') DEFAULT 'regular',"
                     + "automation_enabled BOOLEAN DEFAULT TRUE," // ADD THIS LINE
                     + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
@@ -72,6 +73,13 @@ public class DatabaseConnection {
             try {
                 String addColumnQuery = "ALTER TABLE users ADD COLUMN automation_enabled BOOLEAN DEFAULT TRUE";
                 stmt.execute(addColumnQuery);
+            } catch (SQLException e) {
+                // Column already exists, which is fine
+            }
+
+            try {
+                String addPhoneColumn = "ALTER TABLE users ADD COLUMN phone_number VARCHAR(20)";
+                stmt.execute(addPhoneColumn);
             } catch (SQLException e) {
                 // Column already exists, which is fine
             }

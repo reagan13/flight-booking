@@ -3,12 +3,9 @@ package application.service;
 import application.database.DatabaseConnection;
 import application.model.User;
 import java.sql.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 public class AuthService {
     
-    // Inner class for login result
     public static class LoginResult {
         private boolean success;
         private String message;
@@ -25,7 +22,6 @@ public class AuthService {
         public User getUser() { return user; }
     }
     
-    // Inner class for registration result
     public static class RegistrationResult {
         private boolean success;
         private String message;
@@ -40,7 +36,6 @@ public class AuthService {
     }
     
     // Login method
-    // Update the login method in AuthService.java
 
     public static LoginResult login(String email, String password) {
         System.out.println("=== LOGIN DEBUG ===");
@@ -95,9 +90,8 @@ public class AuthService {
         }
     }
 
-    // Register method
-    // Update the register method in AuthService.java
-    public static RegistrationResult register(String firstName, String lastName, String email, String password) {
+    public static RegistrationResult register(String firstName, String lastName, String email, String phoneNumber,
+            String password) {
         try {
             Connection conn = DatabaseConnection.getConnection();
 
@@ -111,13 +105,16 @@ public class AuthService {
                 return new RegistrationResult(false, "Email already exists");
             }
 
-            // Store password directly (no hashing)
-            String insertSql = "INSERT INTO users (first_name, last_name, email, password, user_type) VALUES (?, ?, ?, ?, 'regular')";
+            // Store user data WITH address field - SET ALL 8 PARAMETERS
+            String insertSql = "INSERT INTO users (first_name, last_name, email, phone_number, password, age, address, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'regular')";
             PreparedStatement insertStmt = conn.prepareStatement(insertSql);
-            insertStmt.setString(1, firstName);
-            insertStmt.setString(2, lastName);
-            insertStmt.setString(3, email);
-            insertStmt.setString(4, password); // Store password directly
+            insertStmt.setString(1, firstName); 
+            insertStmt.setString(2, lastName); 
+            insertStmt.setString(3, email); 
+            insertStmt.setString(4, phoneNumber); 
+            insertStmt.setString(5, password); 
+            insertStmt.setInt(6, 0); 
+            insertStmt.setString(7, ""); 
 
             int result = insertStmt.executeUpdate();
 
@@ -134,166 +131,6 @@ public class AuthService {
         }
     }
 
-    // Password validation
-    public static boolean isValidPassword(String password) {
-        return password != null && password.length() >= 6;
-    }
-    
-    // Email validation
-    public static boolean isValidEmail(String email) {
-        return email != null && email.contains("@") && email.contains(".");
-    }
-    
-    // Hash password using SHA-256
-    private static String hashPassword(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = md.digest(password.getBytes());
-            
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashedBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println("Error hashing password: " + e.getMessage());
-            return password; // Fallback (not recommended for production)
-        }
-    }
-    
-    // Change password method
-    // Update changePassword method
-    public static boolean changePassword(int userId, String oldPassword, String newPassword) {
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-
-            // Verify old password (direct comparison)
-            String verifySql = "SELECT password FROM users WHERE id = ?";
-            PreparedStatement verifyStmt = conn.prepareStatement(verifySql);
-            verifyStmt.setInt(1, userId);
-            ResultSet rs = verifyStmt.executeQuery();
-
-            if (rs.next()) {
-                String storedPassword = rs.getString("password");
-
-                if (!storedPassword.equals(oldPassword)) {
-                    return false; // Old password doesn't match
-                }
-
-                // Update with new password (direct storage)
-                String updateSql = "UPDATE users SET password = ? WHERE id = ?";
-                PreparedStatement updateStmt = conn.prepareStatement(updateSql);
-                updateStmt.setString(1, newPassword);
-                updateStmt.setInt(2, userId);
-
-                int result = updateStmt.executeUpdate();
-                return result > 0;
-            }
-
-            return false;
-
-        } catch (SQLException e) {
-            System.err.println("Error changing password: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-
-    // Update resetPassword method
-    public static boolean resetPassword(String email, String newPassword) {
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-
-            // Check if email exists
-            String checkSql = "SELECT id FROM users WHERE email = ?";
-            PreparedStatement checkStmt = conn.prepareStatement(checkSql);
-            checkStmt.setString(1, email);
-            ResultSet rs = checkStmt.executeQuery();
-
-            if (rs.next()) {
-                // Update password (direct storage)
-                String updateSql = "UPDATE users SET password = ? WHERE email = ?";
-                PreparedStatement updateStmt = conn.prepareStatement(updateSql);
-                updateStmt.setString(1, newPassword);
-                updateStmt.setString(2, email);
-
-                int result = updateStmt.executeUpdate();
-                return result > 0;
-            }
-
-            return false;
-
-        } catch (SQLException e) {
-            System.err.println("Error resetting password: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Get user by email
-    public static User getUserByEmail(String email) {
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-            String sql = "SELECT * FROM users WHERE email = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, email);
-            
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                return new User(
-                    rs.getInt("id"),
-                    rs.getString("first_name"),
-                    rs.getString("last_name"),
-                    rs.getString("email"),
-                    rs.getString("user_type")
-                );
-            }
-            
-        } catch (SQLException e) {
-            System.err.println("Error getting user by email: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
-    
-    // Update user profile
-    public static boolean updateUserProfile(int userId, String firstName, String lastName, String email) {
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-            
-            // Check if email is already taken by another user
-            String checkSql = "SELECT COUNT(*) FROM users WHERE email = ? AND id != ?";
-            PreparedStatement checkStmt = conn.prepareStatement(checkSql);
-            checkStmt.setString(1, email);
-            checkStmt.setInt(2, userId);
-            ResultSet checkRs = checkStmt.executeQuery();
-            
-            if (checkRs.next() && checkRs.getInt(1) > 0) {
-                return false; // Email already taken
-            }
-            
-            // Update user profile
-            String updateSql = "UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE id = ?";
-            PreparedStatement updateStmt = conn.prepareStatement(updateSql);
-            updateStmt.setString(1, firstName);
-            updateStmt.setString(2, lastName);
-            updateStmt.setString(3, email);
-            updateStmt.setInt(4, userId);
-            
-            int result = updateStmt.executeUpdate();
-            return result > 0;
-            
-        } catch (SQLException e) {
-            System.err.println("Error updating user profile: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
     // Delete user account
     public static boolean deleteUser(int userId) {
         try {

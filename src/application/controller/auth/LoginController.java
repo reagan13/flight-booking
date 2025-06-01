@@ -32,8 +32,6 @@ public class LoginController {
     @FXML
     private Hyperlink signupLink;
     
-    @FXML
-    private Hyperlink forgotPasswordLink;
     
     @FXML
     private Label errorLabel;
@@ -57,7 +55,6 @@ public class LoginController {
             if (result.isSuccess()) {
                 User user = result.getUser();
                 
-                // This should now work!
                 UserSession.getInstance().setCurrentUser(user);
 
                 // Check user type and redirect accordingly
@@ -74,7 +71,7 @@ public class LoginController {
 
         } catch (Exception e) {
             System.err.println("Login error: " + e.getMessage());
-            e.printStackTrace();  // This will help us see the full error
+            e.printStackTrace();  
             showError("An error occurred during login. Please try again.");
         }
     }
@@ -87,7 +84,6 @@ public class LoginController {
             Scene adminScene = new Scene(adminRoot);
             stage.setScene(adminScene);
             stage.setTitle("JetSetGO - Admin Panel");
-            // stage.setMaximized(true);
             stage.centerOnScreen();
 
             System.out.println("Successfully navigated to admin panel");
@@ -119,21 +115,7 @@ public class LoginController {
         }
     }
 
-    @FXML
-    public void handleForgotPassword(ActionEvent event) {
-        try {
-            Parent forgotPasswordRoot = FXMLLoader.load(getClass().getResource("/resources/ForgotPassword.fxml"));
-            Scene forgotPasswordScene = new Scene(forgotPasswordRoot);
-            
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(forgotPasswordScene);
-            stage.show();
-        } catch (IOException e) {
-            showError("Could not load forgot password page");
-            e.printStackTrace();
-        }
-    }
-    
+ 
     @FXML
     public void switchToSignup(ActionEvent event) {
         try {
@@ -141,11 +123,7 @@ public class LoginController {
             Scene signupScene = new Scene(signupRoot);
             
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            
-            // Apply existing stylesheets
-            if (((Node) event.getSource()).getScene().getStylesheets() != null) {
-                signupScene.getStylesheets().addAll(((Node) event.getSource()).getScene().getStylesheets());
-            }
+         
             
             stage.setScene(signupScene);
             stage.show();
