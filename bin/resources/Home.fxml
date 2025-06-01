@@ -107,12 +107,7 @@
                     <VBox fx:id="bookingFormContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15; -fx-spacing: 15;" />
                 </ScrollPane>
                 
-                <!-- Continue Button -->
-                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
-                    <Button fx:id="continueToPaymentBtn" text="Continue to Payment" 
-                        style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
-                        maxWidth="Infinity" />
-                </VBox>
+               
             </VBox>
             
             <!-- PAYMENT SCREEN -->
@@ -121,12 +116,7 @@
                     <VBox fx:id="paymentContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
                 
-                <!-- Confirm Payment Button -->
-                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
-                    <Button fx:id="confirmPaymentBtn" text="Confirm Payment" 
-                           style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
-                           maxWidth="Infinity" />
-                </VBox>
+
             </VBox>
             
             <!-- CONFIRMATION SCREEN -->
@@ -135,12 +125,6 @@
                     <VBox fx:id="confirmationContent" style="-fx-background-color: #f5f5f5; -fx-padding: 15;" />
                 </ScrollPane>
                 
-                <!-- New Booking Button -->
-                <VBox style="-fx-padding: 15; -fx-background-color: #f0f0f0; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
-                    <Button fx:id="newBookingBtn" text="Book Another Flight" 
-                           style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 12 25; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-weight: bold; -fx-cursor: hand;" 
-                           maxWidth="Infinity" />
-                </VBox>
             </VBox>
             
         </StackPane>

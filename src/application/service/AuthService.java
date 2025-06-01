@@ -44,7 +44,8 @@ public class AuthService {
 
         try {
             Connection conn = DatabaseConnection.getConnection();
-            String sql = "SELECT id, first_name, last_name, email, password, user_type FROM users WHERE email = ?";
+            // FIX: Add ALL columns to SELECT statement
+            String sql = "SELECT id, first_name, last_name, email, password, age, phone_number, address, user_type FROM users WHERE email = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, email);
 
@@ -64,12 +65,16 @@ public class AuthService {
 
                 // Direct password comparison (no hashing)
                 if (storedPassword.equals(password)) {
-                    User user = new User(
-                            rs.getInt("id"),
-                            rs.getString("first_name"),
-                            rs.getString("last_name"),
-                            rs.getString("email"),
-                            rs.getString("user_type"));
+                    // FIX: Create User object with correct constructor
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setFirstName(rs.getString("first_name"));
+                    user.setLastName(rs.getString("last_name"));
+                    user.setEmail(rs.getString("email"));
+                    user.setAge(rs.getInt("age"));
+                    user.setPhoneNumber(rs.getString("phone_number"));
+                    user.setAddress(rs.getString("address"));
+                    user.setUserType(rs.getString("user_type"));
 
                     System.out.println("✓ Login successful for: " + user.getEmail());
                     System.out.println("✓ User type: " + user.getUserType());
@@ -89,7 +94,7 @@ public class AuthService {
             return new LoginResult(false, "Database error occurred", null);
         }
     }
-
+    
     public static RegistrationResult register(String firstName, String lastName, String email, String phoneNumber,
             String password) {
         try {

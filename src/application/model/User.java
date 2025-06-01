@@ -13,7 +13,7 @@ public class User extends BaseEntity { // INHERITANCE
     private String userType;
 
     // Default constructor
-    public User() {
+    public User(int i, String string, String string2, String string3, String string4, String string5, int j, String string6) {
         super();
     }
     
@@ -44,6 +44,10 @@ public class User extends BaseEntity { // INHERITANCE
         this(id, firstName, lastName, email, address, age, userType);
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public User() {
+        //TODO Auto-generated constructor stub
     }
 
     // ENCAPSULATION - controlled access through getters/setters

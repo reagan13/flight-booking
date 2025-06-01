@@ -19,7 +19,7 @@ public class HomeController extends BaseController {
     // COMPOSITION - Controllers for different functionalities
     private FlightDetailsBuilder flightDetailsController;
     private BookingFormScreenBuilder bookingFormController;
-    private PaymentScreenBuilder paymentController;
+    public PaymentScreenBuilder paymentController;
     
     // COMPOSITION - UI Builders
     private HomeScreenBuilder homeScreenBuilder;
@@ -141,9 +141,17 @@ public class HomeController extends BaseController {
                 }
                 
                 @Override
-                public void onShowAlert(String title, String message) {
-                    showMobileAlert(title, message);
-                }
+                    public void onShowAlert(String title, String message) {
+                        showMobileAlert(title, message);
+                    }
+                
+                    @Override
+                    public void onBackToBooking() {
+                        // Add this missing method
+                        switchToTab("booking-form");
+                    }
+
+                
             }
         );
         

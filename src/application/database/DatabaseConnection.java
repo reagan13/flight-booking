@@ -59,30 +59,16 @@ public class DatabaseConnection {
                     + "last_name VARCHAR(50) NOT NULL,"
                     + "email VARCHAR(100) NOT NULL UNIQUE,"
                     + "password VARCHAR(255) NOT NULL,"
-                    + "age INT,"
-                    + "phone_number VARCHAR(20),"
+                    + "age INT NULL,"
+                    + "phone_number VARCHAR(20) NOT NULL,"
                     + "address VARCHAR(255) NULL,"
                     + "user_type ENUM('regular', 'admin') DEFAULT 'regular',"
-                    + "automation_enabled BOOLEAN DEFAULT TRUE," // ADD THIS LINE
+                    + "automation_enabled BOOLEAN DEFAULT TRUE," 
                     + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                     + ")";
 
             stmt.execute(createUsersTable);
 
-            // For existing databases, add the column if it doesn't exist
-            try {
-                String addColumnQuery = "ALTER TABLE users ADD COLUMN automation_enabled BOOLEAN DEFAULT TRUE";
-                stmt.execute(addColumnQuery);
-            } catch (SQLException e) {
-                // Column already exists, which is fine
-            }
-
-            try {
-                String addPhoneColumn = "ALTER TABLE users ADD COLUMN phone_number VARCHAR(20)";
-                stmt.execute(addPhoneColumn);
-            } catch (SQLException e) {
-                // Column already exists, which is fine
-            }
 
             System.out.println("Users table initialized successfully!");
 

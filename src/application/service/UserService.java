@@ -133,6 +133,7 @@ public class UserService {
                 user.setLastName(rs.getString("last_name"));
                 user.setEmail(rs.getString("email"));
                 user.setAge(rs.getInt("age"));
+                user.setPhoneNumber(rs.getString("phone_number"));
                 user.setAddress(rs.getString("address"));
                 user.setUserType(rs.getString("user_type"));
                 

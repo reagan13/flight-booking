@@ -11,155 +11,188 @@ import java.util.Locale;
 
 public class PaymentScreenBuilder {
     
-    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
-    private String selectedPaymentMethod = "credit_card";
-    
-    public interface PaymentEventHandler {
-        void onPaymentProcessed(PaymentData paymentData);
-        void onShowAlert(String title, String message);
-    }
-    
     private final PaymentEventHandler eventHandler;
+    private final NumberFormat currencyFormat;
+    private String selectedPaymentMethod = "credit_card";
+    private ToggleGroup paymentGroup;
+
+    private VBox paymentSummaryDetails;
+    private Flight currentFlight;
     
     public PaymentScreenBuilder(PaymentEventHandler eventHandler) {
         this.eventHandler = eventHandler;
+        this.currencyFormat = NumberFormat.getCurrencyInstance(new Locale("fil", "PH"));
     }
     
+    /**
+     * Create payment form - matches naming convention
+     */
     public VBox createPaymentForm(Flight flight, BookingFormData formData) {
-        VBox container = new VBox(15);
-        container.setStyle("-fx-padding: 10;");
+        VBox container = new VBox(0);
+        container.setStyle("-fx-background-color: #f5f5f5;");
+        container.setFillWidth(true);
+        container.setMaxWidth(500); // Mobile width constraint
         
-        // Booking summary
-        VBox bookingSummary = createBookingSummary(flight, formData);
-        container.getChildren().add(bookingSummary);
-
-        // Payment method selection
-        VBox paymentMethods = createPaymentMethodsSection();
-        container.getChildren().add(paymentMethods);
-
-        // Payment summary
-        VBox paymentSummary = createPaymentSummary(flight);
-        container.getChildren().add(paymentSummary);
+        // Header section with back button (same as FlightDetailsBuilder)
+        VBox headerSection = createHeaderSection();
         
+        // Main content section
+        VBox contentSection = createContentSection(flight, formData);
+        
+        // Bottom action section  
+        VBox actionSection = createActionSection(flight, formData);
+        
+        container.getChildren().addAll(headerSection, contentSection, actionSection);
         return container;
     }
     
+    /**
+     * Process payment - PUBLIC method for HomeController
+     */
     public void processPayment(Flight flight, BookingFormData formData) {
         double amount = flight.getPrice();
         double processingFee = calculateProcessingFee(amount, selectedPaymentMethod);
         double totalAmount = amount + processingFee;
-        
+
         PaymentData paymentData = new PaymentData(
-            formData, selectedPaymentMethod, getPaymentProvider(selectedPaymentMethod), totalAmount
+            formData, 
+            selectedPaymentMethod, 
+            getPaymentMethodName(selectedPaymentMethod), 
+            totalAmount
         );
-        
+
         eventHandler.onPaymentProcessed(paymentData);
     }
     
-    private VBox createBookingSummary(Flight flight, BookingFormData formData) {
+    private VBox createHeaderSection() {
+        VBox headerSection = new VBox();
+        headerSection.setStyle("-fx-background-color: #d0d0d0; -fx-border-color: #808080; -fx-border-width: 0 0 1 0;");
+        
+        HBox headerBox = new HBox();
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+        headerBox.setStyle("-fx-padding: 10 15;");
+        
+        Button backButton = new Button("Go Back");
+        backButton.setStyle(
+            "-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); " +
+            "-fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-padding: 6 12; " +
+            "-fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;"
+        );
+        backButton.setOnAction(e -> eventHandler.onBackToBooking());
+        
+        // Hover effects (same as FlightDetailsBuilder)
+        backButton.setOnMouseEntered(e -> 
+            backButton.setStyle(
+                "-fx-background-color: linear-gradient(#e0e0e0, #c0c0c0); " +
+                "-fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-padding: 6 12; " +
+                "-fx-border-color: #606060; -fx-border-width: 1; -fx-cursor: hand;"
+            )
+        );
+        
+        backButton.setOnMouseExited(e -> 
+            backButton.setStyle(
+                "-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); " +
+                "-fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-padding: 6 12; " +
+                "-fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;"
+            )
+        );
+        
+        headerBox.getChildren().add(backButton);
+        headerSection.getChildren().add(headerBox);
+        
+        return headerSection;
+    }
+    
+    private VBox createContentSection(Flight flight, BookingFormData formData) {
+        VBox contentSection = new VBox(15);
+        contentSection.setStyle("-fx-padding: 15; -fx-background-color: #f5f5f5;");
+        VBox.setVgrow(contentSection, Priority.ALWAYS);
+        
+        // Flight summary card
+        VBox flightCard = createFlightSummaryCard(flight, formData);
+        
+        // Payment methods card
+        VBox methodsCard = createPaymentMethodsCard();
+        
+        // Payment summary card
+        VBox summaryCard = createPaymentSummaryCard(flight);
+        
+        contentSection.getChildren().addAll(flightCard, methodsCard, summaryCard);
+        return contentSection;
+    }
+    
+    private VBox createFlightSummaryCard(Flight flight, BookingFormData formData) {
         VBox card = new VBox(15);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                     "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1;");
-
-        Label titleLabel = new Label("Booking Summary");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
-
-        VBox detailsBox = new VBox(15);
-        detailsBox.getChildren().addAll(
-                createDetailRow("Flight", flight.getFlightNo()),
-                createDetailRow("Route", flight.getOrigin() + " → " + flight.getDestination()),
-                createDetailRow("Passenger", formData.getFirstName() + " " + formData.getLastName()),
-                createDetailRow("Date", flight.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
-                createDetailRow("Duration", flight.getDuration()));
-
-        VBox totalBox = new VBox(5);
-        totalBox.setStyle("-fx-background-color: #FFF3E0; -fx-padding: 12; -fx-background-radius: 10;");
-
-        Label totalLabel = new Label("Total Amount");
-        totalLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-
-        Label amountLabel = new Label(currencyFormat.format(flight.getPrice()));
-        amountLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FF9800;");
-
-        totalBox.getChildren().addAll(totalLabel, amountLabel);
-
-        card.getChildren().addAll(titleLabel, detailsBox, totalBox);
+        card.setStyle(
+            "-fx-background-color: white; -fx-background-radius: 8; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 8; " +
+            "-fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);"
+        );
+        
+        // Flight header
+        Label flightTitle = new Label("Flight Summary");
+        flightTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
+        
+        // Route section (same style as FlightDetailsBuilder)
+        HBox routeSection = new HBox();
+        routeSection.setAlignment(Pos.CENTER);
+        routeSection.setSpacing(15);
+        
+        VBox originBox = createCompactAirportBox(flight.getOrigin(), "From");
+        Label arrowLabel = new Label("✈️");
+        arrowLabel.setStyle("-fx-font-size: 20px;");
+        VBox destBox = createCompactAirportBox(flight.getDestination(), "To");
+        
+        routeSection.getChildren().addAll(originBox, arrowLabel, destBox);
+        
+        // Flight details
+        VBox detailsGrid = new VBox(8);
+        detailsGrid.getChildren().addAll(
+            createCompactDetailRow("✈️ Flight", flight.getFlightNo()),
+            createCompactDetailRow("👤 Passenger", formData.getFirstName() + " " + formData.getLastName()),
+            createCompactDetailRow("📅 Date", flight.getDeparture().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))),
+            createCompactDetailRow("⏱️ Duration", flight.getDuration())
+        );
+        
+        card.getChildren().addAll(flightTitle, routeSection, detailsGrid);
         return card;
     }
     
-    private VBox createPaymentMethodsSection() {
-        VBox section = new VBox(15);
-        section.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                        "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
+    private VBox createPaymentMethodsCard() {
+        VBox card = new VBox(12);
+        card.setStyle(
+            "-fx-background-color: white; -fx-background-radius: 8; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 8; " +
+            "-fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);"
+        );
         
-        Label titleLabel = new Label("Select Payment Method");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        Label methodsTitle = new Label("Payment Method");
+        methodsTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
         
-        // Toggle group for payment methods
-        ToggleGroup paymentGroup = new ToggleGroup();
+        // Initialize toggle group
+        paymentGroup = new ToggleGroup();
         
-        VBox methodsContainer = new VBox(12);
+        VBox methodsList = new VBox(8);
         
-        RadioButton creditCard = createPaymentOption("💳 Credit/Debit Card", "credit_card", paymentGroup, true);
-        RadioButton gcash = createPaymentOption("🔵 GCash", "gcash", paymentGroup, false);
-        RadioButton maya = createPaymentOption("🟢 Maya (PayMaya)", "maya", paymentGroup, false);
-        RadioButton paypal = createPaymentOption("🅿️ PayPal", "paypal", paymentGroup, false);
+        // Payment methods (same style as BookingsScreenBuilder detail rows)
+        RadioButton creditCard = createPaymentOption("💳 Credit/Debit Card", "credit_card", true);
+        RadioButton gcash = createPaymentOption("🔵 GCash", "gcash", false);
+        RadioButton maya = createPaymentOption("🟢 Maya", "maya", false);
+        RadioButton paypal = createPaymentOption("🅿️ PayPal", "paypal", false);
         
-        methodsContainer.getChildren().addAll(creditCard, gcash, maya, paypal);
+        methodsList.getChildren().addAll(creditCard, gcash, maya, paypal);
+        card.getChildren().addAll(methodsTitle, methodsList);
         
-        section.getChildren().addAll(titleLabel, methodsContainer);
-        return section;
+        return card;
     }
     
-    private VBox createPaymentSummary(Flight flight) {
-        VBox detailsContainer = new VBox(15);
-        detailsContainer.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; " +
-                "-fx-border-color: #e0e0e0; -fx-border-radius: 15; -fx-border-width: 1; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);");
-
-        Label titleLabel = new Label("Payment Summary");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
-
-        // Payment breakdown
-        VBox summaryBox = new VBox(10);
-        summaryBox.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 10;");
-
-        double flightPrice = flight.getPrice();
-        double processingFee = calculateProcessingFee(flightPrice, selectedPaymentMethod);
-        double totalAmount = flightPrice + processingFee;
-
-        HBox flightPriceRow = createPriceSummaryRow("Flight Price", flightPrice);
-        HBox processingFeeRow = createPriceSummaryRow("Processing Fee", processingFee);
-
-        Separator separator = new Separator();
-        separator.setStyle("-fx-background-color: #ddd;");
-
-        HBox totalRow = new HBox();
-        totalRow.setAlignment(Pos.CENTER_LEFT);
-        totalRow.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 10; -fx-background-radius: 8;");
-
-        Label totalLabel = new Label("Total Amount");
-        totalLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label totalValue = new Label(currencyFormat.format(totalAmount));
-        totalValue.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
-
-        totalRow.getChildren().addAll(totalLabel, spacer, totalValue);
-
-        summaryBox.getChildren().addAll(flightPriceRow, processingFeeRow, separator, totalRow);
-
-        detailsContainer.getChildren().addAll(titleLabel, summaryBox);
-        return detailsContainer;
-    }
-    
-    private RadioButton createPaymentOption(String text, String methodId, ToggleGroup group, boolean selected) {
+    private RadioButton createPaymentOption(String text, String methodId, boolean selected) {
         RadioButton radio = new RadioButton(text);
-        radio.setToggleGroup(group);
-        radio.setStyle("-fx-font-size: 14px; -fx-padding: 10;");
+        radio.setToggleGroup(paymentGroup);
+        radio.setStyle(
+            "-fx-background-color: #f8f9fa; -fx-padding: 8; -fx-background-radius: 6; " +
+            "-fx-font-size: 12px; -fx-text-fill: #2c2c2c;"
+        );
         radio.setSelected(selected);
 
         if (selected) {
@@ -168,39 +201,157 @@ public class PaymentScreenBuilder {
 
         radio.setOnAction(e -> {
             selectedPaymentMethod = methodId;
+            updatePaymentSummary(); // ADD THIS LINE - Update summary when method changes
             System.out.println("Selected payment method: " + methodId);
         });
 
         return radio;
     }
     
-    private HBox createDetailRow(String label, String value) {
-        HBox row = new HBox(10);
-        row.setAlignment(Pos.CENTER_LEFT);
-        
-        Label labelText = new Label(label);
-        labelText.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        labelText.setPrefWidth(80);
-        
-        Label valueText = new Label(value);
-        valueText.setStyle("-fx-font-size: 12px; -fx-text-fill: #333;");
-        
-        row.getChildren().addAll(labelText, valueText);
-        return row;
+    private VBox createPaymentSummaryCard(Flight flight) {
+        // Store flight reference for updates
+        this.currentFlight = flight;
+
+        VBox card = new VBox(8);
+        card.setStyle(
+                "-fx-background-color: white; -fx-background-radius: 8; " +
+                        "-fx-border-color: #4CAF50; -fx-border-width: 2; -fx-border-radius: 8; " +
+                        "-fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.2), 4, 0, 0, 2);");
+
+        Label summaryTitle = new Label("Payment Summary");
+        summaryTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
+
+        // CREATE CONTAINER THAT CAN BE UPDATED
+        paymentSummaryDetails = new VBox(8);
+        updatePaymentSummary(); // Initial population
+
+        card.getChildren().addAll(summaryTitle, paymentSummaryDetails);
+        return card;
     }
     
-    private HBox createPriceSummaryRow(String label, double amount) {
+    private void updatePaymentSummary() {
+        if (paymentSummaryDetails == null || currentFlight == null) return;
+        
+        // Clear existing content
+        paymentSummaryDetails.getChildren().clear();
+        
+        // Recalculate with current payment method
+        double flightPrice = currentFlight.getPrice();
+        double processingFee = calculateProcessingFee(flightPrice, selectedPaymentMethod);
+        double totalAmount = flightPrice + processingFee;
+        
+        // Add updated content
+        paymentSummaryDetails.getChildren().addAll(
+            createCompactDetailRow("Flight Price", currencyFormat.format(flightPrice)),
+            createCompactDetailRow("Processing Fee (" + getPaymentMethodName(selectedPaymentMethod) + ")", 
+                                  currencyFormat.format(processingFee)),
+            new Separator(),
+            createTotalRow("Total Amount", totalAmount)
+        );
+    }
+    
+    private HBox createTotalRow(String label, double amount) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #E8F5E8; -fx-padding: 8; -fx-background-radius: 6;");
         
         Label labelText = new Label(label);
-        labelText.setStyle("-fx-font-size: 13px; -fx-text-fill: #666;");
+        labelText.setStyle("-fx-font-size: 12px; -fx-text-fill: #2E7D32; -fx-font-weight: bold;");
+        labelText.setPrefWidth(100);
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
         Label valueText = new Label(currencyFormat.format(amount));
-        valueText.setStyle("-fx-font-size: 13px; -fx-text-fill: #333; -fx-font-weight: bold;");
+        valueText.setStyle("-fx-font-size: 16px; -fx-text-fill: #4CAF50; -fx-font-weight: bold;");
+        
+        row.getChildren().addAll(labelText, spacer, valueText);
+        return row;
+    }
+    
+    private VBox createActionSection(Flight flight, BookingFormData formData) {
+        VBox actionSection = new VBox(10);
+        actionSection.setStyle(
+            "-fx-background-color: #f0f0f0; -fx-border-color: #808080; " +
+            "-fx-border-width: 1 0 0 0; -fx-padding: 15;"
+        );
+        
+        // Security notice
+        HBox securityNotice = new HBox(8);
+        securityNotice.setAlignment(Pos.CENTER);
+        securityNotice.setStyle(
+            "-fx-background-color: #f8f9fa; -fx-padding: 8; -fx-background-radius: 6; " +
+            "-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 6;"
+        );
+        
+        Label lockIcon = new Label("🔒");
+        Label securityText = new Label("Your payment is secured with SSL encryption");
+        securityText.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+        securityNotice.getChildren().addAll(lockIcon, securityText);
+        
+        Button payButton = new Button("Complete Payment");
+        payButton.setStyle(
+            "-fx-background-color: linear-gradient(#4CAF50, #45a049); " +
+            "-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 12 25; " +
+            "-fx-border-color: #388E3C; -fx-border-width: 1; -fx-background-radius: 6; " +
+            "-fx-border-radius: 6; -fx-font-weight: bold; -fx-cursor: hand;"
+        );
+        payButton.setMaxWidth(Double.MAX_VALUE);
+        payButton.setOnAction(e -> processPayment(flight, formData));
+        
+        // Hover effects (same as FlightDetailsBuilder)
+        payButton.setOnMouseEntered(e ->
+            payButton.setStyle(
+                "-fx-background-color: linear-gradient(#45a049, #3d8b40); " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 12 25; " +
+                "-fx-border-color: #2E7D32; -fx-border-width: 1; -fx-background-radius: 6; " +
+                "-fx-border-radius: 6; -fx-font-weight: bold; -fx-cursor: hand;"
+            )
+        );
+        
+        payButton.setOnMouseExited(e ->
+            payButton.setStyle(
+                "-fx-background-color: linear-gradient(#4CAF50, #45a049); " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 12 25; " +
+                "-fx-border-color: #388E3C; -fx-border-width: 1; -fx-background-radius: 6; " +
+                "-fx-border-radius: 6; -fx-font-weight: bold; -fx-cursor: hand;"
+            )
+        );
+        
+        actionSection.getChildren().addAll(securityNotice, payButton);
+        return actionSection;
+    }
+    
+    // Helper methods (same style as FlightDetailsBuilder)
+    
+    private VBox createCompactAirportBox(String code, String label) {
+        VBox box = new VBox(3);
+        box.setAlignment(Pos.CENTER);
+        
+        Label codeLabel = new Label(code);
+        codeLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        
+        Label typeLabel = new Label(label);
+        typeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        
+        box.getChildren().addAll(codeLabel, typeLabel);
+        return box;
+    }
+    
+    private HBox createCompactDetailRow(String label, String value) {
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #f8f9fa; -fx-padding: 8; -fx-background-radius: 6;");
+        
+        Label labelText = new Label(label);
+        labelText.setStyle("-fx-font-size: 11px; -fx-text-fill: #666; -fx-font-weight: bold;");
+        labelText.setPrefWidth(100);
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Label valueText = new Label(value);
+        valueText.setStyle("-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;");
         
         row.getChildren().addAll(labelText, spacer, valueText);
         return row;
@@ -208,17 +359,17 @@ public class PaymentScreenBuilder {
     
     private double calculateProcessingFee(double amount, String paymentMethod) {
         switch (paymentMethod) {
-            case "credit_card": return amount * 0.025; // 2.5%
-            case "gcash":
-            case "maya": return amount * 0.01; // 1%
-            case "paypal": return amount * 0.034; // 3.4%
-            default: return amount * 0.02; // 2%
+            case "credit_card": return amount * 0.035; // 3.5% - Higher for credit cards
+            case "gcash": return amount * 0.015; // 1.5% - E-wallet fee
+            case "maya": return amount * 0.012; // 1.2% - Competitive e-wallet rate
+            case "paypal": return amount * 0.044; // 4.4% - PayPal's international rate
+            default: return amount * 0.025; // 2.5% - Default fallback
         }
     }
     
-    private String getPaymentProvider(String paymentMethod) {
+    private String getPaymentMethodName(String paymentMethod) {
         switch (paymentMethod) {
-            case "credit_card": return "Visa/Mastercard";
+            case "credit_card": return "Credit Card";
             case "gcash": return "GCash";
             case "maya": return "Maya";
             case "paypal": return "PayPal";
@@ -226,7 +377,8 @@ public class PaymentScreenBuilder {
         }
     }
     
-    // Data transfer object
+    // Data Classes
+    
     public static class PaymentData {
         private final BookingFormData formData;
         private final String paymentMethod;
@@ -240,10 +392,18 @@ public class PaymentScreenBuilder {
             this.totalAmount = totalAmount;
         }
         
-        // Getters
         public BookingFormData getFormData() { return formData; }
         public String getPaymentMethod() { return paymentMethod; }
         public String getPaymentProvider() { return paymentProvider; }
         public double getTotalAmount() { return totalAmount; }
+    }
+    
+    /**
+     * Interface for handling payment events (same pattern as other builders)
+     */
+    public interface PaymentEventHandler {
+        void onBackToBooking();
+        void onPaymentProcessed(PaymentData paymentData);
+        void onShowAlert(String title, String message);
     }
 }

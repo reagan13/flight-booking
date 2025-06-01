@@ -55,41 +55,45 @@ public class BookingService {
     /**
      * Update user information in database
      */
-    public static boolean updateUserInformation(String firstName, String lastName, int age, String address, String email, String phone) {
+    public static boolean updateUserInformation(String firstName, String lastName, int age, String address,
+            String email, String phone) {
         if (!UserSession.getInstance().isLoggedIn()) {
             return true; // Skip update for guest users
         }
-        
+
         try {
             Connection conn = DatabaseConnection.getConnection();
-            String sql = "UPDATE users SET first_name = ?, last_name = ?, age = ?, address = ? WHERE email = ?";
-            
+            // Updated SQL to include phone_number
+            String sql = "UPDATE users SET first_name = ?, last_name = ?, age = ?, address = ?, phone_number = ? WHERE email = ?";
+
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, firstName);
             stmt.setString(2, lastName);
             stmt.setInt(3, age);
             stmt.setString(4, address);
-            stmt.setString(5, email);
-            
+            stmt.setString(5, phone); // ← Added phone number update
+            stmt.setString(6, email);
+
             int rowsUpdated = stmt.executeUpdate();
-            
+
             if (rowsUpdated > 0) {
-                // Update the session user object
+                // Update the session user object with ALL new data
                 User currentUser = UserSession.getInstance().getCurrentUser();
                 currentUser.setFirstName(firstName);
                 currentUser.setLastName(lastName);
                 currentUser.setAge(age);
                 currentUser.setAddress(address);
-                
-                System.out.println("User information updated successfully!");
+                currentUser.setPhoneNumber(phone); // ← Added phone number update
+
+                System.out.println("✅ User information updated successfully!");
                 return true;
             }
-            
+
         } catch (SQLException e) {
-            System.err.println("Error updating user information: " + e.getMessage());
+            System.err.println("❌ Error updating user information: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         return false;
     }
     
