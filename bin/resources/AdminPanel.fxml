@@ -410,8 +410,7 @@
                                              wrapText="true" />
                                     
                                     <HBox alignment="CENTER_RIGHT" spacing="10">
-                                        <Button text="Attach File" 
-                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
+                                   
                                         <Button fx:id="sendMessageBtn" onAction="#sendMessage" 
                                                style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 6 20; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" 
                                                text="Send Message" />
