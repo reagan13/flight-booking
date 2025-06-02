@@ -29,7 +29,6 @@ public class MainController {
     
     @FXML
     public void initialize() {
-        // Make sure all UI elements are properly injected before using them
         if (homeTab != null) {
             // Set home as default active tab
             activeTab = homeTab;

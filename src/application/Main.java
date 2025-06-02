@@ -1,4 +1,3 @@
-// filepath: d:\work\jetsetgo\src\application\Main.java
 package application;
 
 import application.service.UserSession;

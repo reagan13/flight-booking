@@ -399,7 +399,7 @@ public class PaymentScreenBuilder {
     }
     
     /**
-     * Interface for handling payment events (same pattern as other builders)
+     * Interface for handling payment events
      */
     public interface PaymentEventHandler {
         void onBackToBooking();
