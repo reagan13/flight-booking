@@ -3,6 +3,7 @@ package application.controller.admin;
 import application.model.*;
 import application.service.*;
 import application.ui.admin.*;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,7 +18,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class AdminController extends BaseController implements Initializable {
-    
+    private boolean isSendingMessage = false;
+    private int currentSelectedUserId = -1;
+
     // FXML Components - ENCAPSULATION
     @FXML private TextField flightSearchField;
     @FXML private TextField bookingSearchField;
@@ -611,38 +614,82 @@ public class AdminController extends BaseController implements Initializable {
     // Message handling methods
     private void loadConversation(int userId) {
         try {
-            currentUserId = userId;
+            currentUserId = userId; // Set the current user ID here
+            
             if (messagesBuilder != null) {
                 messagesBuilder.loadConversation(userId, chatArea, chatScrollPane,
                         chatHeaderLabel, automationToggle);
             }
+            
+            // Enable send button when conversation is loaded
+            if (sendMessageBtn != null) {
+                sendMessageBtn.setDisable(false);
+                sendMessageBtn.setText("Send Message");
+            }
+            
         } catch (Exception e) {
             System.err.println("Error loading conversation: " + e.getMessage());
+            showAlert("Error", "Failed to load conversation: " + e.getMessage());
         }
     }
     
-    @FXML
-    private void sendMessage() {
-        try {
-            if (currentUserId == -1) {
-                showWarningAlert("Warning", "Please select a conversation first.");
-                return;
-            }
-            
-            if (messageInputArea == null || messageInputArea.getText().trim().isEmpty()) {
-                showWarningAlert("Warning", "Please enter a message.");
-                return;
-            }
-            
-            if (messagesBuilder != null) {
-                messagesBuilder.sendMessage(currentUserId, messageInputArea.getText().trim(),
-                                          sendMessageBtn, this::showAlert, this::loadConversation);
-                messageInputArea.clear();
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending message: " + e.getMessage());
-        }
+
+   
+@FXML
+private void sendMessage() {
+    // Prevent multiple simultaneous sends
+    if (isSendingMessage) {
+        System.out.println("⚠️ Already sending a message, ignoring duplicate request");
+        return;
     }
+
+    // Check if we have a selected conversation - use currentUserId instead of currentSelectedUserId
+    if (currentUserId == -1) {
+        showAlert("No Conversation Selected", "Please select a conversation before sending a message.");
+        return;
+    }
+
+    // Get message text
+    String messageText = messageInputArea.getText();
+    if (messageText == null || messageText.trim().isEmpty()) {
+        showAlert("Empty Message", "Please enter a message before sending.");
+        messageInputArea.requestFocus();
+        return;
+    }
+
+    try {
+        isSendingMessage = true;
+
+        // Clear the input immediately to prevent duplicate sends
+        messageInputArea.clear();
+
+        // Disable send button temporarily
+        if (sendMessageBtn != null) {
+            sendMessageBtn.setDisable(true);
+            sendMessageBtn.setText("Select Conversation");
+        }
+
+        // Send message directly using AdminMessageService
+        if (AdminMessageService.sendMessage(currentUserId, messageText.trim(), "admin", null)) {
+            showAlert("Success", "Message sent successfully!");
+            loadConversation(currentUserId); // Reload the conversation
+        } else {
+            showAlert("Error", "Failed to send message. Please try again.");
+        }
+
+    } catch (Exception e) {
+        System.err.println("Error in sendMessage: " + e.getMessage());
+        e.printStackTrace();
+        showAlert("Error", "An error occurred while sending the message: " + e.getMessage());
+    } finally {
+        // Always re-enable send button
+        if (sendMessageBtn != null) {
+            sendMessageBtn.setText("Send Message");
+            sendMessageBtn.setDisable(false);
+        }
+        isSendingMessage = false;
+    }
+}
     
     @FXML
     private void toggleAutomation() {
