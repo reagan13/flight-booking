@@ -23,10 +23,28 @@ public class AdminMessagesBuilder {
     private static final String SCROLL_PANE_STYLE = "-fx-background-color: #f8f8f8; -fx-border-color: #808080; -fx-border-width: 1; -fx-background: #f8f8f8;";
     private static final String CONVERSATION_ITEM_STYLE = "-fx-background-color: white; -fx-border-color: #c0c0c0; -fx-border-width: 0 0 1 0; -fx-padding: 10; -fx-cursor: hand;";
     private static final String CONVERSATION_HOVER_STYLE = "-fx-background-color: #e8e8e8; -fx-border-color: #c0c0c0; -fx-border-width: 0 0 1 0; -fx-padding: 10; -fx-cursor: hand;";
+    private static final String CONVERSATION_SELECTED_STYLE = "-fx-background-color: #e8e8e8; -fx-border-color: #4a90e2; -fx-border-width: 2; -fx-padding: 10; -fx-cursor: hand;";
     private static final String LABEL_STYLE = "-fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-font-weight: bold;";
     private static final String VALUE_STYLE = "-fx-text-fill: #2c3e50; -fx-font-size: 12px;";
     private static final String TIME_STYLE = "-fx-text-fill: #666666; -fx-font-size: 11px;";
     private static final String UNREAD_BADGE_STYLE = "-fx-background-color: #dc3545; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 2 6; -fx-font-size: 10px; -fx-font-weight: bold;";
+    
+    // Automation toggle styles
+    private static final String AUTOMATION_ENABLED_STYLE = "-fx-background-color: linear-gradient(#28a745, #1e7e34); " +
+                                                          "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
+                                                          "-fx-border-color: #1e7e34; -fx-border-width: 1; -fx-cursor: hand;";
+    
+    private static final String AUTOMATION_ENABLED_HOVER_STYLE = "-fx-background-color: linear-gradient(#1e7e34, #155724); " +
+                                                               "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
+                                                               "-fx-border-color: #155724; -fx-border-width: 1; -fx-cursor: hand;";
+    
+    private static final String AUTOMATION_DISABLED_STYLE = "-fx-background-color: linear-gradient(#dc3545, #c82333); " +
+                                                           "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
+                                                           "-fx-border-color: #c82333; -fx-border-width: 1; -fx-cursor: hand;";
+    
+    private static final String AUTOMATION_DISABLED_HOVER_STYLE = "-fx-background-color: linear-gradient(#c82333, #a71e2a); " +
+                                                                "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
+                                                                "-fx-border-color: #a71e2a; -fx-border-width: 1; -fx-cursor: hand;";
     
     public interface MessagesEventHandler {
         void onConversationSelect(int userId);
@@ -37,6 +55,8 @@ public class AdminMessagesBuilder {
     }
     
     private final MessagesEventHandler eventHandler;
+    private VBox currentSelectedConversation = null;
+    private boolean isProcessingAutomationToggle = false; // Prevent recursive calls
     
     public AdminMessagesBuilder(MessagesEventHandler eventHandler) {
         this.eventHandler = eventHandler;
@@ -49,26 +69,22 @@ public class AdminMessagesBuilder {
                                    ToggleButton automationToggle, Label unreadCountLabel) {
         try {
             // Convert ListView to ScrollPane approach
-            if (conversationsList != null) {
+            if (conversationsList != null && conversationsList.getParent() instanceof VBox) {
+                VBox parent = (VBox) conversationsList.getParent();
+                
                 // Create ScrollPane and VBox for conversations
                 ScrollPane conversationsScrollPane = new ScrollPane();
                 VBox conversationsContainer = new VBox();
                 
-                // Replace ListView content with ScrollPane
-                conversationsList.getParent().getChildrenUnmodifiable().forEach(node -> {
-                    if (node == conversationsList) {
-                        // Get parent container and replace ListView with ScrollPane
-                        if (conversationsList.getParent() instanceof VBox) {
-                            VBox parent = (VBox) conversationsList.getParent();
-                            int index = parent.getChildren().indexOf(conversationsList);
-                            parent.getChildren().remove(conversationsList);
-                            parent.getChildren().add(index, conversationsScrollPane);
-                        }
-                    }
-                });
-                
+                // Setup the new components
                 conversationsScrollPane.setContent(conversationsContainer);
                 setupConversationsScrollPane(conversationsScrollPane, conversationsContainer, unreadCountLabel);
+                
+                // Replace ListView with ScrollPane
+                int index = parent.getChildren().indexOf(conversationsList);
+                parent.getChildren().remove(conversationsList);
+                parent.getChildren().add(index, conversationsScrollPane);
+                VBox.setVgrow(conversationsScrollPane, Priority.ALWAYS);
             }
             
             setupChatScrollPane(chatScrollPane, chatArea);
@@ -76,7 +92,9 @@ public class AdminMessagesBuilder {
             
         } catch (Exception e) {
             System.err.println("Error setting up messages content: " + e.getMessage());
-            eventHandler.onMessagesError(e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError(e.getMessage());
+            }
         }
     }
     
@@ -85,19 +103,22 @@ public class AdminMessagesBuilder {
                                    ScrollPane chatScrollPane, VBox chatArea,
                                    TextArea messageInputArea, Button sendMessageBtn, 
                                    Label chatHeaderLabel, ToggleButton automationToggle, 
-                                   Label unreadCountLabel) {
+                                   Label unreadMessagesCount) {
         try {
-            setupConversationsScrollPane(conversationsScrollPane, conversationsContainer, unreadCountLabel);
+            setupConversationsScrollPane(conversationsScrollPane, conversationsContainer, unreadMessagesCount);
             setupChatScrollPane(chatScrollPane, chatArea);
             setupMessageComponents(sendMessageBtn, automationToggle);
             
         } catch (Exception e) {
             System.err.println("Error setting up messages content: " + e.getMessage());
-            eventHandler.onMessagesError(e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError(e.getMessage());
+            }
         }
     }
     
-    private void setupConversationsScrollPane(ScrollPane conversationsScrollPane, VBox conversationsContainer, Label unreadCountLabel) {
+    private void setupConversationsScrollPane(ScrollPane conversationsScrollPane, VBox conversationsContainer, 
+                                            Label unreadMessagesCount) {
         try {
             if (conversationsScrollPane != null) {
                 // Traditional styling for conversations scroll pane
@@ -109,12 +130,14 @@ public class AdminMessagesBuilder {
             
             if (conversationsContainer != null) {
                 conversationsContainer.setStyle("-fx-background-color: #f8f8f8; -fx-spacing: 0;");
-                loadConversationsIntoContainer(conversationsContainer, unreadCountLabel);
+                loadConversationsIntoContainer(conversationsContainer, unreadMessagesCount);
             }
             
         } catch (Exception e) {
             System.err.println("Error setting up conversations scroll pane: " + e.getMessage());
-            eventHandler.onMessagesError(e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError(e.getMessage());
+            }
         }
     }
     
@@ -138,9 +161,10 @@ public class AdminMessagesBuilder {
         }
     }
     
-    private void loadConversationsIntoContainer(VBox conversationsContainer, Label unreadCountLabel) {
+    private void loadConversationsIntoContainer(VBox conversationsContainer, Label unreadMessagesCount) {
         try {
             conversationsContainer.getChildren().clear();
+            currentSelectedConversation = null;
             
             ObservableList<Message> conversations = AdminMessageService.getAllConversations();
             
@@ -152,26 +176,30 @@ public class AdminMessagesBuilder {
                     conversationItem.setOnMouseClicked(event -> {
                         try {
                             // Clear previous selection styling
-                            conversationsContainer.getChildren().forEach(node -> {
-                                if (node instanceof VBox) {
-                                    node.setStyle(CONVERSATION_ITEM_STYLE);
-                                }
-                            });
+                            if (currentSelectedConversation != null) {
+                                currentSelectedConversation.setStyle(CONVERSATION_ITEM_STYLE);
+                            }
                             
                             // Highlight selected conversation
-                            conversationItem.setStyle(CONVERSATION_HOVER_STYLE + " -fx-border-width: 2; -fx-border-color: #4a90e2;");
+                            conversationItem.setStyle(CONVERSATION_SELECTED_STYLE);
+                            currentSelectedConversation = conversationItem;
                             
+                            // Mark messages as read and load conversation
                             AdminMessageService.markMessagesAsRead(conversation.getUserId());
-                            eventHandler.onConversationSelect(conversation.getUserId());
+                            if (eventHandler != null) {
+                                eventHandler.onConversationSelect(conversation.getUserId());
+                            }
                             
                             Platform.runLater(() -> {
-                                updateUnreadCount(unreadCountLabel);
+                                updateUnreadCount(unreadMessagesCount);
                                 // Reload conversations to update unread counts
-                                loadConversationsIntoContainer(conversationsContainer, unreadCountLabel);
+                                loadConversationsIntoContainer(conversationsContainer, unreadMessagesCount);
                             });
                         } catch (Exception e) {
                             System.err.println("Error selecting conversation: " + e.getMessage());
-                            eventHandler.onMessagesError("Failed to load conversation: " + e.getMessage());
+                            if (eventHandler != null) {
+                                eventHandler.onMessagesError("Failed to load conversation: " + e.getMessage());
+                            }
                         }
                     });
                     
@@ -181,12 +209,16 @@ public class AdminMessagesBuilder {
                 }
             }
             
-            updateUnreadCount(unreadCountLabel);
-            eventHandler.onMessagesLoaded(conversations.size());
+            updateUnreadCount(unreadMessagesCount);
+            if (eventHandler != null) {
+                eventHandler.onMessagesLoaded(conversations.size());
+            }
             
         } catch (Exception e) {
             System.err.println("Error loading conversations: " + e.getMessage());
-            eventHandler.onMessagesError(e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError(e.getMessage());
+            }
         }
     }
     
@@ -217,12 +249,18 @@ public class AdminMessagesBuilder {
             }
 
             if (chatArea != null) {
-                for (Message message : messages) {
-                    try {
-                        VBox messageItem = createTraditionalMessageItem(message);
-                        chatArea.getChildren().add(messageItem);
-                    } catch (Exception e) {
-                        System.err.println("Error creating message item: " + e.getMessage());
+                if (messages.isEmpty()) {
+                    // Show empty state
+                    VBox emptyState = createEmptyConversationState();
+                    chatArea.getChildren().add(emptyState);
+                } else {
+                    for (Message message : messages) {
+                        try {
+                            VBox messageItem = createTraditionalMessageItem(message);
+                            chatArea.getChildren().add(messageItem);
+                        } catch (Exception e) {
+                            System.err.println("Error creating message item: " + e.getMessage());
+                        }
                     }
                 }
             }
@@ -236,7 +274,9 @@ public class AdminMessagesBuilder {
 
         } catch (Exception e) {
             System.err.println("Error loading conversation: " + e.getMessage());
-            eventHandler.onMessagesError("Failed to load conversation: " + e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError("Failed to load conversation: " + e.getMessage());
+            }
         }
     }
     
@@ -250,12 +290,17 @@ public class AdminMessagesBuilder {
             }
             
             if (AdminMessageService.sendMessage(userId, messageText, "admin", null)) {
+                // Refresh the conversation view
                 conversationLoader.accept(userId);
                 
                 if (sendMessageBtn != null) {
                     sendMessageBtn.setText("Send");
                     sendMessageBtn.setDisable(false);
                     sendMessageBtn.setStyle(SEND_BUTTON_STYLE);
+                }
+                
+                if (eventHandler != null) {
+                    eventHandler.onMessageSend(messageText);
                 }
             } else {
                 showTraditionalAlert("Error", "Failed to send message.", alertCallback);
@@ -279,7 +324,14 @@ public class AdminMessagesBuilder {
     }
     
     public void toggleAutomation(int userId, ToggleButton automationToggle, BiConsumer<String, String> alertCallback) {
+        // Prevent recursive calls
+        if (isProcessingAutomationToggle) {
+            return;
+        }
+        
         try {
+            isProcessingAutomationToggle = true;
+            
             boolean isEnabled = automationToggle != null ? automationToggle.isSelected() : false;
             AdminMessageService.setAutomationEnabled(userId, isEnabled);
             
@@ -292,19 +344,25 @@ public class AdminMessagesBuilder {
                                "Automated replies " + status + " for this user.\n" +
                                "Bot will " + (isEnabled ? "automatically respond" : "NOT respond") + " to new messages.", 
                                alertCallback);
+            
+            // DO NOT call eventHandler.onAutomationToggle here to prevent recursion
+            
         } catch (Exception e) {
             System.err.println("Error toggling automation: " + e.getMessage());
             showTraditionalAlert("Error", "Failed to toggle automation: " + e.getMessage(), alertCallback);
+        } finally {
+            isProcessingAutomationToggle = false;
         }
     }
     
-    // Method to refresh conversations list
-    public void refreshConversations(VBox conversationsContainer, Label unreadCountLabel) {
+    public void refreshConversations(VBox conversationsContainer, Label unreadMessagesCount) {
         try {
-            loadConversationsIntoContainer(conversationsContainer, unreadCountLabel);
+            loadConversationsIntoContainer(conversationsContainer, unreadMessagesCount);
         } catch (Exception e) {
             System.err.println("Error refreshing conversations: " + e.getMessage());
-            eventHandler.onMessagesError("Failed to refresh conversations: " + e.getMessage());
+            if (eventHandler != null) {
+                eventHandler.onMessagesError("Failed to refresh conversations: " + e.getMessage());
+            }
         }
     }
     
@@ -339,6 +397,18 @@ public class AdminMessagesBuilder {
                 header.getChildren().addAll(nameLabel, spacer, timeLabel);
             }
             
+            // Add last message preview
+            String lastMessagePreview = message.getMessageText();
+            if (lastMessagePreview != null && lastMessagePreview.length() > 40) {
+                lastMessagePreview = lastMessagePreview.substring(0, 40) + "...";
+            } else if (lastMessagePreview == null) {
+                lastMessagePreview = "No messages yet";
+            }
+            
+            Label previewLabel = new Label(lastMessagePreview);
+            previewLabel.setStyle(VALUE_STYLE + " -fx-font-size: 11px;");
+            previewLabel.setWrapText(true);
+            
             // Add status indicator
             HBox statusRow = new HBox(8);
             statusRow.setAlignment(Pos.CENTER_LEFT);
@@ -351,7 +421,7 @@ public class AdminMessagesBuilder {
             
             statusRow.getChildren().addAll(statusLabel, statusText);
             
-            item.getChildren().addAll(header, statusRow);
+            item.getChildren().addAll(header, previewLabel, statusRow);
             
             // Traditional hover effects
             item.setOnMouseEntered(e -> {
@@ -465,6 +535,24 @@ public class AdminMessagesBuilder {
         return messageContainer;
     }
     
+    private VBox createEmptyConversationState() {
+        VBox emptyState = new VBox(15);
+        emptyState.setAlignment(Pos.CENTER);
+        emptyState.setPadding(new Insets(50));
+        
+        Label titleLabel = new Label("No messages yet");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
+        
+        Label messageLabel = new Label("This conversation will show messages once they are exchanged.");
+        messageLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(300);
+        
+        emptyState.getChildren().addAll(titleLabel, messageLabel);
+        
+        return emptyState;
+    }
+    
     private void setupMessageComponents(Button sendMessageBtn, ToggleButton automationToggle) {
         if (sendMessageBtn != null) {
             sendMessageBtn.setText("Send");
@@ -487,47 +575,58 @@ public class AdminMessagesBuilder {
     }
     
     private void updateTraditionalAutomationToggle(ToggleButton automationToggle, boolean isEnabled) {
+        if (automationToggle == null) {
+            return;
+        }
+        
+        // Clear existing event handlers to prevent loops
+        automationToggle.setOnMouseEntered(null);
+        automationToggle.setOnMouseExited(null);
+        
         automationToggle.setSelected(isEnabled);
         
         if (isEnabled) {
             automationToggle.setText("Auto-Reply: ON");
-            automationToggle.setStyle("-fx-background-color: linear-gradient(#28a745, #1e7e34); " +
-                                    "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
-                                    "-fx-border-color: #1e7e34; -fx-border-width: 1; -fx-cursor: hand;");
+            automationToggle.setStyle(AUTOMATION_ENABLED_STYLE);
         } else {
             automationToggle.setText("Auto-Reply: OFF");
-            automationToggle.setStyle("-fx-background-color: linear-gradient(#dc3545, #c82333); " +
-                                    "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
-                                    "-fx-border-color: #c82333; -fx-border-width: 1; -fx-cursor: hand;");
+            automationToggle.setStyle(AUTOMATION_DISABLED_STYLE);
         }
         
-        // Traditional hover effects
+        // Set hover effects without recursive calls
         automationToggle.setOnMouseEntered(e -> {
-            if (isEnabled) {
-                automationToggle.setStyle("-fx-background-color: linear-gradient(#1e7e34, #155724); " +
-                                        "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
-                                        "-fx-border-color: #155724; -fx-border-width: 1; -fx-cursor: hand;");
+            if (automationToggle.isSelected()) {
+                automationToggle.setStyle(AUTOMATION_ENABLED_HOVER_STYLE);
             } else {
-                automationToggle.setStyle("-fx-background-color: linear-gradient(#c82333, #a71e2a); " +
-                                        "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; " +
-                                        "-fx-border-color: #a71e2a; -fx-border-width: 1; -fx-cursor: hand;");
+                automationToggle.setStyle(AUTOMATION_DISABLED_HOVER_STYLE);
             }
         });
         
-        automationToggle.setOnMouseExited(e -> updateTraditionalAutomationToggle(automationToggle, isEnabled));
+        automationToggle.setOnMouseExited(e -> {
+            if (automationToggle.isSelected()) {
+                automationToggle.setStyle(AUTOMATION_ENABLED_STYLE);
+            } else {
+                automationToggle.setStyle(AUTOMATION_DISABLED_STYLE);
+            }
+        });
     }
     
-    private void updateUnreadCount(Label unreadCountLabel) {
+    private void updateUnreadCount(Label unreadMessagesCount) {
         try {
+            if (unreadMessagesCount == null) {
+                return;
+            }
+            
             int unreadCount = AdminMessageService.getUnreadMessageCount();
-            if (unreadCountLabel != null) {
-                if (unreadCount > 0) {
-                    unreadCountLabel.setText(String.valueOf(unreadCount));
-                    unreadCountLabel.setStyle(UNREAD_BADGE_STYLE + " -fx-font-size: 12px;");
-                    unreadCountLabel.setVisible(true);
-                } else {
-                    unreadCountLabel.setVisible(false);
-                }
+            if (unreadCount > 0) {
+                unreadMessagesCount.setText(String.valueOf(unreadCount));
+                unreadMessagesCount.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; " +
+                                           "-fx-background-radius: 8; -fx-padding: 2 6; " +
+                                           "-fx-font-size: 10px; -fx-font-weight: bold; " +
+                                           "-fx-border-color: #808080; -fx-border-width: 1;");
+                unreadMessagesCount.setVisible(true);
+            } else {
+                unreadMessagesCount.setVisible(false);
             }
         } catch (Exception e) {
             System.err.println("Error updating unread count: " + e.getMessage());
