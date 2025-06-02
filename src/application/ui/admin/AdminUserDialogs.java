@@ -33,12 +33,13 @@ public class AdminUserDialogs {
             // Apply traditional styling to dialog
             styleDialog(dialog);
 
-            // Create form fields
+            // Create form fields - ALL USER ATTRIBUTES
             TextField firstNameField = createStyledTextField("Enter first name");
             TextField lastNameField = createStyledTextField("Enter last name");
             TextField emailField = createStyledTextField("Enter email address");
             TextField ageField = createStyledTextField("Enter age (1-120)");
             TextField addressField = createStyledTextField("Enter address");
+            TextField phoneNumberField = createStyledTextField("Enter phone number");
             PasswordField passwordField = createStyledPasswordField("Enter password (min 6 characters)");
             ComboBox<String> userTypeBox = createStyledComboBox();
             userTypeBox.getItems().addAll("regular", "admin");
@@ -46,7 +47,7 @@ public class AdminUserDialogs {
 
             // Create traditional form layout
             VBox content = createTraditionalTwoColumnFormLayout(
-                firstNameField, lastNameField, emailField,
+                firstNameField, lastNameField, emailField, phoneNumberField,
                 passwordField, ageField, addressField, userTypeBox,
                 true // include password field
             );
@@ -59,7 +60,7 @@ public class AdminUserDialogs {
             // Handle dialog result
             dialog.setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
-                    return createUserFromFields(firstNameField, lastNameField, emailField,
+                    return createUserFromFields(firstNameField, lastNameField, emailField, phoneNumberField,
                                                ageField, addressField, userTypeBox, 
                                                passwordField, alertCallback);
                 }
@@ -95,7 +96,7 @@ public class AdminUserDialogs {
             // Apply traditional styling to dialog
             styleDialog(dialog);
             
-            // Create form fields with existing values
+            // Create form fields with existing values - ALL USER ATTRIBUTES
             TextField firstNameField = createStyledTextField("Enter first name");
             firstNameField.setText(user.getFirstName());
             
@@ -111,13 +112,16 @@ public class AdminUserDialogs {
             TextField addressField = createStyledTextField("Enter address");
             addressField.setText(user.getAddress());
             
+            TextField phoneNumberField = createStyledTextField("Enter phone number");
+            phoneNumberField.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
+            
             ComboBox<String> userTypeBox = createStyledComboBox();
             userTypeBox.getItems().addAll("regular", "admin");
             userTypeBox.setValue(user.getUserType());
             
             // Create traditional form layout (without password field for editing)
             VBox content = createTraditionalTwoColumnFormLayout(
-                firstNameField, lastNameField, emailField,
+                firstNameField, lastNameField, emailField, phoneNumberField,
                 null, ageField, addressField, userTypeBox,
                 false // no password field for editing
             );
@@ -130,7 +134,7 @@ public class AdminUserDialogs {
             // Handle dialog result
             dialog.setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
-                    return updateUserFromFields(user, firstNameField, lastNameField, emailField,
+                    return updateUserFromFields(user, firstNameField, lastNameField, emailField, phoneNumberField,
                                                ageField, addressField, userTypeBox, alertCallback);
                 }
                 return null;
@@ -205,9 +209,9 @@ public class AdminUserDialogs {
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.setStyle(DIALOG_STYLE + " -fx-padding: 15;");
         
-        // Set preferred size for better 2-column layout
+        // Set preferred size for better 2-column layout with more fields
         dialogPane.setPrefWidth(600);
-        dialogPane.setPrefHeight(350);
+        dialogPane.setPrefHeight(400);
     }
     
     private static void styleDialogButtons(Dialog<?> dialog) {
@@ -264,9 +268,10 @@ public class AdminUserDialogs {
     }
     
     private static VBox createTraditionalTwoColumnFormLayout(TextField firstNameField, TextField lastNameField,
-                                                            TextField emailField, PasswordField passwordField,
-                                                            TextField ageField, TextField addressField,
-                                                            ComboBox<String> userTypeBox, boolean includePassword) {
+                                                            TextField emailField, TextField phoneNumberField,
+                                                            PasswordField passwordField, TextField ageField,
+                                                            TextField addressField, ComboBox<String> userTypeBox,
+                                                            boolean includePassword) {
         VBox mainContainer = new VBox(5);
         mainContainer.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #c0c0c0; -fx-border-width: 1;");
         
@@ -304,27 +309,28 @@ public class AdminUserDialogs {
         formGrid.add(lastNameField, 3, row);
         row++;
         
-        // Row 2: Email and Age
+        // Row 2: Email and Phone Number
         formGrid.add(createStyledLabel("Email Address:"), 0, row);
         formGrid.add(emailField, 1, row);
-        formGrid.add(createStyledLabel("Age:"), 2, row);
-        formGrid.add(ageField, 3, row);
+        formGrid.add(createStyledLabel("Phone Number:"), 2, row);
+        formGrid.add(phoneNumberField, 3, row);
         row++;
         
-        // Row 3: Password (if included) and User Type
+        // Row 3: Age and User Type
+        formGrid.add(createStyledLabel("Age:"), 0, row);
+        formGrid.add(ageField, 1, row);
+        formGrid.add(createStyledLabel("User Type:"), 2, row);
+        formGrid.add(userTypeBox, 3, row);
+        row++;
+        
+        // Row 4: Password (if included) or empty space
         if (includePassword && passwordField != null) {
             formGrid.add(createStyledLabel("Password:"), 0, row);
             formGrid.add(passwordField, 1, row);
-            formGrid.add(createStyledLabel("User Type:"), 2, row);
-            formGrid.add(userTypeBox, 3, row);
-            row++;
-        } else {
-            formGrid.add(createStyledLabel("User Type:"), 0, row);
-            formGrid.add(userTypeBox, 1, row);
             row++;
         }
         
-        // Row 4: Address (spans all columns)
+        // Row 5: Address (spans all columns)
         formGrid.add(createStyledLabel("Address:"), 0, row);
         GridPane.setColumnSpan(addressField, 3);
         formGrid.add(addressField, 1, row);
@@ -360,14 +366,16 @@ public class AdminUserDialogs {
     
     // VALIDATION AND DATA PROCESSING METHODS
     private static User createUserFromFields(TextField firstNameField, TextField lastNameField,
-                                           TextField emailField, TextField ageField,
-                                           TextField addressField, ComboBox<String> userTypeBox,
-                                           PasswordField passwordField, AlertCallback alertCallback) {
+                                           TextField emailField, TextField phoneNumberField,
+                                           TextField ageField, TextField addressField,
+                                           ComboBox<String> userTypeBox, PasswordField passwordField,
+                                           AlertCallback alertCallback) {
         try {
             User newUser = new User();
             newUser.setFirstName(firstNameField.getText().trim());
             newUser.setLastName(lastNameField.getText().trim());
             newUser.setEmail(emailField.getText().trim());
+            newUser.setPhoneNumber(phoneNumberField.getText().trim());
             newUser.setAge(Integer.parseInt(ageField.getText().trim()));
             newUser.setAddress(addressField.getText().trim());
             newUser.setUserType(userTypeBox.getValue());
@@ -398,13 +406,14 @@ public class AdminUserDialogs {
     }
     
     private static User updateUserFromFields(User user, TextField firstNameField, TextField lastNameField,
-                                           TextField emailField, TextField ageField,
-                                           TextField addressField, ComboBox<String> userTypeBox,
-                                           AlertCallback alertCallback) {
+                                           TextField emailField, TextField phoneNumberField,
+                                           TextField ageField, TextField addressField,
+                                           ComboBox<String> userTypeBox, AlertCallback alertCallback) {
         try {
             user.setFirstName(firstNameField.getText().trim());
             user.setLastName(lastNameField.getText().trim());
             user.setEmail(emailField.getText().trim());
+            user.setPhoneNumber(phoneNumberField.getText().trim());
             user.setAge(Integer.parseInt(ageField.getText().trim()));
             user.setAddress(addressField.getText().trim());
             user.setUserType(userTypeBox.getValue());
