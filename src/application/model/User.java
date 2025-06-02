@@ -1,97 +1,93 @@
 package application.model;
 
-import java.time.LocalDateTime;
-
-public class User extends BaseEntity { // INHERITANCE
-    // ENCAPSULATION - private fields
+public class User {
+    private int id;
     private String firstName;
     private String lastName;
     private String email;
-    private String address;
-    private String phoneNumber; 
     private int age;
-    private String userType;
-
+    private String address;
+    private String userType = "regular"; 
+    private String phoneNumber = "N/A"; 
+    
     // Default constructor
-    public User(int i, String string, String string2, String string3, String string4, String string5, int j, String string6) {
-        super();
-    }
+    public User() {}
     
-    // Constructor with essential fields
-    public User(int id, String firstName, String lastName, String email, String userType) {
-        super(id);
+    // Constructor with parameters
+    public User(String firstName, String lastName, String email, int age, String address) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.userType = userType;
-    }
-    
-    // Full constructor
-    public User(int id, String firstName, String lastName, String email, 
-                String address, int age, String userType) {
-        super(id);
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.address = address;
         this.age = age;
-        this.userType = userType;
+        this.address = address;
     }
     
-    // Constructor with timestamps
-    public User(int id, String firstName, String lastName, String email, 
-                String address, int age, String userType, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this(id, firstName, lastName, email, address, age, userType);
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+    // Getters and Setters
+    public int getId() {
+        return id;
     }
-
-    public User() {
-        //TODO Auto-generated constructor stub
+    
+    public void setId(int id) {
+        this.id = id;
     }
-
-    // ENCAPSULATION - controlled access through getters/setters
-    public String getFirstName() { return firstName; }
-
+    
+    public String getFirstName() {
+        return firstName;
+    }
+    
     public void setFirstName(String firstName) {
         this.firstName = firstName;
-        updateTimestamp(); // inherited method
     }
     
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { 
-        this.lastName = lastName; 
-        updateTimestamp();
+    public String getLastName() {
+        return lastName;
     }
     
-    public String getEmail() { return email; }
-    public void setEmail(String email) { 
-        this.email = email; 
-        updateTimestamp();
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
     
-    public String getAddress() { return address; }
-    public void setAddress(String address) { 
-        this.address = address; 
-        updateTimestamp();
+    public String getEmail() {
+        return email;
     }
     
-    public int getAge() { return age; }
-    public void setAge(int age) { 
-        this.age = age; 
-        updateTimestamp();
+    public void setEmail(String email) {
+        this.email = email;
     }
     
-    public String getUserType() { return userType; }
-    public void setUserType(String userType) { 
-        this.userType = userType; 
-        updateTimestamp();
+    public int getAge() {
+        return age;
     }
     
-    // Business methods
+    public void setAge(int age) {
+        this.age = age;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public String getUserType() {
+        return userType;
+    }
+    
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
+    
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber != null ? phoneNumber : "N/A";
+    }
+    
+    // Utility methods
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -100,24 +96,26 @@ public class User extends BaseEntity { // INHERITANCE
         return "admin".equals(userType);
     }
     
-    public boolean isRegularUser() {
-        return "regular".equals(userType) || "user".equals(userType);
-    }
-    
-    // POLYMORPHISM - implementing abstract method
-    @Override
-    public String getDisplayName() {
-        return getFullName();
+    public boolean isRegular() {
+        return "regular".equals(userType);
     }
     
     @Override
     public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", userType='" + userType + '\'' +
-                '}';
+        return String.format("User{id=%d, name='%s %s', email='%s', type='%s'}", 
+                           id, firstName, lastName, email, userType);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User user = (User) obj;
+        return id == user.id;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(id);
     }
 }
