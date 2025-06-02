@@ -10,10 +10,8 @@ public class User {
     private String userType = "regular"; 
     private String phoneNumber = "N/A"; 
     
-    // Default constructor
     public User() {}
     
-    // Constructor with parameters
     public User(String firstName, String lastName, String email, int age, String address) {
         this.firstName = firstName;
         this.lastName = lastName;

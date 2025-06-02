@@ -1,7 +1,6 @@
 package application.ui.admin;
 
 import javafx.scene.control.*;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import application.model.Transaction;
 import application.service.TransactionService;
@@ -18,7 +17,6 @@ public class AdminTransactionsBuilder {
         // Clear existing columns
         transactionsTable.getColumns().clear();
         
-        // Create comprehensive columns based on your database schema (NO Gateway columns)
         
         // Transaction ID Column
         TableColumn<Transaction, Integer> idCol = new TableColumn<>("ID");
@@ -151,7 +149,7 @@ public class AdminTransactionsBuilder {
         updatedCol.setPrefWidth(130);
         updatedCol.setMinWidth(110);
         
-        // Add columns to table (REMOVED gatewayIdCol and responseCodeCol)
+        // Add columns to table 
         transactionsTable.getColumns().addAll(
             idCol, refCol, bookingIdCol, bookingRefCol, customerCol,
             methodCol, providerCol, baseAmountCol, feeCol, totalCol,
@@ -217,7 +215,7 @@ public class AdminTransactionsBuilder {
             filterTransactions(table, newValue);
         });
         
-        // Updated placeholder text (removed gateway ID)
+        // Updated placeholder text 
         searchField.setPromptText("Search by reference, customer, status, method, provider...");
     }
     

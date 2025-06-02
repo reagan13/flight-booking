@@ -2,9 +2,6 @@ package application.model;
 
 import javafx.beans.property.*;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -177,7 +174,7 @@ public class Transaction {
         }
     }
     
-    // Get transaction reference (alias for description)
+    // Get transaction reference
     public String getTransactionReference() {
         return getDescription();
     }

@@ -1,12 +1,8 @@
 package application.controller.admin;
 
-import application.controller.admin.BaseController;
-import application.ui.*;
 import application.model.*;
 import application.service.*;
 import application.ui.admin.*;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,7 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -87,7 +82,6 @@ public class AdminController extends BaseController implements Initializable {
     private AdminTransactionsBuilder transactionsBuilder; // FIXED: Use AdminTransactionsBuilder
     
     // Current state
-    private Message currentConversation;
     private int currentUserId = -1;
     private Button[] navButtons;
 
@@ -302,7 +296,6 @@ public class AdminController extends BaseController implements Initializable {
                 }
             });
 
-            // FIXED: Initialize transactions builder with correct interface
             transactionsBuilder = new AdminTransactionsBuilder(new AdminTransactionsBuilder.TransactionsEventHandler() {
                 @Override
                 public void onViewTransactionDetails(Transaction transaction) {
@@ -522,7 +515,6 @@ public class AdminController extends BaseController implements Initializable {
         }
     }
     
-    // FIXED: Corrected method calls for transactions using AdminTransactionsBuilder
     private void refreshTransactionsData() {
         try {
             if (transactionsBuilder != null && transactionsTable != null) {

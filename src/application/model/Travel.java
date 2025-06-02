@@ -1,6 +1,5 @@
 package application.model;
 
-import javafx.scene.image.Image;
 
 public class Travel {
     private String id;

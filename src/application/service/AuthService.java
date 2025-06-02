@@ -44,7 +44,6 @@ public class AuthService {
 
         try {
             Connection conn = DatabaseConnection.getConnection();
-            // FIX: Add ALL columns to SELECT statement
             String sql = "SELECT id, first_name, last_name, email, password, age, phone_number, address, user_type FROM users WHERE email = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, email);
@@ -63,9 +62,7 @@ public class AuthService {
                 System.out.println("Input password: " + password);
                 System.out.println("Passwords match: " + storedPassword.equals(password));
 
-                // Direct password comparison (no hashing)
                 if (storedPassword.equals(password)) {
-                    // FIX: Create User object with correct constructor
                     User user = new User();
                     user.setId(rs.getInt("id"));
                     user.setFirstName(rs.getString("first_name"));

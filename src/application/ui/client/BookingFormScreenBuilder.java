@@ -274,12 +274,10 @@ public class BookingFormScreenBuilder {
         if (UserSession.getInstance().isLoggedIn()) {
             User user = UserSession.getInstance().getCurrentUser();
 
-            // Email is already working, so let's focus on phone
             if (user.getEmail() != null && !user.getEmail().isEmpty()) {
                 emailField.setText(user.getEmail());
             }
 
-            // DEBUG: Check phone number method
             try {
                 String phone = user.getPhoneNumber();
                 System.out.println("🔍 DEBUG - Phone number: '" + phone + "'");

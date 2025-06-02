@@ -12,7 +12,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.CompletableFuture;
 
 public class TimeScreenBuilder {
     

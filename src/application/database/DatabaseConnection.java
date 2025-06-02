@@ -123,7 +123,7 @@ public class DatabaseConnection {
             // Create bookings table with NULL allowed for user_id
             String createBookingsTable = "CREATE TABLE IF NOT EXISTS bookings ("
                 + "id INT PRIMARY KEY AUTO_INCREMENT,"
-                + "user_id INT NULL,"  // Explicitly allow NULL for guest bookings
+                + "user_id INT NULL,"  
                 + "flight_id INT NOT NULL,"
                 + "booking_reference VARCHAR(20) UNIQUE,"
                 + "seat_number VARCHAR(5),"
@@ -188,7 +188,7 @@ public class DatabaseConnection {
                     + "id INT PRIMARY KEY AUTO_INCREMENT,"
                     + "flight_id INT NOT NULL,"
                     + "seat_number VARCHAR(5) NOT NULL,"
-                    + "seat_class VARCHAR(20) DEFAULT 'economy'," // economy, business, first
+                    + "seat_class VARCHAR(20) DEFAULT 'economy'," 
                     + "is_available BOOLEAN DEFAULT TRUE,"
                     + "is_window BOOLEAN DEFAULT FALSE,"
                     + "is_aisle BOOLEAN DEFAULT FALSE,"

@@ -17,7 +17,6 @@ public class UserService {
     public static ObservableList<User> getAllUsers() {
         ObservableList<User> users = FXCollections.observableArrayList();
         
-        // First, check what columns exist in the users table
         String checkColumnsQuery = "DESCRIBE users";
         boolean hasPhoneNumber = false;
         boolean hasCreatedAt = false;

@@ -130,12 +130,8 @@ public class FlightService {
                                                   String email, String phone, int passengerCount, double totalPrice) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // In a real implementation, you would:
-                // 1. Create a booking record in the 'bookings' table
-                // 2. Create passenger records in a 'passengers' table
-                // 3. Update available seats for the flight
-                
-                // For now, we'll just simulate a successful booking with a delay
+               
+                //  simulate a successful booking with a delay
                 Thread.sleep(1000);
                 return true;
             } catch (Exception e) {

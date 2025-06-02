@@ -5,7 +5,6 @@ import application.model.User;
 import application.model.Flight;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.Random;
 
 public class BookingService {
@@ -71,7 +70,7 @@ public class BookingService {
             stmt.setString(2, lastName);
             stmt.setInt(3, age);
             stmt.setString(4, address);
-            stmt.setString(5, phone); // ← Added phone number update
+            stmt.setString(5, phone); 
             stmt.setString(6, email);
 
             int rowsUpdated = stmt.executeUpdate();
@@ -83,7 +82,7 @@ public class BookingService {
                 currentUser.setLastName(lastName);
                 currentUser.setAge(age);
                 currentUser.setAddress(address);
-                currentUser.setPhoneNumber(phone); // ← Added phone number update
+                currentUser.setPhoneNumber(phone);
 
                 System.out.println("✅ User information updated successfully!");
                 return true;
@@ -163,7 +162,7 @@ public class BookingService {
             // Generate transaction reference
             String transactionReference = generateTransactionReference();
             
-            // Calculate processing fee (example: 2.5% for credit cards, 1% for digital wallets)
+            // Calculate processing fee 
             double processingFee = calculateProcessingFee(amount, paymentMethod);
             double totalAmount = amount + processingFee;
             
@@ -235,7 +234,7 @@ public class BookingService {
             }
             bookingStmt.setInt(2, flight.getId());
             bookingStmt.setString(3, bookingReference);
-            bookingStmt.setString(4, generateSeatNumber()); // You'll need to implement this
+            bookingStmt.setString(4, generateSeatNumber()); 
 
             int bookingResult = bookingStmt.executeUpdate();
 
@@ -307,7 +306,7 @@ public class BookingService {
     }
     
     private static String generateSeatNumber() {
-        // Simple seat generation - you can make this more sophisticated
+        // Simple seat generation
         String[] seatLetters = {"A", "B", "C", "D", "E", "F"};
         int seatRow = (int) (Math.random() * 30) + 1; // Rows 1-30
         String seatLetter = seatLetters[(int) (Math.random() * seatLetters.length)];
@@ -355,7 +354,6 @@ public class BookingService {
     }
     
     private static boolean simulatePaymentGateway(String paymentMethod, double amount) {
-        // Simulate payment gateway response (90% success rate)
         Random random = new Random();
         return random.nextDouble() < 0.9;
     }

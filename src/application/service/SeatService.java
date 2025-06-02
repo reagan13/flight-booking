@@ -4,7 +4,6 @@ import application.database.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class SeatService {
     

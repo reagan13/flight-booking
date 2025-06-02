@@ -1,6 +1,5 @@
 package application.model;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Message extends BaseEntity { // INHERITANCE

@@ -355,7 +355,6 @@ public class HomeController extends BaseController {
             return;
         }
         
-        // USE NEW METHOD - Replace old implementation
         loadWorldTimes();
         
         // Keep the auto-update service
@@ -368,7 +367,6 @@ public class HomeController extends BaseController {
         if (timeContent == null)
             return;
 
-        // UPDATED - Use new createTimeScreenContent method
         timeContent.getChildren().clear();
 
         VBox timeScreenContent = TimeScreenBuilder.createTimeScreenContent();

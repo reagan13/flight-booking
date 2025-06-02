@@ -1,4 +1,3 @@
-// filepath: d:\work\jetsetgo\src\application\model\Flight.java
 package application.model;
 
 import java.time.LocalDateTime;

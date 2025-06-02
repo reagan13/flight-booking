@@ -1,7 +1,6 @@
 package application.service;
 
 import application.database.DatabaseConnection;
-import application.service.AdminMessageService; // Add this import
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -29,7 +28,7 @@ public class ChatService {
         public LocalDateTime getTimestamp() { return timestamp; }
     }
     
-    // Updated sendMessage method with automation check
+    // sendMessage method with automation check
     public static void sendMessage(String messageText) {
         try {
             if (!UserSession.getInstance().isLoggedIn()) {
@@ -54,7 +53,6 @@ public class ChatService {
         }
     }
     
-    // Keep this method for backward compatibility, but add automation check
     public static void sendMessageOldWay(String messageText) {
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -244,7 +242,6 @@ public class ChatService {
         try {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "INSERT INTO messages (user_id, message_text, sender_type, reply_to) VALUES (?, ?, 'bot', ?)";
-            // Add Statement.RETURN_GENERATED_KEYS here too
             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             
             stmt.setInt(1, userId);
@@ -300,13 +297,11 @@ public class ChatService {
         return messages;
     }
     
-    // New method to get automation status text for UI
     public static String getAutomationStatusText() {
         boolean isEnabled = isAutomationEnabled();
         return isEnabled ? "🤖 Auto-replies: ON" : "🤖 Auto-replies: OFF (Admin disabled)";
     }
     
-    // New method to get automation status color for UI
     public static String getAutomationStatusColor() {
         boolean isEnabled = isAutomationEnabled();
         return isEnabled ? "green" : "red";

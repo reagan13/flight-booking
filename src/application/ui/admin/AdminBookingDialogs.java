@@ -7,7 +7,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import java.util.function.BiConsumer;
 
@@ -59,7 +58,6 @@ public class AdminBookingDialogs {
             dialog.setTitle("Change Booking Status");
             dialog.setHeaderText("Change Status - " + booking.getBookingReference());
 
-            // Apply traditional styling to dialog
             styleStatusDialog(dialog);
 
             // Create traditional status change layout

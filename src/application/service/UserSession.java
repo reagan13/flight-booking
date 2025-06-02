@@ -20,7 +20,6 @@ public class UserSession {
         return instance;
     }
     
-    // Set current user - THIS IS THE METHOD THAT WAS MISSING
     public void setCurrentUser(User user) {
         this.currentUser = user;
         System.out.println("✓ Current user set: " + (user != null ? user.getEmail() + " (" + user.getUserType() + ")" : "null"));
@@ -96,7 +95,6 @@ public class UserSession {
             return true;
         }
         
-        // Add specific permission logic here if needed
         switch (permission) {
             case "book_flight":
             case "view_bookings":

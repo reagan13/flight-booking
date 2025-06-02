@@ -13,14 +13,12 @@ import java.util.Map;
 public class TransactionService {
     
     public static void initializeTransactionsTable() {
-        // This method is now handled by DatabaseConnection.createTransactionsTable()
         System.out.println("TransactionService: Table initialization handled by DatabaseConnection");
     }
     
     public static ObservableList<Transaction> getAllTransactions() {
         ObservableList<Transaction> transactions = FXCollections.observableArrayList();
         
-        // Updated query to match your exact database schema
         String query =
             "SELECT t.id, t.booking_id, t.transaction_reference, t.payment_method, " +
             "t.payment_provider, t.amount, t.processing_fee, t.total_amount, " +
@@ -201,7 +199,7 @@ public class TransactionService {
             case "pending":
                 return "pending";
             case "refunded":
-                return "cancelled"; // or "refunded" if you have that status
+                return "cancelled"; 
             default:
                 return "pending";
         }
@@ -360,10 +358,10 @@ public class TransactionService {
         // Create transaction with available data
         Transaction transaction = new Transaction(
                 transactionId,
-                0, // userId - not directly available in transactions table
+                0, 
                 bookingId,
-                "payment", // Default transaction type
-                amount, // Base amount from database
+                "payment", 
+                amount, 
                 paymentStatus != null ? paymentStatus : "unknown",
                 paymentMethod != null ? paymentMethod : "unknown",
                 transactionRef != null ? transactionRef : "Transaction #" + transactionId,

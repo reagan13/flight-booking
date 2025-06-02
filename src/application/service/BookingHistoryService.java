@@ -93,12 +93,12 @@ public class BookingHistoryService {
                 BookingHistory booking = new BookingHistory(
                         rs.getInt("id"),
                         rs.getString("booking_reference"),
-                        rs.getString("flight_number"), // Correct column name
+                        rs.getString("flight_number"),
                         rs.getString("airline_name"),
                         rs.getString("origin"),
                         rs.getString("destination"),
-                        rs.getTimestamp("departure_time").toLocalDateTime(), // Correct column name
-                        rs.getTimestamp("arrival_time").toLocalDateTime(), // Correct column name
+                        rs.getTimestamp("departure_time").toLocalDateTime(), 
+                        rs.getTimestamp("arrival_time").toLocalDateTime(), 
                         rs.getString("seat_number"),
                         rs.getString("status"),
                         rs.getTimestamp("booking_date").toLocalDateTime(),

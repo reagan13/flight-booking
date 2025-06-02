@@ -3,18 +3,13 @@ package application.service;
 import application.model.Message;
 import application.database.DatabaseConnection;
 import javafx.collections.FXCollections;
-import application.service.ChatService;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AdminMessageService {
     
     // Track automation settings per user
-    private static Map<Integer, Boolean> automationSettings = new HashMap<>();
     
     public static ObservableList<Message> getAllConversations() {
         ObservableList<Message> conversations = FXCollections.observableArrayList();
@@ -112,7 +107,6 @@ public class AdminMessageService {
         try {
             Connection conn = DatabaseConnection.getConnection();
             String sql = "INSERT INTO messages (user_id, message_text, sender_type, reply_to) VALUES (?, ?, ?, ?)";
-            // ADD THIS LINE - that's the only issue
             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             stmt.setInt(1, userId);
@@ -216,7 +210,7 @@ public class AdminMessageService {
             return; // Don't send automated reply if disabled
         }
         
-        // Use ChatService's bot response generator (more comprehensive)
+        // Use ChatService's bot response generator
         String automatedResponse = ChatService.generateBotReply(userMessage);
         boolean sent = sendMessage(userId, automatedResponse, "bot", null);
         

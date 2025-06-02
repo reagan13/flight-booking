@@ -6,18 +6,13 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
-import javafx.geometry.Pos;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public class AdminTransactionDialogs {
     
-    // Remove the add transaction functionality and interface methods related to adding
     
-    // Static methods for dialogs only
   
     public static void showTransactionDetails(Transaction transaction, BiConsumer<String, String> alertCallback) {
         try {
@@ -49,7 +44,7 @@ public class AdminTransactionDialogs {
                             transaction.getBookingReference() != null ? transaction.getBookingReference() : "N/A" }
             });
 
-            // Payment Info Section (REMOVED Gateway fields)
+            // Payment Info Section
             VBox paymentInfo = createDetailSection("Payment Information", new String[][] {
                     { "Payment Method:",
                             transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "N/A" },
