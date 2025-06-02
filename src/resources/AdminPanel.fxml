@@ -123,8 +123,7 @@
                                        style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
                                 <Label fx:id="totalUsersLabel" text="25" 
                                        style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
-                                <Label text="+3 this week" 
-                                       style="-fx-font-size: 10px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
+                              
                             </VBox>
                             
                             <!-- Flights Card -->
@@ -134,8 +133,7 @@
                                        style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
                                 <Label fx:id="totalFlightsLabel" text="12" 
                                        style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
-                                <Label text="2 departing today" 
-                                       style="-fx-font-size: 10px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
+                                
                             </VBox>
                             
                             <!-- Bookings Card -->
@@ -145,8 +143,7 @@
                                        style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
                                 <Label fx:id="totalBookingsLabel" text="48" 
                                        style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
-                                <Label text="+5 today" 
-                                       style="-fx-font-size: 10px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
+                             
                             </VBox>
                             
                             <!-- Revenue Card -->
@@ -156,8 +153,7 @@
                                        style="-fx-font-size: 12px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
                                 <Label fx:id="totalRevenueLabel" text="₱2,230" 
                                        style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
-                                <Label text="+₱340 today" 
-                                       style="-fx-font-size: 10px; -fx-text-fill: #2c2c2c; -fx-font-weight: bold;" />
+                                
                             </VBox>
                         </HBox>
                         

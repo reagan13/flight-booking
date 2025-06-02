@@ -18,7 +18,7 @@ public class AdminTransactionsBuilder {
         // Clear existing columns
         transactionsTable.getColumns().clear();
         
-        // Create comprehensive columns based on your FULL database schema
+        // Create comprehensive columns based on your database schema (NO Gateway columns)
         
         // Transaction ID Column
         TableColumn<Transaction, Integer> idCol = new TableColumn<>("ID");
@@ -31,8 +31,8 @@ public class AdminTransactionsBuilder {
         TableColumn<Transaction, String> refCol = new TableColumn<>("Reference");
         refCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDescription()));
-        refCol.setPrefWidth(120);
-        refCol.setMinWidth(100);
+        refCol.setPrefWidth(140);
+        refCol.setMinWidth(120);
         
         // Booking ID Column
         TableColumn<Transaction, Integer> bookingIdCol = new TableColumn<>("Booking ID");
@@ -45,15 +45,15 @@ public class AdminTransactionsBuilder {
         TableColumn<Transaction, String> bookingRefCol = new TableColumn<>("Booking Ref");
         bookingRefCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getBookingReference()));
-        bookingRefCol.setPrefWidth(100);
-        bookingRefCol.setMinWidth(90);
+        bookingRefCol.setPrefWidth(120);
+        bookingRefCol.setMinWidth(100);
         
         // Customer Name Column
         TableColumn<Transaction, String> customerCol = new TableColumn<>("Customer");
         customerCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getUserName()));
-        customerCol.setPrefWidth(120);
-        customerCol.setMinWidth(100);
+        customerCol.setPrefWidth(140);
+        customerCol.setMinWidth(120);
         
         // Payment Method Column
         TableColumn<Transaction, String> methodCol = new TableColumn<>("Payment Method");
@@ -62,37 +62,33 @@ public class AdminTransactionsBuilder {
         methodCol.setPrefWidth(120);
         methodCol.setMinWidth(100);
         
-        // Payment Provider Column (NEW - from your schema)
+        // Payment Provider Column
         TableColumn<Transaction, String> providerCol = new TableColumn<>("Provider");
         providerCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPaymentProvider()));
         providerCol.setPrefWidth(100);
         providerCol.setMinWidth(80);
         
-        
         // Amount Column (base amount)
         TableColumn<Transaction, String> baseAmountCol = new TableColumn<>("Base Amount");
         baseAmountCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedAmount()));
-        baseAmountCol.setPrefWidth(100);
-        baseAmountCol.setMinWidth(90);
+        baseAmountCol.setPrefWidth(110);
+        baseAmountCol.setMinWidth(100);
         
-        
-        // Processing Fee Column (NEW - from your schema)
+        // Processing Fee Column
         TableColumn<Transaction, String> feeCol = new TableColumn<>("Processing Fee");
         feeCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedProcessingFee()));
-        feeCol.setPrefWidth(100);
-        feeCol.setMinWidth(90);
+        feeCol.setPrefWidth(110);
+        feeCol.setMinWidth(100);
         
         // Total Amount Column
         TableColumn<Transaction, String> totalCol = new TableColumn<>("Total Amount");
         totalCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedTotalAmount()));
-        totalCol.setPrefWidth(100);
-        totalCol.setMinWidth(90);
-
-        
+        totalCol.setPrefWidth(110);
+        totalCol.setMinWidth(100);
         
         // Payment Status Column with color coding
         TableColumn<Transaction, String> statusCol = new TableColumn<>("Status");
@@ -115,6 +111,7 @@ public class AdminTransactionsBuilder {
                         // Color code based on status
                         switch (status.toLowerCase()) {
                             case "completed":
+                            case "paid":
                             case "success":
                                 setStyle("-fx-background-color: #d4edda; -fx-text-fill: #155724; -fx-font-weight: bold;");
                                 break;
@@ -140,22 +137,6 @@ public class AdminTransactionsBuilder {
         dateCol.setPrefWidth(140);
         dateCol.setMinWidth(120);
         
-        // Gateway Transaction ID Column (NEW - from your schema)
-        TableColumn<Transaction, String> gatewayIdCol = new TableColumn<>("Gateway ID");
-        gatewayIdCol.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getGatewayTransactionId()));
-        gatewayIdCol.setPrefWidth(120);
-        gatewayIdCol.setMinWidth(100);
-
-                
-        // Gateway Response Code Column (NEW - from your schema)
-        TableColumn<Transaction, String> responseCodeCol = new TableColumn<>("Response Code");
-        responseCodeCol.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getGatewayResponseCode()));
-        responseCodeCol.setPrefWidth(100);
-        responseCodeCol.setMinWidth(90);
-
-        
         // Created At Column
         TableColumn<Transaction, String> createdCol = new TableColumn<>("Created");
         createdCol.setCellValueFactory(cellData -> 
@@ -163,19 +144,18 @@ public class AdminTransactionsBuilder {
         createdCol.setPrefWidth(130);
         createdCol.setMinWidth(110);
         
-        // Updated At Column (NEW - from your schema)
+        // Updated At Column
         TableColumn<Transaction, String> updatedCol = new TableColumn<>("Last Updated");
         updatedCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedUpdatedAt()));
         updatedCol.setPrefWidth(130);
         updatedCol.setMinWidth(110);
         
-        // Add ALL columns to table in logical order
+        // Add columns to table (REMOVED gatewayIdCol and responseCodeCol)
         transactionsTable.getColumns().addAll(
             idCol, refCol, bookingIdCol, bookingRefCol, customerCol,
             methodCol, providerCol, baseAmountCol, feeCol, totalCol,
-            statusCol, dateCol, gatewayIdCol, responseCodeCol, 
-            createdCol, updatedCol
+            statusCol, dateCol, createdCol, updatedCol
         );
         
         // Set table properties
@@ -237,8 +217,8 @@ public class AdminTransactionsBuilder {
             filterTransactions(table, newValue);
         });
         
-        // Add placeholder text that shows all searchable fields
-        searchField.setPromptText("Search by reference, customer, status, method, provider, gateway ID...");
+        // Updated placeholder text (removed gateway ID)
+        searchField.setPromptText("Search by reference, customer, status, method, provider...");
     }
     
     private void loadTransactions(TableView<Transaction> table) {

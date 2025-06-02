@@ -18,56 +18,65 @@ public class AdminTransactionDialogs {
     // Remove the add transaction functionality and interface methods related to adding
     
     // Static methods for dialogs only
+  
     public static void showTransactionDetails(Transaction transaction, BiConsumer<String, String> alertCallback) {
         try {
             Alert dialog = new Alert(Alert.AlertType.INFORMATION);
             dialog.setTitle("Transaction Details");
             dialog.setHeaderText("Transaction #" + transaction.getTransactionId());
             dialog.setResizable(true);
-            
+
             // Create a comprehensive details view
             VBox mainContent = new VBox(15);
             mainContent.setPadding(new Insets(20));
             mainContent.setStyle("-fx-background-color: #f8f9fa;");
-            
+
             // Basic Info Section
-            VBox basicInfo = createDetailSection("Basic Information", new String[][]{
-                {"Transaction ID:", String.valueOf(transaction.getTransactionId())},
-                {"Transaction Reference:", transaction.getDescription() != null ? transaction.getDescription() : "N/A"},
-                {"Transaction Type:", transaction.getTransactionType() != null ? transaction.getTransactionType() : "N/A"},
-                {"Status:", transaction.getStatus() != null ? transaction.getStatus().toUpperCase() : "UNKNOWN"}
+            VBox basicInfo = createDetailSection("Basic Information", new String[][] {
+                    { "Transaction ID:", String.valueOf(transaction.getTransactionId()) },
+                    { "Transaction Reference:",
+                            transaction.getDescription() != null ? transaction.getDescription() : "N/A" },
+                    { "Transaction Type:",
+                            transaction.getTransactionType() != null ? transaction.getTransactionType() : "N/A" },
+                    { "Status:", transaction.getStatus() != null ? transaction.getStatus().toUpperCase() : "UNKNOWN" }
             });
-            
+
             // Customer & Booking Info Section
-            VBox customerInfo = createDetailSection("Customer & Booking Information", new String[][]{
-                {"Customer Name:", transaction.getUserName() != null ? transaction.getUserName() : "Unknown"},
-                {"Booking ID:", String.valueOf(transaction.getBookingId())},
-                {"Booking Reference:", transaction.getBookingReference() != null ? transaction.getBookingReference() : "N/A"}
+            VBox customerInfo = createDetailSection("Customer & Booking Information", new String[][] {
+                    { "Customer Name:", transaction.getUserName() != null ? transaction.getUserName() : "Unknown" },
+                    { "Booking ID:", String.valueOf(transaction.getBookingId()) },
+                    { "Booking Reference:",
+                            transaction.getBookingReference() != null ? transaction.getBookingReference() : "N/A" }
             });
-            
-            // Payment Info Section
-            VBox paymentInfo = createDetailSection("Payment Information", new String[][]{
-                {"Payment Method:", transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "N/A"},
-                {"Amount:", transaction.getFormattedAmount()},
-                {"Payment Date:", transaction.getFormattedDateTime()}
+
+            // Payment Info Section (REMOVED Gateway fields)
+            VBox paymentInfo = createDetailSection("Payment Information", new String[][] {
+                    { "Payment Method:",
+                            transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "N/A" },
+                    { "Payment Provider:",
+                            transaction.getPaymentProvider() != null ? transaction.getPaymentProvider() : "N/A" },
+                    { "Base Amount:", transaction.getFormattedAmount() },
+                    { "Processing Fee:", transaction.getFormattedProcessingFee() },
+                    { "Total Amount:", transaction.getFormattedTotalAmount() },
+                    { "Payment Date:", transaction.getFormattedDateTime() }
             });
-            
+
             // Timeline Section
-            VBox timelineInfo = createDetailSection("Timeline", new String[][]{
-                {"Created:", transaction.getFormattedDateTime()},
-                {"Last Updated:", transaction.getFormattedDateTime()} // You can add updated_at to Transaction model
+            VBox timelineInfo = createDetailSection("Timeline", new String[][] {
+                    { "Created:", transaction.getFormattedCreatedAt() },
+                    { "Last Updated:", transaction.getFormattedUpdatedAt() }
             });
-            
+
             mainContent.getChildren().addAll(basicInfo, customerInfo, paymentInfo, timelineInfo);
-            
+
             // Wrap in ScrollPane for long content
             ScrollPane scrollPane = new ScrollPane(mainContent);
             scrollPane.setFitToWidth(true);
             scrollPane.setPrefSize(500, 400);
-            
+
             dialog.getDialogPane().setContent(scrollPane);
             dialog.showAndWait();
-            
+
         } catch (Exception e) {
             System.err.println("Error showing transaction details: " + e.getMessage());
             if (alertCallback != null) {
@@ -75,7 +84,7 @@ public class AdminTransactionDialogs {
             }
         }
     }
-    
+
     private static VBox createDetailSection(String title, String[][] details) {
         VBox section = new VBox(8);
         
@@ -110,15 +119,19 @@ public class AdminTransactionDialogs {
             ChoiceDialog<String> dialog = new ChoiceDialog<>("pending", "completed", "failed", "cancelled", "refunded");
             dialog.setTitle("Change Transaction Status");
             dialog.setHeaderText("Transaction #" + transaction.getTransactionId());
-            dialog.setContentText("Current Status: " + transaction.getStatus().toUpperCase() + "\n\nSelect new status:");
+            dialog.setContentText("Current Status: " + transaction.getStatus().toUpperCase() + 
+                                "\n\n⚠️ Note: This will also update the booking status automatically." +
+                                "\n\nSelect new status:");
             
             Optional<String> result = dialog.showAndWait();
             result.ifPresent(status -> {
                 try {
                     if (TransactionService.updateTransactionStatus(transaction.getTransactionId(), status)) {
+                        String bookingStatus = mapPaymentToBookingStatus(status);
                         if (alertCallback != null) {
-                            alertCallback.accept("Success", "Transaction status updated from '" + 
-                                transaction.getStatus() + "' to '" + status + "' successfully!");
+                            alertCallback.accept("Success", 
+                                "✅ Transaction status updated to: " + status.toUpperCase() + 
+                                "\n📋 Booking status updated to: " + bookingStatus.toUpperCase());
                         }
                         if (onSuccess != null) {
                             onSuccess.run();
@@ -143,4 +156,18 @@ public class AdminTransactionDialogs {
             }
         }
     }
+    
+    private static String mapPaymentToBookingStatus(String paymentStatus) {
+        switch (paymentStatus.toLowerCase()) {
+            case "completed":
+                return "confirmed";
+            case "failed":
+            case "cancelled":
+            case "refunded":
+                return "cancelled";
+            default:
+                return "pending";
+        }
+    }
+    
 }

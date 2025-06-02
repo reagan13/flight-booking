@@ -163,8 +163,6 @@ public class DatabaseConnection {
                     + "total_amount DECIMAL(10,2),"
                     + "payment_status VARCHAR(20) DEFAULT 'pending',"
                     + "payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,"
-                    + "gateway_transaction_id VARCHAR(100),"
-                    + "gateway_response_code VARCHAR(20),"
                     + "created_at DATETIME DEFAULT CURRENT_TIMESTAMP,"
                     + "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
                     + "FOREIGN KEY (booking_id) REFERENCES bookings(id)"
