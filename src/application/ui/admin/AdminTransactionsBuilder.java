@@ -18,65 +18,227 @@ public class AdminTransactionsBuilder {
         // Clear existing columns
         transactionsTable.getColumns().clear();
         
-        // Create columns
+        // Create comprehensive columns based on your FULL database schema
+        
+        // Transaction ID Column
         TableColumn<Transaction, Integer> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleIntegerProperty(cellData.getValue().getTransactionId()).asObject());
         idCol.setPrefWidth(60);
+        idCol.setMinWidth(50);
         
-        TableColumn<Transaction, String> userCol = new TableColumn<>("User");
-        userCol.setCellValueFactory(cellData -> 
+        // Transaction Reference Column  
+        TableColumn<Transaction, String> refCol = new TableColumn<>("Reference");
+        refCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDescription()));
+        refCol.setPrefWidth(120);
+        refCol.setMinWidth(100);
+        
+        // Booking ID Column
+        TableColumn<Transaction, Integer> bookingIdCol = new TableColumn<>("Booking ID");
+        bookingIdCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleIntegerProperty(cellData.getValue().getBookingId()).asObject());
+        bookingIdCol.setPrefWidth(80);
+        bookingIdCol.setMinWidth(70);
+        
+        // Booking Reference Column
+        TableColumn<Transaction, String> bookingRefCol = new TableColumn<>("Booking Ref");
+        bookingRefCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getBookingReference()));
+        bookingRefCol.setPrefWidth(100);
+        bookingRefCol.setMinWidth(90);
+        
+        // Customer Name Column
+        TableColumn<Transaction, String> customerCol = new TableColumn<>("Customer");
+        customerCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getUserName()));
-        userCol.setPrefWidth(120);
+        customerCol.setPrefWidth(120);
+        customerCol.setMinWidth(100);
         
-        TableColumn<Transaction, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getTransactionType()));
-        typeCol.setPrefWidth(100);
+        // Payment Method Column
+        TableColumn<Transaction, String> methodCol = new TableColumn<>("Payment Method");
+        methodCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPaymentMethod()));
+        methodCol.setPrefWidth(120);
+        methodCol.setMinWidth(100);
         
-        TableColumn<Transaction, Double> amountCol = new TableColumn<>("Amount");
-        amountCol.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleDoubleProperty(cellData.getValue().getAmount()).asObject());
-        amountCol.setPrefWidth(100);
+        // Payment Provider Column (NEW - from your schema)
+        TableColumn<Transaction, String> providerCol = new TableColumn<>("Provider");
+        providerCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPaymentProvider()));
+        providerCol.setPrefWidth(100);
+        providerCol.setMinWidth(80);
         
+        
+        // Amount Column (base amount)
+        TableColumn<Transaction, String> baseAmountCol = new TableColumn<>("Base Amount");
+        baseAmountCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedAmount()));
+        baseAmountCol.setPrefWidth(100);
+        baseAmountCol.setMinWidth(90);
+        
+        
+        // Processing Fee Column (NEW - from your schema)
+        TableColumn<Transaction, String> feeCol = new TableColumn<>("Processing Fee");
+        feeCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedProcessingFee()));
+        feeCol.setPrefWidth(100);
+        feeCol.setMinWidth(90);
+        
+        // Total Amount Column
+        TableColumn<Transaction, String> totalCol = new TableColumn<>("Total Amount");
+        totalCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedTotalAmount()));
+        totalCol.setPrefWidth(100);
+        totalCol.setMinWidth(90);
+
+        
+        
+        // Payment Status Column with color coding
         TableColumn<Transaction, String> statusCol = new TableColumn<>("Status");
         statusCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getStatus()));
-        statusCol.setPrefWidth(80);
+        statusCol.setPrefWidth(100);
+        statusCol.setMinWidth(80);
         
-        TableColumn<Transaction, String> dateCol = new TableColumn<>("Date");
+        // Add custom cell factory for status colors
+        statusCol.setCellFactory(column -> {
+            return new TableCell<Transaction, String>() {
+                @Override
+                protected void updateItem(String status, boolean empty) {
+                    super.updateItem(status, empty);
+                    if (empty || status == null) {
+                        setText(null);
+                        setStyle("");
+                    } else {
+                        setText(status.toUpperCase());
+                        // Color code based on status
+                        switch (status.toLowerCase()) {
+                            case "completed":
+                            case "success":
+                                setStyle("-fx-background-color: #d4edda; -fx-text-fill: #155724; -fx-font-weight: bold;");
+                                break;
+                            case "pending":
+                                setStyle("-fx-background-color: #fff3cd; -fx-text-fill: #856404; -fx-font-weight: bold;");
+                                break;
+                            case "failed":
+                            case "cancelled":
+                                setStyle("-fx-background-color: #f8d7da; -fx-text-fill: #721c24; -fx-font-weight: bold;");
+                                break;
+                            default:
+                                setStyle("-fx-background-color: #f8f9fa; -fx-text-fill: #495057;");
+                        }
+                    }
+                }
+            };
+        });
+        
+        // Payment Date Column
+        TableColumn<Transaction, String> dateCol = new TableColumn<>("Payment Date");
         dateCol.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedDateTime()));
-        dateCol.setPrefWidth(120);
+        dateCol.setPrefWidth(140);
+        dateCol.setMinWidth(120);
         
-        TableColumn<Transaction, String> paymentCol = new TableColumn<>("Payment");
-        paymentCol.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPaymentMethod()));
-        paymentCol.setPrefWidth(100);
+        // Gateway Transaction ID Column (NEW - from your schema)
+        TableColumn<Transaction, String> gatewayIdCol = new TableColumn<>("Gateway ID");
+        gatewayIdCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getGatewayTransactionId()));
+        gatewayIdCol.setPrefWidth(120);
+        gatewayIdCol.setMinWidth(100);
+
+                
+        // Gateway Response Code Column (NEW - from your schema)
+        TableColumn<Transaction, String> responseCodeCol = new TableColumn<>("Response Code");
+        responseCodeCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getGatewayResponseCode()));
+        responseCodeCol.setPrefWidth(100);
+        responseCodeCol.setMinWidth(90);
+
         
-        // Add columns to table
-        transactionsTable.getColumns().addAll(idCol, userCol, typeCol, amountCol, statusCol, dateCol, paymentCol);
+        // Created At Column
+        TableColumn<Transaction, String> createdCol = new TableColumn<>("Created");
+        createdCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedCreatedAt()));
+        createdCol.setPrefWidth(130);
+        createdCol.setMinWidth(110);
         
-        // Load data
-        loadTransactions(transactionsTable);
+        // Updated At Column (NEW - from your schema)
+        TableColumn<Transaction, String> updatedCol = new TableColumn<>("Last Updated");
+        updatedCol.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedUpdatedAt()));
+        updatedCol.setPrefWidth(130);
+        updatedCol.setMinWidth(110);
         
-        // Add row click handler
+        // Add ALL columns to table in logical order
+        transactionsTable.getColumns().addAll(
+            idCol, refCol, bookingIdCol, bookingRefCol, customerCol,
+            methodCol, providerCol, baseAmountCol, feeCol, totalCol,
+            statusCol, dateCol, gatewayIdCol, responseCodeCol, 
+            createdCol, updatedCol
+        );
+        
+        // Set table properties
+        transactionsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         transactionsTable.setRowFactory(tv -> {
             TableRow<Transaction> row = new TableRow<>();
+            
+            // Add hover effect
+            row.setOnMouseEntered(e -> {
+                if (!row.isEmpty()) {
+                    row.setStyle("-fx-background-color: #f8f9fa;");
+                }
+            });
+            
+            row.setOnMouseExited(e -> {
+                row.setStyle("");
+            });
+            
+            // Add double-click handler for transaction details
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Transaction transaction = row.getItem();
                     eventHandler.onViewTransactionDetails(transaction);
                 }
             });
+            
+            // Add context menu for actions
+            ContextMenu contextMenu = new ContextMenu();
+            
+            MenuItem viewDetails = new MenuItem("View Full Details");
+            viewDetails.setOnAction(e -> {
+                if (!row.isEmpty()) {
+                    eventHandler.onViewTransactionDetails(row.getItem());
+                }
+            });
+            
+            MenuItem changeStatus = new MenuItem("Change Status");
+            changeStatus.setOnAction(e -> {
+                if (!row.isEmpty()) {
+                    Transaction transaction = row.getItem();
+                    AdminTransactionDialogs.changeTransactionStatus(transaction, 
+                        (title, message) -> eventHandler.onTransactionsError(message),
+                        () -> loadTransactions(transactionsTable));
+                }
+            });
+            
+            contextMenu.getItems().addAll(viewDetails, changeStatus);
+            row.setContextMenu(contextMenu);
+            
             return row;
         });
+        
+        // Load data
+        loadTransactions(transactionsTable);
     }
     
     public void setupTransactionSearch(TextField searchField, TableView<Transaction> table) {
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             filterTransactions(table, newValue);
         });
+        
+        // Add placeholder text that shows all searchable fields
+        searchField.setPromptText("Search by reference, customer, status, method, provider, gateway ID...");
     }
     
     private void loadTransactions(TableView<Transaction> table) {
@@ -96,22 +258,8 @@ public class AdminTransactionsBuilder {
         }
         
         try {
-            ObservableList<Transaction> allTransactions = TransactionService.getAllTransactions();
-            ObservableList<Transaction> filteredTransactions = FXCollections.observableArrayList();
-            
-            String lowerCaseFilter = searchText.toLowerCase();
-            
-            for (Transaction transaction : allTransactions) {
-                if (transaction.getTransactionType().toLowerCase().contains(lowerCaseFilter) ||
-                    transaction.getStatus().toLowerCase().contains(lowerCaseFilter) ||
-                    transaction.getPaymentMethod().toLowerCase().contains(lowerCaseFilter) ||
-                    transaction.getUserName().toLowerCase().contains(lowerCaseFilter) ||
-                    transaction.getDescription().toLowerCase().contains(lowerCaseFilter) ||
-                    String.valueOf(transaction.getTransactionId()).contains(lowerCaseFilter)) {
-                    filteredTransactions.add(transaction);
-                }
-            }
-            
+            // Use the database search which searches across all fields
+            ObservableList<Transaction> filteredTransactions = TransactionService.searchTransactions(searchText);
             table.setItems(filteredTransactions);
         } catch (Exception e) {
             eventHandler.onTransactionsError("Search failed: " + e.getMessage());

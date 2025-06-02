@@ -1,6 +1,10 @@
 package application.model;
 
 import javafx.beans.property.*;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -18,6 +22,15 @@ public class Transaction {
     private final StringProperty userName;
     private final StringProperty bookingReference;
     
+    // Additional fields to match your database schema
+    private final StringProperty paymentProvider;
+    private final DoubleProperty processingFee;
+    private final DoubleProperty totalAmount;
+    private final StringProperty gatewayTransactionId;
+    private final StringProperty gatewayResponseCode;
+    private final ObjectProperty<LocalDateTime> createdAt;
+    private final ObjectProperty<LocalDateTime> updatedAt;
+
     // Default constructor
     public Transaction() {
         this(0, 0, 0, "", 0.0, "", "", "", LocalDateTime.now());
@@ -38,6 +51,15 @@ public class Transaction {
         this.transactionDate = new SimpleObjectProperty<>(transactionDate);
         this.userName = new SimpleStringProperty("");
         this.bookingReference = new SimpleStringProperty("");
+        
+        // Initialize additional fields
+        this.paymentProvider = new SimpleStringProperty("");
+        this.processingFee = new SimpleDoubleProperty(0.0);
+        this.totalAmount = new SimpleDoubleProperty(amount); // Default to amount if not set
+        this.gatewayTransactionId = new SimpleStringProperty("");
+        this.gatewayResponseCode = new SimpleStringProperty("");
+        this.createdAt = new SimpleObjectProperty<>(LocalDateTime.now());
+        this.updatedAt = new SimpleObjectProperty<>(LocalDateTime.now());
     }
     
     // Property getters
@@ -52,8 +74,15 @@ public class Transaction {
     public ObjectProperty<LocalDateTime> transactionDateProperty() { return transactionDate; }
     public StringProperty userNameProperty() { return userName; }
     public StringProperty bookingReferenceProperty() { return bookingReference; }
+    public StringProperty paymentProviderProperty() { return paymentProvider; }
+    public DoubleProperty processingFeeProperty() { return processingFee; }
+    public DoubleProperty totalAmountProperty() { return totalAmount; }
+    public StringProperty gatewayTransactionIdProperty() { return gatewayTransactionId; }
+    public StringProperty gatewayResponseCodeProperty() { return gatewayResponseCode; }
+    public ObjectProperty<LocalDateTime> createdAtProperty() { return createdAt; }
+    public ObjectProperty<LocalDateTime> updatedAtProperty() { return updatedAt; }
     
-    // Getters
+    // Basic getters
     public int getTransactionId() { return transactionId.get(); }
     public int getUserId() { return userId.get(); }
     public int getBookingId() { return bookingId.get(); }
@@ -66,7 +95,16 @@ public class Transaction {
     public String getUserName() { return userName.get(); }
     public String getBookingReference() { return bookingReference.get(); }
     
-    // Setters
+    // Additional getters for database fields
+    public String getPaymentProvider() { return paymentProvider.get(); }
+    public double getProcessingFee() { return processingFee.get(); }
+    public double getTotalAmount() { return totalAmount.get(); }
+    public String getGatewayTransactionId() { return gatewayTransactionId.get(); }
+    public String getGatewayResponseCode() { return gatewayResponseCode.get(); }
+    public LocalDateTime getCreatedAt() { return createdAt.get(); }
+    public LocalDateTime getUpdatedAt() { return updatedAt.get(); }
+    
+    // Basic setters
     public void setTransactionId(int transactionId) { this.transactionId.set(transactionId); }
     public void setUserId(int userId) { this.userId.set(userId); }
     public void setBookingId(int bookingId) { this.bookingId.set(bookingId); }
@@ -79,6 +117,15 @@ public class Transaction {
     public void setUserName(String userName) { this.userName.set(userName); }
     public void setBookingReference(String bookingReference) { this.bookingReference.set(bookingReference); }
     
+    // Additional setters for database fields
+    public void setPaymentProvider(String paymentProvider) { this.paymentProvider.set(paymentProvider); }
+    public void setProcessingFee(double processingFee) { this.processingFee.set(processingFee); }
+    public void setTotalAmount(double totalAmount) { this.totalAmount.set(totalAmount); }
+    public void setGatewayTransactionId(String gatewayTransactionId) { this.gatewayTransactionId.set(gatewayTransactionId); }
+    public void setGatewayResponseCode(String gatewayResponseCode) { this.gatewayResponseCode.set(gatewayResponseCode); }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt.set(createdAt); }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt.set(updatedAt); }
+    
     // Utility methods
     public String getFormattedDateTime() {
         if (transactionDate.get() != null) {
@@ -87,8 +134,30 @@ public class Transaction {
         return "Unknown";
     }
     
+    public String getFormattedCreatedAt() {
+        if (createdAt.get() != null) {
+            return createdAt.get().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+        }
+        return "Unknown";
+    }
+    
+    public String getFormattedUpdatedAt() {
+        if (updatedAt.get() != null) {
+            return updatedAt.get().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+        }
+        return "Unknown";
+    }
+    
     public String getFormattedAmount() {
         return String.format("₱%.2f", amount.get());
+    }
+    
+    public String getFormattedTotalAmount() {
+        return String.format("₱%.2f", totalAmount.get());
+    }
+    
+    public String getFormattedProcessingFee() {
+        return String.format("₱%.2f", processingFee.get());
     }
     
     public String getStatusBadgeColor() {
@@ -108,10 +177,22 @@ public class Transaction {
         }
     }
     
+    // Get transaction reference (alias for description)
+    public String getTransactionReference() {
+        return getDescription();
+    }
+    
+    public void setTransactionReference(String transactionReference) {
+        setDescription(transactionReference);
+    }
+    
+    
+  
     @Override
     public String toString() {
-        return String.format("Transaction{id=%d, type=%s, amount=%.2f, status=%s, date=%s}", 
-                           getTransactionId(), getTransactionType(), getAmount(), 
-                           getStatus(), getFormattedDateTime());
+        return String.format("Transaction{id=%d, ref=%s, type=%s, amount=%.2f, total=%.2f, status=%s, method=%s, provider=%s, date=%s}", 
+                           getTransactionId(), getDescription(), getTransactionType(), 
+                           getAmount(), getTotalAmount(), getStatus(), getPaymentMethod(), 
+                           getPaymentProvider(), getFormattedDateTime());
     }
 }

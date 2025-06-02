@@ -226,7 +226,7 @@ public class TransactionService {
     }
     
     private static Transaction createTransactionFromResultSet(ResultSet rs) throws SQLException {
-        // Map your exact MySQL schema to Transaction model
+        // Map ALL fields from your exact MySQL schema to Transaction model
         int transactionId = rs.getInt("id");
         int bookingId = rs.getInt("booking_id");
         String transactionRef = rs.getString("transaction_reference");
@@ -239,21 +239,34 @@ public class TransactionService {
         Timestamp paymentDate = rs.getTimestamp("payment_date");
         String gatewayTransactionId = rs.getString("gateway_transaction_id");
         String gatewayResponseCode = rs.getString("gateway_response_code");
-        
+        Timestamp createdAt = rs.getTimestamp("created_at");
+        Timestamp updatedAt = rs.getTimestamp("updated_at");
+
         // Create transaction with available data
         Transaction transaction = new Transaction(
-            transactionId,
-            0, // userId - not directly available in transactions table
-            bookingId,
-            "payment", // Default transaction type
-            totalAmount, // Use total_amount as the main amount
-            paymentStatus != null ? paymentStatus : "unknown",
-            paymentMethod != null ? paymentMethod : "unknown",
-            transactionRef != null ? transactionRef : "Transaction #" + transactionId,
-            paymentDate != null ? paymentDate.toLocalDateTime() : LocalDateTime.now()
-        );
-        
-        // Set additional fields from user data
+                transactionId,
+                0, // userId - not directly available in transactions table
+                bookingId,
+                "payment", // Default transaction type
+                amount, // Base amount from database
+                paymentStatus != null ? paymentStatus : "unknown",
+                paymentMethod != null ? paymentMethod : "unknown",
+                transactionRef != null ? transactionRef : "Transaction #" + transactionId,
+                paymentDate != null ? paymentDate.toLocalDateTime() : LocalDateTime.now());
+
+        // Set ALL additional fields from database
+        transaction.setPaymentProvider(paymentProvider != null ? paymentProvider : "N/A");
+        transaction.setProcessingFee(processingFee);
+        transaction.setTotalAmount(totalAmount);
+        transaction.setGatewayTransactionId(gatewayTransactionId != null ? gatewayTransactionId : "N/A");
+        transaction.setGatewayResponseCode(gatewayResponseCode != null ? gatewayResponseCode : "N/A");
+
+        if (createdAt != null)
+            transaction.setCreatedAt(createdAt.toLocalDateTime());
+        if (updatedAt != null)
+            transaction.setUpdatedAt(updatedAt.toLocalDateTime());
+
+        // Set user and booking info from JOINs
         String firstName = rs.getString("user_first_name");
         String lastName = rs.getString("user_last_name");
         if (firstName != null && lastName != null) {
@@ -261,12 +274,13 @@ public class TransactionService {
         } else {
             transaction.setUserName("Unknown User");
         }
-        
+
         String bookingRef = rs.getString("booking_ref");
         transaction.setBookingReference(bookingRef != null ? bookingRef : "N/A");
-        
+
         return transaction;
     }
+
     
     // Search transactions by various criteria
     public static ObservableList<Transaction> searchTransactions(String searchTerm) {
