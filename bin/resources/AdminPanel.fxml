@@ -68,6 +68,10 @@
                    style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-padding: 10 15; -fx-border-color: #808080; -fx-border-width: 1; -fx-alignment: center-left; -fx-cursor: hand;" 
                    onAction="#showMessages" />
             
+            <Button fx:id="transactionsBtn" text="Transactions" maxWidth="Infinity" 
+                    style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-size: 12px; -fx-padding: 10 15; -fx-border-color: #808080; -fx-border-width: 1; -fx-alignment: center-left; -fx-cursor: hand;" 
+                    onAction="#showTransactions" />
+            
             <!-- Separator -->
             <Separator style="-fx-background-color: #808080;" />
             
@@ -410,7 +414,8 @@
                                              wrapText="true" />
                                     
                                     <HBox alignment="CENTER_RIGHT" spacing="10">
-                                        
+                                        <Button text="Attach File" 
+                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
                                         <Button fx:id="sendMessageBtn" onAction="#sendMessage" 
                                                style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 6 20; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" 
                                                text="Send Message" />
@@ -420,6 +425,36 @@
                         </HBox>
                     </VBox>
                     
+                    <!-- TRANSACTIONS CONTENT -->
+
+
+                    <VBox fx:id="transactionsContent" visible="false" spacing="15">
+                        <!-- Header -->
+                        <VBox style="-fx-background-color: #f0f0f0; -fx-padding: 15; -fx-border-color: #808080; -fx-border-width: 2;" spacing="10">
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <Label text="Transactions Management" 
+                                    style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                
+                                <!-- Search -->
+                                <HBox spacing="10" alignment="CENTER_RIGHT">
+                                    <TextField fx:id="transactionSearchField" promptText="Search transactions..." 
+                                            style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-padding: 6; -fx-font-size: 12px; -fx-pref-width: 200px;" />
+                                    <Button text="Clear" onAction="#clearTransactionSearch" 
+                                        style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
+                                    
+                                </HBox>
+                            </HBox>
+                            <Label text="Monitor and manage financial transactions" 
+                                style="-fx-font-size: 11px; -fx-text-fill: #555555;" />
+                        </VBox>
+                        
+                        <!-- Table -->
+                        <VBox style="-fx-background-color: white; -fx-padding: 15; -fx-border-color: #808080; -fx-border-width: 2;" VBox.vgrow="ALWAYS">
+                            <TableView fx:id="transactionsTable" VBox.vgrow="ALWAYS" 
+                                    style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1;" />
+                        </VBox>
+                    </VBox>
                 </StackPane>
             </content>
         </ScrollPane>

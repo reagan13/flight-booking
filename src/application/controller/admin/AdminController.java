@@ -27,6 +27,7 @@ public class AdminController extends BaseController implements Initializable {
     @FXML private TextField flightSearchField;
     @FXML private TextField bookingSearchField;
     @FXML private TextField messageSearchField;
+    @FXML private TextField transactionSearchField;
     
     // Labels
     @FXML private Label adminNameLabel;
@@ -49,6 +50,7 @@ public class AdminController extends BaseController implements Initializable {
     @FXML private Button flightsBtn;
     @FXML private Button bookingsBtn;
     @FXML private Button messagesBtn;
+    @FXML private Button transactionsBtn;
     @FXML private Button addUserBtn;
     @FXML private Button addFlightBtn;
     
@@ -58,12 +60,14 @@ public class AdminController extends BaseController implements Initializable {
     @FXML private VBox flightsContent;
     @FXML private VBox bookingsContent;
     @FXML private VBox messagesContent;
+    @FXML private VBox transactionsContent;
     
     // Tables
     @FXML private TableView<User> usersTable;
     @FXML private TableView<Flight> flightsTable;
     @FXML private TableView<Booking> bookingsTable;
     @FXML private TableView<Message> messagesTable;
+    @FXML private TableView<Transaction> transactionsTable;
     
     // Message components
     @FXML private ListView<Message> conversationsList;
@@ -75,21 +79,26 @@ public class AdminController extends BaseController implements Initializable {
     @FXML private ToggleButton automationToggle;
     @FXML private Label unreadCountLabel;
     
-    // UI Builders - COMPOSITION pattern
+    // UI Builders - COMPOSITION pattern - FIXED TYPES
     private AdminUsersBuilder usersBuilder;
     private AdminFlightsBuilder flightsBuilder;
     private AdminBookingsBuilder bookingsBuilder;
     private AdminMessagesBuilder messagesBuilder;
+    private AdminTransactionsBuilder transactionsBuilder; // FIXED: Use AdminTransactionsBuilder
     
     // Current state
     private Message currentConversation;
     private int currentUserId = -1;
-    
+    private Button[] navButtons;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("AdminController initializing...");
         
         try {
+            // Initialize navigation buttons array
+            navButtons = new Button[]{dashboardBtn, usersBtn, flightsBtn, bookingsBtn, messagesBtn, transactionsBtn};
+            
             // Check FXML injection
             if (!checkFXMLElements()) {
                 System.err.println("FXML elements not properly injected!");
@@ -130,255 +139,433 @@ public class AdminController extends BaseController implements Initializable {
     
     // ENCAPSULATION - private initialization methods
     private boolean checkFXMLElements() {
-        return adminNameLabel != null && dashboardContent != null && 
-               usersTable != null && flightsTable != null && 
-               bookingsTable != null && conversationsList != null;
+        boolean allPresent = true;
+        
+        if (adminNameLabel == null) {
+            System.err.println("adminNameLabel is null");
+            allPresent = false;
+        }
+        if (dashboardContent == null) {
+            System.err.println("dashboardContent is null");
+            allPresent = false;
+        }
+        if (usersTable == null) {
+            System.err.println("usersTable is null");
+            allPresent = false;
+        }
+        if (flightsTable == null) {
+            System.err.println("flightsTable is null");
+            allPresent = false;
+        }
+        if (bookingsTable == null) {
+            System.err.println("bookingsTable is null");
+            allPresent = false;
+        }
+        if (transactionsTable == null) {
+            System.err.println("transactionsTable is null");
+            allPresent = false;
+        }
+        if (transactionsContent == null) {
+            System.err.println("transactionsContent is null");
+            allPresent = false;
+        }
+        if (conversationsList == null) {
+            System.err.println("conversationsList is null");
+            allPresent = false;
+        }
+        
+        return allPresent;
     }
     
     private void initializeBuilders() {
-        // Initialize users builder with event handling - POLYMORPHISM
-        usersBuilder = new AdminUsersBuilder(new AdminUsersBuilder.UsersEventHandler() {
-            @Override
-            public void onUserEdit(User user) {
-                AdminUserDialogs.editUser(user, AdminController.this::showAlert, 
-                                        AdminController.this::refreshUsersData);
-            }
+        try {
+            // Initialize users builder with event handling - POLYMORPHISM
+            usersBuilder = new AdminUsersBuilder(new AdminUsersBuilder.UsersEventHandler() {
+                @Override
+                public void onUserEdit(User user) {
+                    AdminUserDialogs.editUser(user, AdminController.this::showAlert, 
+                                            AdminController.this::refreshUsersData);
+                }
+                
+                @Override
+                public void onUserDelete(User user) {
+                    AdminUserDialogs.deleteUser(user, AdminController.this::showAlert, 
+                                              AdminController.this::refreshUsersData);
+                }
+                
+                @Override
+                public void onUserAdd() {
+                    addNewUser();
+                }
+                
+                @Override
+                public void onUsersLoaded(int count) {
+                    System.out.println("Users loaded: " + count);
+                }
+                
+                @Override
+                public void onUsersError(String error) {
+                    showErrorAlert("Users Error", error);
+                }
+            });
             
-            @Override
-            public void onUserDelete(User user) {
-                AdminUserDialogs.deleteUser(user, AdminController.this::showAlert, 
-                                          AdminController.this::refreshUsersData);
-            }
-            
-            @Override
-            public void onUserAdd() {
-                addNewUser();
-            }
-            
-            @Override
-            public void onUsersLoaded(int count) {
-                System.out.println("Users loaded: " + count);
-            }
-            
-            @Override
-            public void onUsersError(String error) {
-                showErrorAlert("Users Error", error);
-            }
-        });
-        
-        // Initialize flights builder
-        flightsBuilder = new AdminFlightsBuilder(new AdminFlightsBuilder.FlightsEventHandler() {
-            @Override
-            public void onFlightEdit(Flight flight) {
-                AdminFlightDialogs.editFlight(flight, AdminController.this::showAlert, 
-                                            AdminController.this::refreshFlightsData);
-            }
-            
-            @Override
-            public void onFlightDelete(Flight flight) {
-                AdminFlightDialogs.deleteFlight(flight, AdminController.this::showAlert, 
-                                              AdminController.this::refreshFlightsData);
-            }
-            
-            @Override
-            public void onFlightAdd() {
-                addNewFlight();
-            }
-            
-            @Override
-            public void onFlightDetails(Flight flight) {
-                AdminFlightDialogs.showFlightDetails(flight, AdminController.this::showAlert);
-            }
-            
-            @Override
-            public void onFlightsLoaded(int count) {
-                System.out.println("Flights loaded: " + count);
-            }
-            
-            @Override
-            public void onFlightsError(String error) {
-                showErrorAlert("Flights Error", error);
-            }
-        });
+            // Initialize flights builder
+            flightsBuilder = new AdminFlightsBuilder(new AdminFlightsBuilder.FlightsEventHandler() {
+                @Override
+                public void onFlightEdit(Flight flight) {
+                    AdminFlightDialogs.editFlight(flight, AdminController.this::showAlert, 
+                                                AdminController.this::refreshFlightsData);
+                }
+                
+                @Override
+                public void onFlightDelete(Flight flight) {
+                    AdminFlightDialogs.deleteFlight(flight, AdminController.this::showAlert, 
+                                                  AdminController.this::refreshFlightsData);
+                }
+                
+                @Override
+                public void onFlightAdd() {
+                    addNewFlight();
+                }
+                
+                @Override
+                public void onFlightDetails(Flight flight) {
+                    AdminFlightDialogs.showFlightDetails(flight, AdminController.this::showAlert);
+                }
+                
+                @Override
+                public void onFlightsLoaded(int count) {
+                    System.out.println("Flights loaded: " + count);
+                }
+                
+                @Override
+                public void onFlightsError(String error) {
+                    showErrorAlert("Flights Error", error);
+                }
+            });
 
+            // Initialize bookings builder
+            bookingsBuilder = new AdminBookingsBuilder(new AdminBookingsBuilder.BookingsEventHandler() {
+                @Override
+                public void onBookingView(Booking booking) {
+                    AdminBookingDialogs.showBookingDetails(booking, AdminController.this::showAlert);
+                }
+                
+                @Override
+                public void onBookingStatusChange(Booking booking) {
+                    AdminBookingDialogs.changeBookingStatus(booking, AdminController.this::showAlert,
+                                                          AdminController.this::refreshBookingsData);
+                }
+                
+                @Override
+                public void onBookingDelete(Booking booking) {
+                    AdminBookingDialogs.deleteBooking(booking, AdminController.this::showAlert,
+                                                    AdminController.this::refreshBookingsData);
+                }
+                
+                @Override
+                public void onBookingsLoaded(int count) {
+                    System.out.println("Bookings loaded: " + count);
+                }
+                
+                @Override
+                public void onBookingsError(String error) {
+                    showErrorAlert("Bookings Error", error);
+                }
+            });
+            
+            // Initialize messages builder
+            messagesBuilder = new AdminMessagesBuilder(new AdminMessagesBuilder.MessagesEventHandler() {
+                @Override
+                public void onConversationSelect(int userId) {
+                    loadConversation(userId);
+                }
+                
+                @Override
+                public void onMessageSend(String message) {
+                    sendMessage();
+                }
+                
+                @Override
+                public void onAutomationToggle(boolean enabled) {
+                    toggleAutomation();
+                }
+                
+                @Override
+                public void onMessagesLoaded(int count) {
+                    System.out.println("Messages loaded: " + count);
+                }
+                
+                @Override
+                public void onMessagesError(String error) {
+                    showErrorAlert("Messages Error", error);
+                }
+            });
 
-        
-        // Initialize bookings builder
-        bookingsBuilder = new AdminBookingsBuilder(new AdminBookingsBuilder.BookingsEventHandler() {
-            @Override
-            public void onBookingView(Booking booking) {
-                AdminBookingDialogs.showBookingDetails(booking, AdminController.this::showAlert);
-            }
+            // FIXED: Initialize transactions builder with correct interface
+            transactionsBuilder = new AdminTransactionsBuilder(new AdminTransactionsBuilder.TransactionsEventHandler() {
+                @Override
+                public void onViewTransactionDetails(Transaction transaction) {
+                    AdminTransactionDialogs.showTransactionDetails(transaction, AdminController.this::showAlert);
+                }
+                
+                @Override
+                public void onTransactionsLoaded(int count) {
+                    System.out.println("Transactions loaded: " + count);
+                }
+                
+                @Override
+                public void onTransactionsError(String error) {
+                    showErrorAlert("Transactions Error", error);
+                }
+            });
             
-            @Override
-            public void onBookingStatusChange(Booking booking) {
-                AdminBookingDialogs.changeBookingStatus(booking, AdminController.this::showAlert,
-                                                      AdminController.this::refreshBookingsData);
-            }
-            
-            @Override
-            public void onBookingDelete(Booking booking) {
-                AdminBookingDialogs.deleteBooking(booking, AdminController.this::showAlert,
-                                                AdminController.this::refreshBookingsData);
-            }
-            
-            @Override
-            public void onBookingsLoaded(int count) {
-                System.out.println("Bookings loaded: " + count);
-            }
-            
-            @Override
-            public void onBookingsError(String error) {
-                showErrorAlert("Bookings Error", error);
-            }
-        });
-        
-        // Initialize messages build`er
-        messagesBuilder = new AdminMessagesBuilder(new AdminMessagesBuilder.MessagesEventHandler() {
-            @Override
-            public void onConversationSelect(int userId) {
-                loadConversation(userId);
-            }
-            
-            @Override
-            public void onMessageSend(String message) {
-                sendMessage();
-            }
-            
-            @Override
-            public void onAutomationToggle(boolean enabled) {
-                toggleAutomation();
-            }
-            
-            @Override
-            public void onMessagesLoaded(int count) {
-                System.out.println("Messages loaded: " + count);
-            }
-            
-            @Override
-            public void onMessagesError(String error) {
-                showErrorAlert("Messages Error", error);
-            }
-        });
+        } catch (Exception e) {
+            System.err.println("Error initializing builders: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     private void setupAdminInfo() {
-        User currentUser = UserSession.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String fullName = UserSession.getInstance().getCurrentUserFullName();
-            adminNameLabel.setText("Welcome, " + (fullName != null ? fullName : "Admin"));
-        } else {
+        try {
+            // Check if UserSession exists
+            try {
+                User currentUser = UserSession.getInstance().getCurrentUser();
+                if (currentUser != null) {
+                    String fullName = UserSession.getInstance().getCurrentUserFullName();
+                    adminNameLabel.setText("Welcome, " + (fullName != null ? fullName : "Admin"));
+                } else {
+                    adminNameLabel.setText("Welcome, Admin");
+                }
+            } catch (Exception e) {
+                // UserSession might not exist yet
+                adminNameLabel.setText("Welcome, Admin");
+            }
+        } catch (Exception e) {
+            System.err.println("Error setting up admin info: " + e.getMessage());
             adminNameLabel.setText("Welcome, Admin");
         }
     }
     
     private void loadDashboardStats() {
-        AdminDashboardBuilder.DashboardLabels labels = new AdminDashboardBuilder.DashboardLabels(
-            totalUsersLabel, totalFlightsLabel, totalBookingsLabel, totalRevenueLabel,
-            pendingBookingsLabel, confirmedBookingsLabel, cancelledBookingsLabel, 
-            totalMessagesLabel, todayBookingsLabel, newMessagesLabel, systemStatusLabel
-        );
-        
-        AdminDashboardBuilder.loadDashboardStats(labels, 
-            new AdminDashboardBuilder.DashboardEventHandler() {
-                @Override
-                public void onStatsLoaded() {
-                    System.out.println("Dashboard stats loaded successfully");
-                }
+        try {
+            // Check if AdminDashboardBuilder exists
+            try {
+                AdminDashboardBuilder.DashboardLabels labels = new AdminDashboardBuilder.DashboardLabels(
+                    totalUsersLabel, totalFlightsLabel, totalBookingsLabel, totalRevenueLabel,
+                    pendingBookingsLabel, confirmedBookingsLabel, cancelledBookingsLabel, 
+                    totalMessagesLabel, todayBookingsLabel, newMessagesLabel, systemStatusLabel
+                );
                 
-                @Override
-                public void onStatsError(String error) {
-                    System.err.println("Dashboard stats error: " + error);
-                }
-            });
+                AdminDashboardBuilder.loadDashboardStats(labels, 
+                    new AdminDashboardBuilder.DashboardEventHandler() {
+                        @Override
+                        public void onStatsLoaded() {
+                            System.out.println("Dashboard stats loaded successfully");
+                        }
+                        
+                        @Override
+                        public void onStatsError(String error) {
+                            System.err.println("Dashboard stats error: " + error);
+                        }
+                    });
+            } catch (Exception e) {
+                System.err.println("AdminDashboardBuilder not available: " + e.getMessage());
+                // Set default values
+                if (totalUsersLabel != null) totalUsersLabel.setText("0");
+                if (totalFlightsLabel != null) totalFlightsLabel.setText("0");
+                if (totalBookingsLabel != null) totalBookingsLabel.setText("0");
+                if (totalRevenueLabel != null) totalRevenueLabel.setText("₱0.00");
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading dashboard stats: " + e.getMessage());
+        }
     }
     
     // Navigation methods - POLYMORPHISM through method overriding
     @FXML
     private void showDashboard() {
-        hideAllContent();
-        dashboardContent.setVisible(true);
-        updateActiveButton(dashboardBtn);
-        loadDashboardStats();
-        System.out.println("Showing dashboard");
+        try {
+            hideAllContent();
+            if (dashboardContent != null) {
+                dashboardContent.setVisible(true);
+            }
+            updateActiveButton(dashboardBtn);
+            loadDashboardStats();
+            System.out.println("Showing dashboard");
+        } catch (Exception e) {
+            System.err.println("Error showing dashboard: " + e.getMessage());
+        }
     }
     
     @FXML
     private void showUsers() {
-        hideAllContent();
-        usersContent.setVisible(true);
-        updateActiveButton(usersBtn);
-        refreshUsersData();
-        System.out.println("Showing users");
+        try {
+            hideAllContent();
+            if (usersContent != null) {
+                usersContent.setVisible(true);
+            }
+            updateActiveButton(usersBtn);
+            refreshUsersData();
+            System.out.println("Showing users");
+        } catch (Exception e) {
+            System.err.println("Error showing users: " + e.getMessage());
+        }
     }
     
     @FXML
     private void showFlights() {
-        hideAllContent();
-        flightsContent.setVisible(true);
-        updateActiveButton(flightsBtn);
-        refreshFlightsData();
-        System.out.println("Showing flights");
+        try {
+            hideAllContent();
+            if (flightsContent != null) {
+                flightsContent.setVisible(true);
+            }
+            updateActiveButton(flightsBtn);
+            refreshFlightsData();
+            System.out.println("Showing flights");
+        } catch (Exception e) {
+            System.err.println("Error showing flights: " + e.getMessage());
+        }
     }
     
     @FXML
     private void showBookings() {
-        hideAllContent();
-        bookingsContent.setVisible(true);
-        updateActiveButton(bookingsBtn);
-        refreshBookingsData();
-        System.out.println("Showing bookings");
+        try {
+            hideAllContent();
+            if (bookingsContent != null) {
+                bookingsContent.setVisible(true);
+            }
+            updateActiveButton(bookingsBtn);
+            refreshBookingsData();
+            System.out.println("Showing bookings");
+        } catch (Exception e) {
+            System.err.println("Error showing bookings: " + e.getMessage());
+        }
     }
     
     @FXML
     private void showMessages() {
-        hideAllContent();
-        messagesContent.setVisible(true);
-        updateActiveButton(messagesBtn);
-        refreshMessagesData();
-        System.out.println("Showing messages");
+        try {
+            hideAllContent();
+            if (messagesContent != null) {
+                messagesContent.setVisible(true);
+            }
+            updateActiveButton(messagesBtn);
+            refreshMessagesData();
+            System.out.println("Showing messages");
+        } catch (Exception e) {
+            System.err.println("Error showing messages: " + e.getMessage());
+        }
     }
     
+    @FXML
+    private void showTransactions() {
+        try {
+            hideAllContent();
+            if (transactionsContent != null) {
+                transactionsContent.setVisible(true);
+            }
+            updateActiveButton(transactionsBtn);
+            refreshTransactionsData();
+            System.out.println("Showing transactions");
+        } catch (Exception e) {
+            System.err.println("Error showing transactions: " + e.getMessage());
+        }
+    }
+
     // Data loading methods using builders
     private void refreshUsersData() {
-        usersBuilder.setupUsersTable(usersTable);
+        try {
+            if (usersBuilder != null && usersTable != null) {
+                usersBuilder.setupUsersTable(usersTable);
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing users data: " + e.getMessage());
+        }
     }
     
     private void refreshFlightsData() {
-        flightsBuilder.setupFlightsTable(flightsTable);
-        if (flightSearchField != null) {
-            flightsBuilder.setupFlightSearch(flightSearchField, flightsTable);
+        try {
+            if (flightsBuilder != null && flightsTable != null) {
+                flightsBuilder.setupFlightsTable(flightsTable);
+                if (flightSearchField != null) {
+                    flightsBuilder.setupFlightSearch(flightSearchField, flightsTable);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing flights data: " + e.getMessage());
         }
     }
     
     private void refreshBookingsData() {
-        bookingsBuilder.setupBookingsTable(bookingsTable);
-        if (bookingSearchField != null) {
-            bookingsBuilder.setupBookingSearch(bookingSearchField, bookingsTable);
+        try {
+            if (bookingsBuilder != null && bookingsTable != null) {
+                bookingsBuilder.setupBookingsTable(bookingsTable);
+                if (bookingSearchField != null) {
+                    bookingsBuilder.setupBookingSearch(bookingSearchField, bookingsTable);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing bookings data: " + e.getMessage());
         }
     }
     
     private void refreshMessagesData() {
-        messagesBuilder.setupMessagesContent(conversationsList, chatArea, chatScrollPane,
-                                           messageInputArea, sendMessageBtn, chatHeaderLabel,
-                                           automationToggle, unreadCountLabel);
+        try {
+            if (messagesBuilder != null) {
+                messagesBuilder.setupMessagesContent(conversationsList, chatArea, chatScrollPane,
+                                               messageInputArea, sendMessageBtn, chatHeaderLabel,
+                                               automationToggle, unreadCountLabel);
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing messages data: " + e.getMessage());
+        }
+    }
+    
+    // FIXED: Corrected method calls for transactions using AdminTransactionsBuilder
+    private void refreshTransactionsData() {
+        try {
+            if (transactionsBuilder != null && transactionsTable != null) {
+                transactionsBuilder.setupTransactionsTable(transactionsTable);
+                if (transactionSearchField != null) {
+                    transactionsBuilder.setupTransactionSearch(transactionSearchField, transactionsTable);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing transactions data: " + e.getMessage());
+        }
     }
     
     // FXML Action handlers
     @FXML
     private void addNewUser() {
-        AdminUserDialogs.addNewUser(this::showAlert, this::refreshUsersData);
+        try {
+            AdminUserDialogs.addNewUser(this::showAlert, this::refreshUsersData);
+        } catch (Exception e) {
+            System.err.println("Error adding new user: " + e.getMessage());
+        }
     }
     
     @FXML
     private void addNewFlight() {
-        AdminFlightDialogs.addNewFlight(this::showAlert, this::refreshFlightsData);
+        try {
+            AdminFlightDialogs.addNewFlight(this::showAlert, this::refreshFlightsData);
+        } catch (Exception e) {
+            System.err.println("Error adding new flight: " + e.getMessage());
+        }
     }
+    
+ 
     
     @FXML
     private void handleLogout(ActionEvent event) {
         try {
-            UserSession.getInstance().clearSession();
+            // Clear session if UserSession exists
+            try {
+                UserSession.getInstance().clearSession();
+            } catch (Exception e) {
+                System.err.println("UserSession not available: " + e.getMessage());
+            }
             
             Stage stage = (Stage) logoutButton.getScene().getWindow();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/Login.fxml"));
@@ -399,134 +586,273 @@ public class AdminController extends BaseController implements Initializable {
     
     // ENCAPSULATION - private helper methods
     private void hideAllContent() {
-        dashboardContent.setVisible(false);
-        usersContent.setVisible(false);
-        flightsContent.setVisible(false);
-        bookingsContent.setVisible(false);
-        messagesContent.setVisible(false);
+        try {
+            if (dashboardContent != null) dashboardContent.setVisible(false);
+            if (usersContent != null) usersContent.setVisible(false);
+            if (flightsContent != null) flightsContent.setVisible(false);
+            if (bookingsContent != null) bookingsContent.setVisible(false);
+            if (messagesContent != null) messagesContent.setVisible(false);
+            if (transactionsContent != null) transactionsContent.setVisible(false);
+        } catch (Exception e) {
+            System.err.println("Error hiding content: " + e.getMessage());
+        }
     }
     
     private void updateActiveButton(Button activeButton) {
-        Button[] navButtons = {dashboardBtn, usersBtn, flightsBtn, bookingsBtn, messagesBtn};
-        
-        for (Button btn : navButtons) {
-            if (btn == activeButton) {
-                btn.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 12 15;");
-            } else {
-                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #495057; -fx-padding: 12 15;");
+        try {
+            if (navButtons != null) {
+                for (Button btn : navButtons) {
+                    if (btn != null) {
+                        if (btn == activeButton) {
+                            btn.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 12 15;");
+                        } else {
+                            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #495057; -fx-padding: 12 15;");
+                        }
+                    }
+                }
             }
+        } catch (Exception e) {
+            System.err.println("Error updating active button: " + e.getMessage());
         }
     }
     
     // Message handling methods
     private void loadConversation(int userId) {
-        currentUserId = userId;
-        messagesBuilder.loadConversation(userId, chatArea, chatScrollPane, 
-                                       chatHeaderLabel, automationToggle);
+        try {
+            currentUserId = userId;
+            if (messagesBuilder != null) {
+                messagesBuilder.loadConversation(userId, chatArea, chatScrollPane,
+                        chatHeaderLabel, automationToggle);
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading conversation: " + e.getMessage());
+        }
     }
     
     @FXML
     private void sendMessage() {
-        if (currentUserId == -1) {
-            showWarningAlert("Warning", "Please select a conversation first.");
-            return;
+        try {
+            if (currentUserId == -1) {
+                showWarningAlert("Warning", "Please select a conversation first.");
+                return;
+            }
+            
+            if (messageInputArea == null || messageInputArea.getText().trim().isEmpty()) {
+                showWarningAlert("Warning", "Please enter a message.");
+                return;
+            }
+            
+            if (messagesBuilder != null) {
+                messagesBuilder.sendMessage(currentUserId, messageInputArea.getText().trim(),
+                                          sendMessageBtn, this::showAlert, this::loadConversation);
+                messageInputArea.clear();
+            }
+        } catch (Exception e) {
+            System.err.println("Error sending message: " + e.getMessage());
         }
-        
-        if (messageInputArea == null || messageInputArea.getText().trim().isEmpty()) {
-            showWarningAlert("Warning", "Please enter a message.");
-            return;
-        }
-        
-        messagesBuilder.sendMessage(currentUserId, messageInputArea.getText().trim(),
-                                  sendMessageBtn, this::showAlert, this::loadConversation);
-        messageInputArea.clear();
     }
     
     @FXML
     private void toggleAutomation() {
-        if (currentUserId == -1) {
-            if (automationToggle != null) {
-                automationToggle.setSelected(!automationToggle.isSelected());
+        try {
+            if (currentUserId == -1) {
+                if (automationToggle != null) {
+                    automationToggle.setSelected(!automationToggle.isSelected());
+                }
+                showWarningAlert("Warning", "Please select a conversation first.");
+                return;
             }
-            showWarningAlert("Warning", "Please select a conversation first.");
-            return;
+            
+            if (messagesBuilder != null) {
+                messagesBuilder.toggleAutomation(currentUserId, automationToggle, this::showAlert);
+            }
+        } catch (Exception e) {
+            System.err.println("Error toggling automation: " + e.getMessage());
         }
-        
-        messagesBuilder.toggleAutomation(currentUserId, automationToggle, this::showAlert);
     }
     
-    public void refreshDashboard() {
-        loadDashboardStats();
-        System.out.println("Dashboard refreshed");
+    // Search and filter methods
+    @FXML
+    private void searchFlights() {
+        try {
+            if (flightsBuilder != null && flightSearchField != null && flightsTable != null) {
+                flightsBuilder.setupFlightSearch(flightSearchField, flightsTable);
+            }
+        } catch (Exception e) {
+            System.err.println("Error searching flights: " + e.getMessage());
+        }
     }
 
+    @FXML
+    private void searchBookings() {
+        try {
+            if (bookingsBuilder != null && bookingSearchField != null && bookingsTable != null) {
+                bookingsBuilder.setupBookingSearch(bookingSearchField, bookingsTable);
+            }
+        } catch (Exception e) {
+            System.err.println("Error searching bookings: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void searchTransactions() {
+        try {
+            if (transactionsBuilder != null && transactionSearchField != null && transactionsTable != null) {
+                transactionsBuilder.setupTransactionSearch(transactionSearchField, transactionsTable);
+            }
+        } catch (Exception e) {
+            System.err.println("Error searching transactions: " + e.getMessage());
+        }
+    }
     
-// Search and filter methods
-@FXML
-private void searchFlights() {
-    String searchTerm = flightSearchField.getText();
-    if (flightsBuilder != null) {
-        flightsBuilder.setupFlightSearch(flightSearchField, flightsTable);
+    // Clear search methods
+    @FXML
+    private void clearFlightSearch() {
+        try {
+            if (flightSearchField != null) {
+                flightSearchField.clear();
+                refreshFlightsData();
+            }
+        } catch (Exception e) {
+            System.err.println("Error clearing flight search: " + e.getMessage());
+        }
     }
-}
 
-@FXML
-private void searchBookings() {
-    String searchTerm = bookingSearchField.getText();
-    if (bookingsBuilder != null) {
-        bookingsBuilder.setupBookingSearch(bookingSearchField, bookingsTable);
+    @FXML
+    private void clearBookingSearch() {
+        try {
+            if (bookingSearchField != null) {
+                bookingSearchField.clear();
+                refreshBookingsData();
+            }
+        } catch (Exception e) {
+            System.err.println("Error clearing booking search: " + e.getMessage());
+        }
     }
-}
 
-@FXML
-private void clearFlightSearch() {
-    if (flightSearchField != null) {
-        flightSearchField.clear();
-        refreshFlightsData();
+    @FXML
+    private void clearTransactionSearch() {
+        try {
+            if (transactionSearchField != null) {
+                transactionSearchField.clear();
+                refreshTransactionsData();
+            }
+        } catch (Exception e) {
+            System.err.println("Error clearing transaction search: " + e.getMessage());
+        }
     }
-}
 
-@FXML
-private void clearBookingSearch() {
-    if (bookingSearchField != null) {
-        bookingSearchField.clear();
-        refreshBookingsData();
+    @FXML
+    private void clearMessageSearch() {
+        try {
+            if (messageSearchField != null) {
+                messageSearchField.clear();
+                refreshMessagesData();
+            }
+        } catch (Exception e) {
+            System.err.println("Error clearing message search: " + e.getMessage());
+        }
     }
-}
 
-@FXML
-private void clearMessageSearch() {
-    if (messageSearchField != null) {
-        messageSearchField.clear();
-        refreshMessagesData();
+    @FXML
+    private void clearUserSearch() {
+        try {
+            refreshUsersData();
+        } catch (Exception e) {
+            System.err.println("Error clearing user search: " + e.getMessage());
+        }
     }
-}
 
-@FXML
-private void clearUserSearch() {
-    // If you have a user search field, handle it here
-    refreshUsersData();
-}
+    // Refresh methods for buttons
+    @FXML
+    private void refreshUsers() {
+        try {
+            refreshUsersData();
+        } catch (Exception e) {
+            System.err.println("Error refreshing users: " + e.getMessage());
+        }
+    }
 
-// Refresh methods for buttons
-@FXML
-private void refreshUsers() {
-    refreshUsersData();
-}
+    @FXML
+    private void refreshFlights() {
+        try {
+            refreshFlightsData();
+        } catch (Exception e) {
+            System.err.println("Error refreshing flights: " + e.getMessage());
+        }
+    }
 
-@FXML
-private void refreshFlights() {
-    refreshFlightsData();
-}
+    @FXML
+    private void refreshBookings() {
+        try {
+            refreshBookingsData();
+        } catch (Exception e) {
+            System.err.println("Error refreshing bookings: " + e.getMessage());
+        }
+    }
 
-@FXML
-private void refreshBookings() {
-    refreshBookingsData();
-}
+    @FXML
+    private void refreshMessages() {
+        try {
+            refreshMessagesData();
+        } catch (Exception e) {
+            System.err.println("Error refreshing messages: " + e.getMessage());
+        }
+    }
 
-@FXML
-private void refreshMessages() {
-    refreshMessagesData();
-}
+    @FXML
+    private void refreshTransactions() {
+        try {
+            refreshTransactionsData();
+        } catch (Exception e) {
+            System.err.println("Error refreshing transactions: " + e.getMessage());
+        }
+    }
 
+    @FXML
+    private void refreshDashboard() {
+        try {
+            loadDashboardStats();
+            System.out.println("Dashboard refreshed");
+        } catch (Exception e) {
+            System.err.println("Error refreshing dashboard: " + e.getMessage());
+        }
+    }
+
+    // Utility methods for alerts
+    protected void showAlert(String title, String message) {
+        try {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        } catch (Exception e) {
+            System.err.println("Error showing alert: " + e.getMessage());
+        }
+    }
+
+    protected void showErrorAlert(String title, String message) {
+        try {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        } catch (Exception e) {
+            System.err.println("Error showing error alert: " + e.getMessage());
+        }
+    }
+
+    protected void showWarningAlert(String title, String message) {
+        try {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        } catch (Exception e) {
+            System.err.println("Error showing warning alert: " + e.getMessage());
+        }
+    }
 }
