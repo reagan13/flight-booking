@@ -404,18 +404,19 @@
                                 
                                 <!-- Message Input Area -->
                                 <VBox spacing="10" style="-fx-padding: 10; -fx-border-color: #808080; -fx-border-width: 1 0 0 0;">
-                                   <TextArea fx:id="messageInputArea" maxHeight="80" minHeight="40" prefHeight="60" 
-                                          promptText="Type your reply here..." 
-                                          style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-size: 12px; -fx-padding: 8;" 
-                                          wrapText="true" />
-                                   
-                                   <HBox alignment="CENTER_RIGHT" spacing="10">
-                                          <!-- REMOVED: Attach File Button -->
-                                          <Button fx:id="sendMessageBtn" onAction="#sendMessage" 
-                                                 style="-fx-background-color: linear-gradient(#4a90e2, #357abd); -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-border-color: #2c5282; -fx-border-width: 1; -fx-cursor: hand;" 
-                                                 text="Send Message" />
-                                   </HBox>
-                                   </VBox>
+                                    <TextArea fx:id="messageInputArea" maxHeight="80" minHeight="40" prefHeight="60" 
+                                             promptText="Type your reply here..." 
+                                             style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-size: 12px; -fx-padding: 8;" 
+                                             wrapText="true" />
+                                    
+                                    <HBox alignment="CENTER_RIGHT" spacing="10">
+                                        <Button text="Attach File" 
+                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
+                                        <Button fx:id="sendMessageBtn" onAction="#sendMessage" 
+                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 6 20; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" 
+                                               text="Send Message" />
+                                    </HBox>
+                                </VBox>
                             </VBox>
                         </HBox>
                     </VBox>

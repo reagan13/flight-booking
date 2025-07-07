@@ -162,44 +162,50 @@ public class HomeController extends BaseController {
     }
 
     private void showConfirmationAfterPayment(PaymentData paymentData) {
-        // Process the booking first
-        BookingService.BookingResult result = BookingService.completeBooking(
-                currentFlight,
-                paymentData.getFormData().getFirstName(),
-                paymentData.getFormData().getLastName(),
-                paymentData.getFormData().getAge(),
-                paymentData.getFormData().getAddress(),
-                paymentData.getFormData().getEmail(),
-                paymentData.getFormData().getPhone(),
-                paymentData.getTotalAmount(),
-                paymentData.getPaymentMethod(),
-                paymentData.getPaymentProvider());
-
-        if (result.isSuccess()) {
-            // Show confirmation screen
-            confirmationContent.getChildren().clear();
-            VBox confirmationScreen = ConfirmationScreenBuilder.createConfirmationScreen(
-                    result,
-                    currentFlight,
-                    paymentData.getFormData(),
-                    new ConfirmationScreenBuilder.ConfirmationEventHandler() {
-                        @Override
-                        public void onNavigateToHome() {
-                            switchToTab("home");
-                        }
-                    });
-            confirmationContent.getChildren().add(confirmationScreen);
-
-            // Switch to confirmation screen (NOT home)
-            switchToTab("confirmation");
-
-            // Show success alert
-            showMobileAlert("Payment Successful",
-                    "Your booking has been confirmed! Reference: " + result.getBookingReference());
+        // This method is called from processBooking() after successful booking
+        // The booking has already been processed, so we just need to show confirmation
+        confirmationContent.getChildren().clear();
+        
+        // Create a simple confirmation screen with payment data
+        VBox confirmationScreen = createPaymentConfirmationScreen(paymentData);
+        confirmationContent.getChildren().add(confirmationScreen);
+        
+        // Switch to confirmation screen
+        switchToTab("confirmation");
+    }
+    
+    private VBox createPaymentConfirmationScreen(PaymentData paymentData) {
+        VBox container = new VBox(20);
+        container.setStyle("-fx-padding: 20; -fx-alignment: center; -fx-background-color: white;");
+        
+        Label titleLabel = new Label("✅ Payment Successful!");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2e7d32;");
+        
+        Label messageLabel = new Label("Your booking has been confirmed!");
+        messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #666;");
+        
+        // Flight details
+        if (currentFlight != null) {
+            Label flightLabel = new Label("Flight: " + currentFlight.getFlightNo());
+            flightLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333;");
+            
+            Label routeLabel = new Label("Route: " + currentFlight.getOrigin() + " → " + currentFlight.getDestination());
+            routeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333;");
+            
+            Label amountLabel = new Label("Amount: ₱" + String.format("%.2f", paymentData.getTotalAmount()));
+            amountLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333; -fx-font-weight: bold;");
+            
+            container.getChildren().addAll(titleLabel, messageLabel, flightLabel, routeLabel, amountLabel);
         } else {
-            // Show error alert if booking failed
-            showMobileAlert("Booking Failed", result.getMessage());
+            container.getChildren().addAll(titleLabel, messageLabel);
         }
+        
+        Button homeButton = new Button("Return to Home");
+        homeButton.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 12 24;");
+        homeButton.setOnAction(e -> switchToTab("home"));
+        
+        container.getChildren().add(homeButton);
+        return container;
     }
     
     
@@ -587,6 +593,7 @@ public class HomeController extends BaseController {
         hideStatus();
         
         if (result.isSuccess()) {
+            // Show confirmation screen using the proper method
             showConfirmationScreen(result);
             showMobileAlert("Booking Confirmed", 
                 "Your booking has been confirmed! Reference: " + result.getBookingReference());

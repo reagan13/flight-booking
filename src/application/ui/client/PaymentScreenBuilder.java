@@ -61,8 +61,9 @@ public class PaymentScreenBuilder {
             totalAmount
         );
 
+        // Only call onPaymentProcessed - this will handle the booking and confirmation
         eventHandler.onPaymentProcessed(paymentData);
-        eventHandler.onShowConfirmation(paymentData);
+        // Remove the duplicate call to onShowConfirmation - it's called from processBooking()
     }
     
     private VBox createHeaderSection() {
