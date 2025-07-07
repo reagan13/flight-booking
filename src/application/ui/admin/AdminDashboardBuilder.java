@@ -84,8 +84,11 @@ public class AdminDashboardBuilder {
             // Update message and daily statistics
             labels.totalMessagesLabel.setText(String.valueOf(totalMessages));
             labels.todayBookingsLabel.setText(String.valueOf(todayBookings));
-            labels.newMessagesLabel.setText(String.valueOf(newMessages));
-
+            if (labels.newMessagesLabel != null) {
+                labels.newMessagesLabel.setText(String.valueOf(newMessages));
+            } else {
+                System.out.println("⚠️ newMessagesLabel is null - check if it's commented out in FXML");
+            }
             // Update system status
             String systemStatus = AdminService.getSystemStatus();
             labels.systemStatusLabel.setText(systemStatus);
@@ -119,7 +122,9 @@ public class AdminDashboardBuilder {
 
             labels.totalMessagesLabel.setText("0");
             labels.todayBookingsLabel.setText("0");
-            labels.newMessagesLabel.setText("0");
+            if (labels.newMessagesLabel != null) {
+                labels.newMessagesLabel.setText("0");
+            }
             labels.systemStatusLabel.setText("🔴 Error Loading Data");
             labels.systemStatusLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
 

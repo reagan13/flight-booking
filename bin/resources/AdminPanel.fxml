@@ -76,7 +76,7 @@
             <Separator style="-fx-background-color: #808080;" />
             
             <!-- Quick Stats Section -->
-            <VBox spacing="10" style="-fx-padding: 10 0 0 0;">
+            <!-- <VBox spacing="10" style="-fx-padding: 10 0 0 0;">
                 <Label text="Quick Stats" 
                        style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
                 
@@ -97,7 +97,7 @@
                                style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
                     </HBox>
                 </VBox>
-            </VBox>
+            </VBox> -->
         </VBox>
     </left>
     
@@ -222,7 +222,7 @@
                                    style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
                             
                             <HBox spacing="15">
-                                <VBox style="-fx-background-color: #f0f0f0; -fx-padding: 15; -fx-border-color: #808080; -fx-border-width: 2;" 
+                                <!-- <VBox style="-fx-background-color: #f0f0f0; -fx-padding: 15; -fx-border-color: #808080; -fx-border-width: 2;" 
                                      prefWidth="300" prefHeight="80" spacing="8">
                                     <HBox alignment="CENTER_LEFT" spacing="10">
                                         <Label text="New Messages:" 
@@ -235,7 +235,7 @@
                                     </HBox>
                                     <Label text="Customer support queries waiting for response" 
                                            style="-fx-font-size: 10px; -fx-text-fill: #555555;" />
-                                </VBox>
+                                </VBox> -->
                                 
                                 <VBox style="-fx-background-color: #f0f0f0; -fx-padding: 15; -fx-border-color: #808080; -fx-border-width: 2;" 
                                      prefWidth="300" prefHeight="80" spacing="8">
@@ -361,11 +361,11 @@
                             <!-- Left Panel - Conversations List -->
                             <VBox prefWidth="300" style="-fx-background-color: #f0f0f0; -fx-padding: 10; -fx-border-color: #808080; -fx-border-width: 2;" spacing="10">
                                 <HBox spacing="10" alignment="CENTER_LEFT">
-                                    <Label text="Conversations" 
+                                    <Label text="Messages" 
                                            style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;" />
                                     <Region HBox.hgrow="ALWAYS" />
-                                    <Label fx:id="conversationCount" text="3" 
-                                           style="-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 2 6; -fx-border-color: #808080; -fx-border-width: 1;" />
+                                    <!-- <Label fx:id="conversationCount" text="3" 
+                                           style="-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 2 6; -fx-border-color: #808080; -fx-border-width: 1;" /> -->
                                 </HBox>
                                 
                                 <ListView fx:id="conversationsList" VBox.vgrow="ALWAYS" 
@@ -409,13 +409,7 @@
                                              style="-fx-background-color: white; -fx-border-color: #808080; -fx-border-width: 1; -fx-font-size: 12px; -fx-padding: 8;" 
                                              wrapText="true" />
                                     
-                                    <HBox alignment="CENTER_RIGHT" spacing="10">
-                                        <Button text="Attach File" 
-                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-padding: 6 12; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" />
-                                        <Button fx:id="sendMessageBtn" onAction="#sendMessage" 
-                                               style="-fx-background-color: linear-gradient(#f0f0f0, #d0d0d0); -fx-text-fill: #2c2c2c; -fx-font-weight: bold; -fx-padding: 6 20; -fx-border-color: #808080; -fx-border-width: 1; -fx-cursor: hand;" 
-                                               text="Send Message" />
-                                    </HBox>
+                                    
                                 </VBox>
                             </VBox>
                         </HBox>
